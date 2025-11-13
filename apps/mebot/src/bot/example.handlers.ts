@@ -1,15 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  ChannelMessage as ChannelMessageEvent,
-  EButtonMessageStyle,
-  EMessageComponentType,
-  Events,
-  MezonClient,
-} from 'mezon-sdk';
-import { Message as MezonMessage } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
-import { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
-import { User } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
-import { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
+import { EButtonMessageStyle, EMessageComponentType, Events } from 'mezon-sdk';
 import {
   Args,
   Channel,
@@ -20,11 +10,12 @@ import {
   ComponentPayload,
   ComponentTarget,
   ChannelMessagePayload,
+  Message,
   MessageContent,
   On,
-  NezonMessage,
-  NezonUser,
+  User,
 } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
 
 @Injectable()
 export class ExampleHandlers {
@@ -32,8 +23,8 @@ export class ExampleHandlers {
 
   @Command({ name: 'ping', aliases: ['pong'] })
   async onPing(
-    @Args() args: string[],
-    @NezonMessage() messageEntity?: MezonMessage,
+    @Args() args: Nezon.Args,
+    @Message() messageEntity?: Nezon.Message,
   ) {
     if (!messageEntity) {
       return;
@@ -44,12 +35,13 @@ export class ExampleHandlers {
 
   @Command('button')
   async onButtonDemo(
-    @ChannelMessagePayload() message: ChannelMessageEvent,
-    @NezonMessage() messageEntity?: MezonMessage,
+    @ChannelMessagePayload() message: Nezon.ChannelMessage,
+    @Message() messageEntity?: Nezon.Message,
   ) {
     if (!messageEntity) {
       return;
     }
+     
     const referenceId = message.message_id ?? messageEntity.id;
     const components = [
       {
@@ -73,10 +65,10 @@ export class ExampleHandlers {
 
   @Component({ pattern: '^demo_button_success_.+' })
   async onDemoButtonClicked(
-    @ComponentPayload() payload: MessageButtonClicked,
-    @ComponentParams() params: string[],
-    @Client() client: MezonClient,
-    @ComponentTarget() targetMessage?: MezonMessage,
+    @ComponentPayload() payload: Nezon.ComponentPayload,
+    @ComponentParams() params: Nezon.ComponentParams,
+    @Client() client: Nezon.Client,
+    @ComponentTarget() targetMessage?: Nezon.Message,
   ) {
     if (!payload?.channel_id || !payload?.message_id) {
       return;
@@ -100,10 +92,10 @@ export class ExampleHandlers {
 
   @On(Events.ChannelMessage)
   async logChannelMessage(
-    @ChannelMessagePayload() message: ChannelMessageEvent,
+    @ChannelMessagePayload() message: Nezon.ChannelMessage,
     @MessageContent() content: string,
-    @Channel() channel: TextChannel | undefined,
-    @NezonUser() user: User | undefined,
+    @Channel() channel: Nezon.Channel | undefined,
+    @User() user: Nezon.User | undefined,
   ) {
     const channelLabel = channel?.id ?? message.channel_id ?? 'unknown';
     const author =
@@ -118,8 +110,8 @@ export class ExampleHandlers {
   }
 
   private async getMessageByIds(
-    client: MezonClient,
-    payload: MessageButtonClicked,
+    client: Nezon.Client,
+    payload: Nezon.ComponentPayload,
   ) {
     try {
       const channel = await client.channels.fetch(payload.channel_id);
@@ -129,4 +121,3 @@ export class ExampleHandlers {
     }
   }
 }
-

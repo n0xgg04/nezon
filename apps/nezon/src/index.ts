@@ -16,3 +16,4 @@ export * from './services/nezon-events.service';
 export * from './services/nezon-lifecycle.service';
 export * from './services/nezon-component.service';
 export * from './services/nezon-event-bridge.service';
+export * from './types';

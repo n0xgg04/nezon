@@ -85,13 +85,13 @@ export function Clan(): ParameterDecorator {
   });
 }
 
-export function NezonUser(): ParameterDecorator {
+export function User(): ParameterDecorator {
   return setParamMetadata({
     type: NezonParamType.USER,
   });
 }
 
-export function NezonMessage(): ParameterDecorator {
+export function Message(): ParameterDecorator {
   return setParamMetadata({
     type: NezonParamType.THIS_MESSAGE,
   });

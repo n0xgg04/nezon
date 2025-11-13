@@ -1,131 +1,97 @@
+---
 id: overview
 title: Giới thiệu Nezon
 sidebar_position: 1
 slug: /
-
 ---
 
-Nezon là thư viện mở rộng NestJS giúp bạn xây dựng bot cho nền tảng **Mezon** nhanh chóng, an toàn và giàu tính năng. Thay vì tự tay kết nối `MezonClient`, khai báo vô số listener và tự fetch dữ liệu cho từng sự kiện, Nezon tự động hóa toàn bộ quy trình:
+Nezon là thư viện mở rộng NestJS giúp bạn xây dựng bot cho nền tảng **Mezon** nhanh chóng. Thư viện chủ động quản lý vòng đời `MezonClient`, tự động khám phá command/component/event qua decorator và cung cấp hệ decorator tham số typed, giúp bạn tập trung vào logic kinh doanh thay vì wiring chi tiết.
 
-- **Decorator cấp cao** (`@Command`, `@Component`, `@On`, `@Once`) cho phép khai báo logic một cách trực quan.
-- **Hệ decorator tham số typed** (`@Args`, `@Channel`, `@NezonMessage`, `@NezonUser`, …) trả về đúng kiểu dữ liệu từ `mezon-sdk`.
-- **`@ComponentTarget`** và cơ chế cache, giúp truy cập nhanh tin nhắn gốc của component mà không phải fetch lặp lại.
-- **Event bridge tích hợp**: mọi sự kiện trong `mezon-sdk` được bind và phát qua `EventEmitter2`, bạn chỉ cần subscribe.
-- **Lifecycle service** đăng nhập bot, bind/unbind listener và đóng kết nối khi ứng dụng kết thúc.
+## Tổng quan nhanh
+
+- Khai báo logic bằng decorator: `@Command`, `@Component`, `@On`, `@Once`.
+- Truy cập dữ liệu typed qua decorator: `@Message`, `@Channel`, `@User`, ...
+- Namespace `Nezon` đi kèm alias type (`Nezon.Message`, `Nezon.Channel`, ...) nên không cần import trực tiếp từ `mezon-sdk`.
+- Event bridge phát toàn bộ sự kiện trong `mezon-sdk` qua `EventEmitter2`.
+- Lifecycle service đăng nhập bot, bind listener và dọn dẹp khi ứng dụng shutdown.
 
 ---
 
 ## 1. Cài đặt & Khởi tạo
 
-### Cài đặt
-
 ```bash
 yarn add @n0xgg04/nezon
 ```
 
-> **Lưu ý:** `mezon-sdk` là peer dependency, hãy cài đặt cùng phiên bản với bot hiện tại.
-
-### Khởi tạo module
-
 ```ts
-import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { NezonModule } from "@n0xgg04/nezon";
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { NezonModule } from '@n0xgg04/nezon';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     NezonModule.forRoot({
-      token: process.env.MEZON_TOKEN ?? "",
-      botId: process.env.MEZON_BOT_ID ?? "",
+      token: process.env.MEZON_TOKEN ?? '',
+      botId: process.env.MEZON_BOT_ID ?? '',
     }),
   ],
 })
 export class AppModule {}
 ```
 
-`NezonModuleOptions` thừa hưởng toàn bộ thuộc tính của `ClientConfigDto`. Nếu muốn lấy cấu hình từ service khác, hãy dùng `NezonModule.forRootAsync`.
+`NezonModule.forRootAsync` hỗ trợ lấy cấu hình từ service khác nếu cần.
 
 ---
 
-## 2. Viết command văn bản
-
-### Interface `NezonCommandOptions`
+## 2. Command văn bản
 
 ```ts
-export interface NezonCommandOptions {
-  name: string;
-  aliases?: string[];
-  prefix?: string; // mặc định '*'
-}
-```
-
-### Ví dụ
-
-```ts
-import { Injectable } from "@nestjs/common";
-import { Command, Args, MessageContent, NezonMessage } from "@n0xgg04/nezon";
-import { Message as MezonMessage } from "mezon-sdk/dist/cjs/mezon-client/structures/Message";
+import { Injectable } from '@nestjs/common';
+import { Command, Args, Message, MessageContent } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
 
 @Injectable()
 export class PingHandler {
-  @Command({ name: "ping", aliases: ["pong"], prefix: "!" })
+  @Command({ name: 'ping', aliases: ['pong'], prefix: '!' })
   async onPing(
-    @Args() args: string[],
-    @MessageContent() content: string,
-    @NezonMessage() message?: MezonMessage
+    @Args() args: Nezon.Args,
+    @Message() message?: Nezon.Message,
+    @MessageContent() content?: string,
   ) {
     if (!message) return;
-    const reply = args.length ? args.join(" ") : "pong";
+    const reply = args.length ? args.join(' ') : 'pong';
     await message.reply({ t: `✅ ${reply} (${content})` });
   }
 }
 ```
 
-Nezon tự động parse `ChannelMessage`, xử lý prefix, tên command và tham số rồi dựng `NezonCommandContext` để inject dữ liệu.
+`Nezon.Args` là alias của `string[]`, `Nezon.Message` là `mezon-sdk` `Message`. Bạn không cần import trực tiếp từ SDK.
 
 ---
 
-## 3. Xử lý component tương tác
-
-### Interface `NezonComponentOptions`
+## 3. Component tương tác
 
 ```ts
-export interface NezonComponentOptions {
-  id?: string;
-  pattern?: RegExp | string;
-  event?: Events | string; // mặc định Events.MessageButtonClicked
-  separator?: string | RegExp; // mặc định '_'
-}
-```
-
-### Ví dụ với `@ComponentTarget`
-
-```ts
-import { Injectable } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
 import {
   Command,
   Component,
   ComponentPayload,
   ComponentTarget,
   Client,
-  NezonMessage,
-} from "@n0xgg04/nezon";
-import {
-  EButtonMessageStyle,
-  EMessageComponentType,
-  MezonClient,
-} from "mezon-sdk";
-import { Message as MezonMessage } from "mezon-sdk/dist/cjs/mezon-client/structures/Message";
-import { MessageButtonClicked } from "mezon-sdk/dist/cjs/rtapi/realtime";
+  Message,
+} from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+import { EButtonMessageStyle, EMessageComponentType } from 'mezon-sdk';
 
 @Injectable()
 export class ButtonHandler {
-  @Command("button")
-  async askForConfirm(@NezonMessage() message?: MezonMessage) {
+  @Command('button')
+  async askForConfirm(@Message() message?: Nezon.Message) {
     if (!message) return;
     await message.reply({
-      t: "Nhấn nút để xác nhận.",
+      t: 'Nhấn nút để xác nhận.',
       components: [
         {
           components: [
@@ -133,7 +99,7 @@ export class ButtonHandler {
               id: `demo_button_success_${message.id}`,
               type: EMessageComponentType.BUTTON,
               component: {
-                label: "Confirm",
+                label: 'Confirm',
                 style: EButtonMessageStyle.SUCCESS,
               },
             },
@@ -143,11 +109,11 @@ export class ButtonHandler {
     });
   }
 
-  @Component({ pattern: "^demo_button_success_.+" })
+  @Component({ pattern: '^demo_button_success_.+' })
   async onConfirm(
-    @ComponentPayload() payload: MessageButtonClicked,
-    @Client() client: MezonClient,
-    @ComponentTarget() target?: MezonMessage
+    @ComponentPayload() payload: Nezon.ComponentPayload,
+    @Client() client: Nezon.Client,
+    @ComponentTarget() target?: Nezon.Message,
   ) {
     const message =
       target ??
@@ -160,115 +126,106 @@ export class ButtonHandler {
 }
 ```
 
-`@ComponentTarget` sử dụng cache nội bộ để lấy `Message` gốc của component. Nếu cache không tồn tại, Nezon sẽ fetch và lưu lại cho lần sau.
+`ComponentTarget` dùng cache tích hợp để trả về `Message` gốc, hạn chế fetch lặp lại.
 
 ---
 
 ## 4. Lắng nghe sự kiện realtime
 
-### Decorator `@On` / `@Once`
-
 ```ts
-import { Injectable } from "@nestjs/common";
-import { On, Once, ChannelMessagePayload } from "@n0xgg04/nezon";
-import { ChannelMessage } from "mezon-sdk";
+import { Injectable } from '@nestjs/common';
+import { On, Once, ChannelMessagePayload, MessageContent, Channel, User } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+import { Events } from 'mezon-sdk';
 
 @Injectable()
 export class EventListener {
-  @On("ChannelMessage")
-  async onMessage(@ChannelMessagePayload() message: ChannelMessage) {
-    if (message.sender_id === message.bot_id) return;
-    console.log("Received message", message.content.t);
+  @On(Events.ChannelMessage)
+  async onMessage(
+    @ChannelMessagePayload() payload: Nezon.ChannelMessage,
+    @MessageContent() content: string,
+    @Channel() channel: Nezon.Channel | undefined,
+    @User() user: Nezon.User | undefined,
+  ) {
+    const author = user?.username ?? payload.username ?? payload.sender_id ?? 'unknown';
+    console.log(`[${channel?.id ?? payload.channel_id}] ${author}: ${content}`);
   }
 
-  @Once("Ready")
+  @Once('Ready')
   onReady() {
-    console.log("Bot is ready");
+    console.log('Bot is ready');
   }
 }
 ```
 
-### Event bridge & EventEmitter2
+### Event bridge
 
-`NezonEventBridgeService` đăng ký **tất cả giá trị trong `mezon-sdk/dist/constants/Events`** và phát lại qua `EventEmitter2`. Bạn có thể inject `EventEmitter2` để subscribe tùy ý:
+Nezon phát toàn bộ sự kiện trên `mezon-sdk` qua `EventEmitter2`. Bạn có thể inject `EventEmitter2` và lắng nghe tùy ý:
 
 ```ts
-import { Injectable } from "@nestjs/common";
-import { EventEmitter2 } from "@nestjs/event-emitter";
-import { Events } from "mezon-sdk";
+import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Events } from 'mezon-sdk';
 
 @Injectable()
 export class TokenWatcher {
   constructor(emitter: EventEmitter2) {
     emitter.on(Events.TokenSend, (payload) => {
-      console.log("Token transfer", payload);
+      console.log('Token transfer', payload);
     });
   }
 }
 ```
 
-Một vài sự kiện thường dùng:
-
-| `Events`                      | Ý nghĩa                                 |
-| ----------------------------- | --------------------------------------- |
-| `Events.ChannelMessage`       | Tin nhắn mới trong channel/thread       |
-| `Events.MessageButtonClicked` | Người dùng click button trong component |
-| `Events.TokenSend`            | Giao dịch token giữa người dùng         |
-| `Events.AddClanUser`          | Thành viên mới vào clan                 |
-| `Events.GiveCoffee`           | Hành động tặng coffee                   |
-| `Events.StreamingJoinedEvent` | Người dùng tham gia phòng stream/voice  |
-
-> Nezon chuẩn hoá một số payload (ví dụ `ChannelMessage`) để luôn có mảng `mentions`, `attachments`, `references`.
+Một số sự kiện hay dùng: `Events.ChannelMessage`, `Events.MessageButtonClicked`, `Events.TokenSend`, `Events.AddClanUser`...
 
 ---
 
 ## 5. Bộ decorator tham số
 
-### Enum `NezonParamType`
+Namespace `Nezon` cung cấp alias type:
 
 ```ts
-export enum NezonParamType {
-  CONTEXT = "context",
-  MESSAGE = "message",
-  CLIENT = "client",
-  ARGS = "args",
-  ARG = "arg",
-  COMPONENT = "component",
-  COMPONENT_PARAMS = "component_params",
-  COMPONENT_PARAM = "component_param",
-  MESSAGE_CONTENT = "message_content",
-  CHANNEL = "channel",
-  CLAN = "clan",
-  USER = "user",
-  THIS_MESSAGE = "this_message",
-  COMPONENT_TARGET = "component_target",
+export namespace Nezon {
+  export type Client = MezonClient;
+  export type ChannelMessage = ChannelMessage;
+  export type Message = MezonMessage;
+  export type Channel = MezonTextChannel;
+  export type Clan = MezonClan;
+  export type User = MezonUser;
+  export type ComponentPayload = MessageButtonClicked;
+  export type ComponentParams = string[];
+  export type ComponentParam = string | undefined;
+  export type Args = string[];
 }
 ```
 
-### Tra cứu nhanh
+| Decorator              | Type / Giá trị                             |
+| ---------------------- | ------------------------------------------- |
+| `@Context()`           | Context command/component                   |
+| `@Args()` / `@Arg(i)`  | `Nezon.Args` / phần tử `string`             |
+| `@Message()`           | `Nezon.Message`                             |
+| `@ChannelMessagePayload()` | `Nezon.ChannelMessage`                 |
+| `@MessageContent()`    | Chuỗi nội dung ban đầu                      |
+| `@Client()`            | `Nezon.Client` (`MezonClient`)              |
+| `@Channel()` / `@Clan()` | `Nezon.Channel`, `Nezon.Clan`            |
+| `@User()`              | `Nezon.User`                                |
+| `@ComponentPayload()`  | `Nezon.ComponentPayload`                    |
+| `@ComponentParams()` / `@ComponentParam()` | `Nezon.ComponentParams` / phần tử |
+| `@ComponentTarget()`   | `Nezon.Message` (tin nhắn gốc)              |
 
-| Decorator                                      | Giá trị trả về                                           |
-| ---------------------------------------------- | -------------------------------------------------------- |
-| `@Context()`                                   | Toàn bộ context (command/component)                      |
-| `@Args()` / `@Arg(index)`                      | Mảng tham số text và từng phần tử cụ thể                 |
-| `@ChannelMessagePayload()` / `@NezonMessage()` | Tin nhắn hiện tại ở dạng `ChannelMessage` hoặc `Message` |
-| `@MessageContent()`                            | Chuỗi nội dung tin nhắn (`content.t`)                    |
-| `@Client()`                                    | Instance `MezonClient` đang được dùng                    |
-| `@Channel()` / `@Clan()`                       | Channel/Clan tương ứng đã được cache                     |
-| `@NezonUser()`                                 | User gửi tin nhắn (fetch từ clan cache)                  |
-| `@ComponentPayload()`                          | Payload nguyên gốc của component                         |
-| `@ComponentParams()` / `@ComponentParam(i)`    | Mảng tham số tách từ `button_id` và phần tử theo vị trí  |
-| `@ComponentTarget()`                           | `Message` gốc mà component thuộc về (có cache tự động)   |
-
-### Ví dụ tổng hợp
+### Ví dụ kết hợp
 
 ```ts
-import { Command, NezonUser, Channel, Args } from '@n0xgg04/nezon';
-import { User as MezonUser } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
-import { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
+import { Command, Message, Channel, Args, User } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('greet')
-async greet(@NezonUser() user: MezonUser, @Channel() channel: TextChannel, @Args() args: string[]) {
+async greet(
+  @User() user: Nezon.User,
+  @Channel() channel: Nezon.Channel,
+  @Args() args: Nezon.Args,
+) {
   const name = args.at(0) ?? user.username;
   await channel.send({ t: `Xin chào ${name}` });
 }
@@ -278,15 +235,15 @@ async greet(@NezonUser() user: MezonUser, @Channel() channel: TextChannel, @Args
 
 ## 6. Lifecycle & caching
 
-- `NezonLifecycleService` gọi `login()` trên `MezonClient`, khởi tạo command/component/event bridge và hủy đăng ký khi app dừng.
-- `NezonClientService` giữ một instance `MezonClient` singleton. Bạn có thể inject service này để gọi API tùy ý.
-- `NezonCommandService` và `NezonComponentService` cache channel, clan, user, message theo từng request nhằm giảm số lần `fetch`.
+- `NezonLifecycleService` gọi `login()` khi app bootstrap và dọn dẹp khi shutdown.
+- `NezonClientService` giữ một instance `MezonClient` duy nhất.
+- `NezonCommandService` & `NezonComponentService` cache channel, clan, user, message theo từng lần xử lý nhằm giảm số lần gọi API.
 
 ---
 
 ## 7. Demo mẫu
 
-Kho chứa kèm ứng dụng mẫu tại `apps/mebot`. Chạy thử:
+Trong repo đã có app mẫu `apps/mebot`:
 
 ```bash
 cd apps/mebot
@@ -294,12 +251,12 @@ yarn install
 yarn start
 ```
 
-Thiết lập `MEZON_TOKEN` và `MEZON_BOT_ID` trong biến môi trường trước khi khởi động bot.
+Thiết lập `MEZON_TOKEN` và `MEZON_BOT_ID` trước khi chạy bot.
 
 ---
 
 ## 8. Góp ý & phát triển
 
-- Mở issue/PR tại GitHub nếu bạn cần thêm decorator hoặc hỗ trợ component mới.
-- Lên lịch kiểm tra phiên bản `mezon-sdk` khi Mezon phát hành cập nhật mới.
-- Chia sẻ trải nghiệm hoặc mẹo sử dụng qua cộng đồng để thư viện ngày càng tốt hơn.
+- Mở issue/PR nếu bạn cần thêm decorator hoặc hỗ trợ component mới.
+- Theo dõi thay đổi của `mezon-sdk` để cập nhật alias type khi cần.
+- Chia sẻ trải nghiệm, mẹo sử dụng để thư viện ngày càng tốt hơn.
