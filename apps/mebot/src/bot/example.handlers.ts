@@ -53,6 +53,39 @@ export class ExampleHandlers {
     );
   }
 
+  @Command('onclick')
+  async onClickDemo(
+    @AutoContext() [message]: Nezon.AutoContext,
+  ) {
+    await message.reply(
+      SmartMessage.text('Click the buttons below to see onClick handlers in action!')
+        .addButton(
+          new ButtonBuilder()
+            .setLabel('Button 1 (onClick)')
+            .setStyle(ButtonStyle.Primary)
+            .onClick(async (context) => {
+              await context.message.reply(SmartMessage.text('Button 1 was clicked!'));
+            }),
+        )
+        .addButton(
+          new ButtonBuilder()
+            .setLabel('Button 2 (onClick)')
+            .setStyle(ButtonStyle.Success)
+            .onClick(async ({ channel, user, message}) => {
+              await message.reply(
+                SmartMessage.text(`Button 2 was clicked by ${user.display_name} in ${channel.name}!`),
+              );
+            }),
+        )
+        .addButton(
+          new ButtonBuilder()
+            .setCustomId('/demo/success/onclick-static')
+            .setLabel('Button 3 (setCustomId)')
+            .setStyle(ButtonStyle.Secondary),
+        ),
+    );
+  }
+
   @Command('image')
   async onImageDemo(
     @Args() args: Nezon.Args,
