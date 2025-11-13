@@ -17,6 +17,36 @@ Nezon là thư viện NestJS giúp xây dựng bot cho nền tảng Mezon nhanh 
 
 ## Cài đặt
 
+### Tạo project mới (Khuyến nghị)
+
+Tạo một Mezon bot project mới với template sẵn:
+
+```bash
+npx create-mezon-bot my-bot
+```
+
+Hoặc:
+
+```bash
+npm create mezon-bot my-bot
+```
+
+Lệnh này sẽ tự động:
+- Tạo cấu trúc project NestJS
+- Cài đặt tất cả dependencies
+- Tạo example handlers với các tính năng demo
+- Cấu hình NezonModule
+
+Sau đó chỉ cần:
+```bash
+cd my-bot
+cp .env.example .env
+# Edit .env với MEZON_TOKEN và MEZON_BOT_ID
+yarn start:dev
+```
+
+### Cài đặt vào project hiện có
+
 Trong dự án NestJS của bạn:
 
 ```bash

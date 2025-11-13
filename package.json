@@ -26,5 +26,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "create-mezon-bot": "node apps/create-mezon-bot/bin/create-mezon-bot.js"
+  }
 }

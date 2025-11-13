@@ -1,0 +1,31 @@
+{
+  "name": "create-mezon-bot",
+  "version": "1.0.0",
+  "description": "Create a new Mezon bot project with Nezon",
+  "author": "@n0xgg04",
+  "license": "MIT",
+  "bin": {
+    "create-mezon-bot": "bin/create-mezon-bot.js"
+  },
+  "files": [
+    "bin",
+    "template"
+  ],
+  "keywords": [
+    "mezon",
+    "mezon-bot",
+    "nezon",
+    "nestjs",
+    "create",
+    "scaffold",
+    "template"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/n0xgg04/nezon.git"
+  },
+  "bugs": {
+    "url": "https://github.com/n0xgg04/nezon/issues"
+  },
+  "homepage": "https://github.com/n0xgg04/nezon#readme"
+}

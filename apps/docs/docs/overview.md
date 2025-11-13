@@ -94,6 +94,18 @@ new ButtonBuilder()
 
 ## Bắt đầu nhanh
 
+### Tạo project mới (Khuyến nghị)
+
+```bash
+npx create-mezon-bot my-bot
+cd my-bot
+cp .env.example .env
+# Edit .env với MEZON_TOKEN và MEZON_BOT_ID
+yarn start:dev
+```
+
+### Hoặc cài đặt vào project hiện có
+
 ```bash
 yarn add @n0xgg04/nezon
 ```
