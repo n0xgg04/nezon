@@ -6,7 +6,7 @@ Nezon là thư viện NestJS giúp xây dựng bot cho nền tảng Mezon nhanh 
 
 - **Decorator command**: Định nghĩa text command bằng `@Command`, hỗ trợ alias, prefix riêng và tự động phân tích tham số.
 - **Decorator component**: Bắt sự kiện nút bấm (và các component khác) qua `@Component`, hỗ trợ pattern/regex cho `button_id`, kèm `@ComponentTarget` để lấy ngay `Message` đã cache.
-- **Injection ngữ cảnh typed**: Các decorator `@NezonMessage`, `@Channel`, `@Clan`, `@NezonUser`, `@MessageContent`, `@Args`… trả về đối tượng typed từ `mezon-sdk`.
+- **Injection ngữ cảnh typed**: Các decorator `@Message`, `@Channel`, `@Clan`, `@User`, `@MessageContent`, `@Args`… trả về đối tượng typed từ `mezon-sdk`. Đi kèm namespace `Nezon` để truy cập type alias (`Nezon.Message`, `Nezon.Channel`, ...).
 - **Lifecycle tự động**: Khởi tạo, đăng nhập bot, binding event/command/component và shutdown được xử lý trong `NezonModule`.
 - **Caching nội bộ**: Hạn chế gọi API lặp lại khi truy cập channel/clan/user/message trong cùng một lần xử lý command.
 
@@ -43,16 +43,16 @@ export class AppModule {}
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { Command, Args, NezonMessage, MessageContent } from '@n0xgg04/nezon';
-import { Message as MezonMessage } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
+import { Command, Args, Message, MessageContent } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
 
 @Injectable()
 export class PingHandler {
   @Command({ name: 'ping', aliases: ['pong'] })
   async onPing(
-    @Args() args: string[],
-    @MessageContent() content: string,
-    @NezonMessage() message?: MezonMessage,
+    @Args() args: Nezon.Args,
+    @Message() message?: Nezon.Message,
+    @MessageContent() content?: string,
   ) {
     if (!message) {
       return;
@@ -73,20 +73,18 @@ import {
   ComponentPayload,
   Client,
   ComponentTarget,
-  NezonMessage,
+  Message,
 } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
 import {
   EButtonMessageStyle,
   EMessageComponentType,
-  MezonClient,
 } from 'mezon-sdk';
-import { Message as MezonMessage } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
-import { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
 
 @Injectable()
 export class ButtonHandler {
   @Command('button')
-  async askForConfirm(@NezonMessage() message?: MezonMessage) {
+  async askForConfirm(@Message() message?: Nezon.Message) {
     if (!message) {
       return;
     }
@@ -111,9 +109,9 @@ export class ButtonHandler {
 
   @Component({ pattern: '^demo_button_success_.+' })
   async onConfirm(
-    @ComponentPayload() payload: MessageButtonClicked,
-    @Client() client: MezonClient,
-    @ComponentTarget() target?: MezonMessage,
+    @ComponentPayload() payload: Nezon.ComponentPayload,
+    @Client() client: Nezon.Client,
+    @ComponentTarget() target?: Nezon.Message,
   ) {
     const message =
       target ??

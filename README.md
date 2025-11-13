@@ -1,146 +1,59 @@
 # Nezon
 
-Nezon là thư viện NestJS giúp xây dựng bot cho nền tảng Mezon nhanh chóng, tương tự trải nghiệm của Necord với Discord.
+Monorepo chứa thư viện `@n0xgg04/nezon` và tài liệu đi kèm.
 
-## Tính năng chính
+## Cấu trúc chính
 
-- **Decorator command**: Định nghĩa text command bằng `@Command`, hỗ trợ alias, prefix riêng và tự động phân tích tham số.
-- **Decorator component**: Bắt sự kiện nút bấm (và các component khác) qua `@Component`, hỗ trợ pattern/regex cho `button_id`, kèm `@ComponentTarget` để lấy ngay `Message` đã cache.
-- **Injection ngữ cảnh typed**: Các decorator `@NezonMessage`, `@Channel`, `@Clan`, `@NezonUser`, `@MessageContent`, `@Args`… trả về đối tượng typed từ `mezon-sdk`.
-- **Lifecycle tự động**: Khởi tạo, đăng nhập bot, binding event/command/component và shutdown được xử lý trong `NezonModule`.
-- **Caching nội bộ**: Hạn chế gọi API lặp lại khi truy cập channel/clan/user/message trong cùng một lần xử lý command.
+- `apps/nezon`: Library Nezon (NestJS module + decorator).
+- `apps/mebot`: Ứng dụng mẫu NestJS sử dụng Nezon.
+- `apps/docs`: Tài liệu Docusaurus.
 
-## Cài đặt
+## Tính năng nổi bật của Nezon
 
-Trong dự án NestJS của bạn:
+- Decorator-first (`@Command`, `@Component`, `@On`, `@Once`).
+- Decorator tham số typed (`@Message`, `@Channel`, `@User`, ...).
+- Namespace `Nezon` cung cấp alias type (`Nezon.Message`, `Nezon.Channel`, ...).
+- Event bridge phát toàn bộ sự kiện `mezon-sdk` qua `EventEmitter2`.
+- Lifecycle service tự động đăng nhập bot, bind/unbind listener và dọn dẹp.
 
-```bash
-yarn add @n0xgg04/nezon
-```
-
-Đảm bảo đã cài `mezon-sdk` (được khai báo trong peer dependency).
-
-## Khởi tạo module
+## Ví dụ nhanh
 
 ```ts
-import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { NezonModule } from "@n0xgg04/nezon";
-
-@Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    NezonModule.forRoot({
-      token: process.env.MEZON_TOKEN ?? "",
-      botId: process.env.MEZON_BOT_ID ?? "",
-    }),
-  ],
-})
-export class AppModule {}
-```
-
-## Ví dụ command cơ bản
-
-```ts
-import { Injectable } from "@nestjs/common";
-import { Command, Args, NezonMessage, MessageContent } from "@n0xgg04/nezon";
-import { Message as MezonMessage } from "mezon-sdk/dist/cjs/mezon-client/structures/Message";
+import { Injectable } from '@nestjs/common';
+import { Command, Args, Message } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
 
 @Injectable()
 export class PingHandler {
-  @Command({ name: "ping", aliases: ["pong"] })
-  async onPing(
-    @Args() args: string[],
-    @MessageContent() content: string,
-    @NezonMessage() message?: MezonMessage
-  ) {
-    if (!message) {
-      return;
-    }
-    const suffix = args.length ? args.join(" ") : "pong";
-    await message.reply({ t: `✅ ${suffix} (${content})` });
+  @Command({ name: 'ping' })
+  async onPing(@Args() args: Nezon.Args, @Message() message?: Nezon.Message) {
+    if (!message) return;
+    await message.reply({ t: args.join(' ') || 'pong' });
   }
 }
 ```
 
-## Ví dụ button component
+## Scripts hữu ích
 
-```ts
-import { Injectable } from "@nestjs/common";
-import {
-  Command,
-  Component,
-  ComponentPayload,
-  Client,
-  ComponentTarget,
-  NezonMessage,
-} from "@n0xgg04/nezon";
-import {
-  EButtonMessageStyle,
-  EMessageComponentType,
-  MezonClient,
-} from "mezon-sdk";
-import { Message as MezonMessage } from "mezon-sdk/dist/cjs/mezon-client/structures/Message";
-import { MessageButtonClicked } from "mezon-sdk/dist/cjs/rtapi/realtime";
-
-@Injectable()
-export class ButtonHandler {
-  @Command("button")
-  async askForConfirm(@NezonMessage() message?: MezonMessage) {
-    if (!message) {
-      return;
-    }
-    await message.reply({
-      t: "Nhấn nút để xác nhận.",
-      components: [
-        {
-          components: [
-            {
-              id: `demo_button_success_${message.id}`,
-              type: EMessageComponentType.BUTTON,
-              component: {
-                label: "Confirm",
-                style: EButtonMessageStyle.SUCCESS,
-              },
-            },
-          ],
-        },
-      ],
-    });
-  }
-
-  @Component({ pattern: "^demo_button_success_.+" })
-  async onConfirm(
-    @ComponentPayload() payload: MessageButtonClicked,
-    @Client() client: MezonClient,
-    @ComponentTarget() target?: MezonMessage
-  ) {
-    const message =
-      target ??
-      (await client.channels
-        .fetch(payload.channel_id)
-        .then((ch) => ch.messages.fetch(payload.message_id)));
-
-    await message.reply({ t: `Đã xác nhận, user ${payload.user_id}` });
-  }
-}
-```
-
-## Ví dụ module hoàn chỉnh
-
-Repo đã kèm ứng dụng mẫu tại `apps/mebot`. Bạn có thể chạy thử:
+Monorepo dùng Yarn 1 + Turbo:
 
 ```bash
-cd apps/mebot
-yarn install
-yarn start
+yarn install        # cài dependencies
+
+# build 
+yarn workspace @n0xgg04/nezon run build
+
+# chạy docs dev
+yarn workspace docs run start
+
+# build docs static
+yarn workspace docs run build
 ```
 
-Đừng quên set `MEZON_TOKEN` và `MEZON_BOT_ID` vào biến môi trường.
+## Deploy docs lên Vercel
 
-## Góp ý & phát triển
+- `vercel.json` đã cấu hình dùng `apps/docs`.
+- Build command: `yarn --cwd apps/docs install && yarn --cwd apps/docs build`.
+- Output directory: `apps/docs/build` (được Vercel hiểu đúng nhờ cấu hình).
 
-- Mở issue hoặc gửi PR nếu bạn muốn bổ sung decorator mới, cải thiện type, hoặc hỗ trợ thêm loại component.
-- Kiểm tra `apps/mebot` để tham khảo cách kết hợp nhiều decorator.
-
-Chúc bạn xây dựng bot Mezon thật nhanh với Nezon! 🚀
+Push lên branch và kích hoạt deploy trong Vercel để xuất bản tài liệu.
