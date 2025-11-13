@@ -9,12 +9,60 @@ Hướng dẫn cài đặt Nezon và tạo bot đầu tiên với tính năng pi
 ## Yêu cầu
 
 - Node.js >= 18
-- NestJS project
 - Mezon bot token và bot ID
 
 ## Cài đặt
 
-### 1. Cài đặt package
+Có 2 cách để bắt đầu với Nezon:
+
+### Cách 1: Tạo project mới (Khuyến nghị) ⭐
+
+Sử dụng `create-mezon-bot` để tạo project với template sẵn:
+
+```bash
+npx create-mezon-bot my-bot
+```
+
+Hoặc:
+
+```bash
+npm create mezon-bot my-bot
+```
+
+Lệnh này sẽ tự động:
+- ✅ Tạo cấu trúc project NestJS hoàn chỉnh
+- ✅ Cài đặt tất cả dependencies (`@n0xgg04/nezon`, `@nestjs/*`, etc.)
+- ✅ Tạo example handlers với các tính năng demo
+- ✅ Cấu hình `NezonModule` sẵn sàng
+- ✅ Tạo `.env.example` với template
+
+Sau đó:
+
+```bash
+cd my-bot
+cp .env.example .env
+```
+
+Chỉnh sửa `.env` và thêm credentials:
+
+```env
+MEZON_TOKEN=your_mezon_token_here
+MEZON_BOT_ID=your_bot_id_here
+```
+
+Chạy bot:
+
+```bash
+yarn start:dev
+```
+
+Bot sẽ tự động kết nối và sẵn sàng nhận commands!
+
+### Cách 2: Cài đặt vào project hiện có
+
+Nếu bạn đã có NestJS project:
+
+#### 1. Cài đặt package
 
 ```bash
 yarn add @n0xgg04/nezon
@@ -26,7 +74,9 @@ hoặc với npm:
 npm install @n0xgg04/nezon
 ```
 
-### 2. Cấu hình Module
+Đảm bảo đã cài `mezon-sdk` (được khai báo trong peer dependency).
+
+#### 2. Cấu hình Module
 
 Tạo hoặc cập nhật `app.module.ts`:
 
@@ -47,7 +97,7 @@ import { NezonModule } from '@n0xgg04/nezon';
 export class AppModule {}
 ```
 
-### 3. Cấu hình môi trường
+#### 3. Cấu hình môi trường
 
 Tạo file `.env`:
 
@@ -56,7 +106,7 @@ MEZON_TOKEN=your_bot_token_here
 MEZON_BOT_ID=your_bot_id_here
 ```
 
-### 4. Tạo Handler
+#### 4. Tạo Handler
 
 Tạo file `ping.handler.ts`:
 
@@ -78,7 +128,7 @@ export class PingHandler {
 }
 ```
 
-### 5. Đăng ký Handler
+#### 5. Đăng ký Handler
 
 Thêm handler vào `app.module.ts`:
 
