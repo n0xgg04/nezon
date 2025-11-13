@@ -5,11 +5,10 @@
       "src": "apps/docs/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "apps/docs/build"
+        "distDir": "build"
       }
     }
   ],
   "buildCommand": "yarn --cwd apps/docs install && yarn --cwd apps/docs build",
-  "outputDirectory": "apps/docs/build",
   "framework": "docusaurus"
 }
