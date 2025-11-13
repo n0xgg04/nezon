@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "apps/docs/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "apps/docs/build"
+      }
+    }
+  ],
+  "buildCommand": "cd apps/docs && yarn install && yarn build",
+  "outputDirectory": "apps/docs/build",
+  "framework": "docusaurus"
+}
