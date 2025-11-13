@@ -1,0 +1,166 @@
+import 'reflect-metadata';
+import { Injectable } from '@nestjs/common';
+import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
+import { NEZON_COMMAND_METADATA } from '../decorators/command.decorator';
+import {
+  NEZON_EVENT_METADATA,
+  NEZON_EVENT_ONCE_METADATA,
+} from '../decorators/on.decorator';
+import { NEZON_COMPONENT_METADATA } from '../decorators/component.decorator';
+import { NezonCommandDefinition } from '../interfaces/command-definition.interface';
+import { NezonEventDefinition } from '../interfaces/event-definition.interface';
+import { NezonCommandOptions } from '../interfaces/command-options.interface';
+import { NezonComponentDefinition } from '../interfaces/component-definition.interface';
+import { NEZON_PARAMS_METADATA } from '../decorators/params.decorator';
+import { NezonParameterMetadata } from '../interfaces/parameter-metadata.interface';
+
+@Injectable()
+export class NezonExplorerService {
+  constructor(
+    private readonly discoveryService: DiscoveryService,
+    private readonly metadataScanner: MetadataScanner,
+    private readonly reflector: Reflector,
+  ) {}
+
+  exploreCommands(): NezonCommandDefinition[] {
+    const providers = this.discoveryService.getProviders();
+    const commands: NezonCommandDefinition[] = [];
+    for (const wrapper of providers) {
+      const { instance } = wrapper;
+      if (!instance || !Object.getPrototypeOf(instance)) {
+        continue;
+      }
+      const prototype = Object.getPrototypeOf(instance);
+      this.metadataScanner.scanFromPrototype(
+        instance,
+        prototype,
+        (methodName) => {
+          const methodRef = prototype[methodName];
+          if (!methodRef) {
+            return;
+          }
+          const options = this.reflector.get<NezonCommandOptions>(
+            NEZON_COMMAND_METADATA,
+            methodRef,
+          );
+          if (!options) {
+            return;
+          }
+          const parameters =
+            Reflect.getMetadata(
+              NEZON_PARAMS_METADATA,
+              prototype,
+              methodName,
+            ) ?? [];
+          const sortedParameters = [...parameters].sort(
+            (left: NezonParameterMetadata, right: NezonParameterMetadata) =>
+              left.index - right.index,
+          );
+          commands.push({
+            instance,
+            methodName,
+            options,
+            parameters: sortedParameters,
+          });
+        },
+      );
+    }
+    return commands;
+  }
+
+  exploreEvents(): NezonEventDefinition[] {
+    const providers = this.discoveryService.getProviders();
+    const listeners: NezonEventDefinition[] = [];
+    for (const wrapper of providers) {
+      const { instance } = wrapper;
+      if (!instance || !Object.getPrototypeOf(instance)) {
+        continue;
+      }
+      const prototype = Object.getPrototypeOf(instance);
+      this.metadataScanner.scanFromPrototype(
+        instance,
+        prototype,
+        (methodName) => {
+          const methodRef = prototype[methodName];
+          if (!methodRef) {
+            return;
+          }
+          const event = this.reflector.get<string>(
+            NEZON_EVENT_METADATA,
+            methodRef,
+          );
+          if (!event) {
+            return;
+          }
+          const once = !!this.reflector.get<boolean>(
+            NEZON_EVENT_ONCE_METADATA,
+            methodRef,
+          );
+          const parameters =
+            Reflect.getMetadata(
+              NEZON_PARAMS_METADATA,
+              prototype,
+              methodName,
+            ) ?? [];
+          const sortedParameters = [...parameters].sort(
+            (left: NezonParameterMetadata, right: NezonParameterMetadata) =>
+              left.index - right.index,
+          );
+          listeners.push({
+            instance,
+            methodName,
+            event,
+            once,
+            parameters: sortedParameters,
+          });
+        },
+      );
+    }
+    return listeners;
+  }
+
+  exploreComponents(): NezonComponentDefinition[] {
+    const providers = this.discoveryService.getProviders();
+    const components: NezonComponentDefinition[] = [];
+    for (const wrapper of providers) {
+      const { instance } = wrapper;
+      if (!instance || !Object.getPrototypeOf(instance)) {
+        continue;
+      }
+      const prototype = Object.getPrototypeOf(instance);
+      this.metadataScanner.scanFromPrototype(
+        instance,
+        prototype,
+        (methodName) => {
+          const methodRef = prototype[methodName];
+          if (!methodRef) {
+            return;
+          }
+          const options =
+            this.reflector.get(NEZON_COMPONENT_METADATA, methodRef) ?? null;
+          if (!options) {
+            return;
+          }
+          const parameters =
+            Reflect.getMetadata(
+              NEZON_PARAMS_METADATA,
+              prototype,
+              methodName,
+            ) ?? [];
+          const sortedParameters = [...parameters].sort(
+            (left: NezonParameterMetadata, right: NezonParameterMetadata) =>
+              left.index - right.index,
+          );
+          components.push({
+            instance,
+            methodName,
+            options,
+            parameters: sortedParameters,
+          });
+        },
+      );
+    }
+    return components;
+  }
+}
+
