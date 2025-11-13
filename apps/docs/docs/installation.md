@@ -179,6 +179,21 @@ hoặc
 
 Bot sẽ phản hồi: `pong!`
 
+### Nếu bạn dùng create-mezon-bot
+
+Project được tạo đã có sẵn nhiều example commands để bạn tham khảo:
+
+- `*ping` / `*pong` - Ping pong command
+- `*button` - Demo button với setCustomId
+- `*onclick` - Demo button với onClick handler
+- `*image` - Demo image attachments
+- `*embed` - Demo embed messages
+- `*form` - Demo form với text fields và select fields
+- `*file` - Demo file attachments
+- `*update` - Demo message update với buttons
+
+Xem file `src/bot/example.handlers.ts` để học cách sử dụng các tính năng của Nezon.
+
 ## Giải thích Code
 
 ### `@Command` Decorator
@@ -253,6 +268,41 @@ async onEcho(
 ```
 
 Sử dụng: `*echo Hello World` → Bot reply: `Hello World`
+
+## Tạo project với create-mezon-bot
+
+`create-mezon-bot` là công cụ CLI giúp tạo project Mezon bot với Nezon một cách nhanh chóng. Project được tạo sẽ bao gồm:
+
+- ✅ Cấu trúc NestJS hoàn chỉnh
+- ✅ NezonModule đã được cấu hình
+- ✅ Example handlers với các tính năng demo
+- ✅ TypeScript configuration
+- ✅ Tất cả dependencies cần thiết
+
+### Sử dụng
+
+```bash
+npx create-mezon-bot my-bot
+```
+
+Sau khi tạo project, bạn sẽ có:
+- `src/bot/example.handlers.ts` - File chứa các example handlers
+- `.env.example` - Template cho environment variables
+- `package.json` - Đã có sẵn tất cả dependencies
+
+### Example commands có sẵn
+
+Project được tạo sẽ có sẵn các example commands:
+- `*ping` / `*pong` - Ping pong command
+- `*button` - Demo button với setCustomId
+- `*onclick` - Demo button với onClick handler
+- `*image` - Demo image attachments
+- `*embed` - Demo embed messages
+- `*form` - Demo form với text fields và select fields
+- `*file` - Demo file attachments
+- `*update` - Demo message update với buttons
+
+Xem thêm: [create-mezon-bot trên npm](https://www.npmjs.com/package/create-mezon-bot)
 
 ## Troubleshooting
 
