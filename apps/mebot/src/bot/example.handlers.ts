@@ -172,6 +172,19 @@ export class ExampleHandlers {
     );
   }
 
+  @Command('prompt')
+  async onPrompt(
+    @Args() args: Nezon.Args,
+    @AutoContext() [message]: Nezon.AutoContext,
+    @User() user?: Nezon.User,
+    @MessageContent() content?: string,
+  ) {
+    const userText = args.length ? args.join(' ') : '';
+    await message.reply(
+      SmartMessage.text(`User ID: ${user.id}\nTin nhắn: ${content}`),
+    );
+  }
+
   @Command('update')
   async onUpdateDemo(
     @ChannelMessagePayload() payload: Nezon.ChannelMessage,
@@ -238,6 +251,20 @@ export class ExampleHandlers {
         (error as Error)?.stack,
       );
     }
+  }
+
+  @Component({ pattern: '/user/:user_id/:action' })
+  async onUserAction(
+    @AutoContext() [message]: Nezon.AutoContext,
+    @ComponentParams() allParams: Record<string, string> | string[],
+    @ComponentParams('user_id') userId: string,
+    @ComponentParams('action') action: string,
+  ) {
+    await message.reply(
+      SmartMessage.text(
+        `User ID: ${userId}\nAction: ${action}\nAll params: ${JSON.stringify(allParams)}`,
+      ),
+    );
   }
 
   @On(Events.ChannelMessage)

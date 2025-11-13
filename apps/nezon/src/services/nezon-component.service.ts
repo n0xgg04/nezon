@@ -26,8 +26,10 @@ interface RegisteredComponent {
   matcher: (payload: MessageButtonClicked) => {
     matched: boolean;
     params: string[];
+    namedParams?: Record<string, string>;
     match: RegExpMatchArray | null;
   };
+  namedParams?: Record<string, string>;
 }
 
 interface BoundComponentHandler {
@@ -123,7 +125,7 @@ export class NezonComponentService {
     }
     const payload = payloadCandidate;
     for (const registration of registrations) {
-      const { matched, params, match } = registration.matcher(payload);
+      const { matched, params, namedParams, match } = registration.matcher(payload);
       if (!matched) {
         continue;
       }
@@ -131,6 +133,7 @@ export class NezonComponentService {
         payload,
         client: this.clientService.getClient(),
         params,
+        namedParams,
         match,
         cache: new Map<symbol, unknown>(),
       };
@@ -180,13 +183,20 @@ export class NezonComponentService {
           value = context.payload;
           break;
         case NezonParamType.COMPONENT_PARAMS:
-          value = context.params;
+          if (typeof param.data === 'string' && param.data) {
+            value = context.namedParams?.[param.data] ?? undefined;
+          } else {
+            value = context.namedParams ?? context.params;
+          }
           break;
         case NezonParamType.COMPONENT_PARAM:
-          value =
-            typeof param.data === 'number'
-              ? context.params[param.data] ?? undefined
-              : undefined;
+          if (typeof param.data === 'string') {
+            value = context.namedParams?.[param.data] ?? undefined;
+          } else if (typeof param.data === 'number') {
+            value = context.params[param.data] ?? undefined;
+          } else {
+            value = undefined;
+          }
           break;
         case NezonParamType.CLIENT:
           value = context.client;
@@ -327,14 +337,31 @@ export class NezonComponentService {
   ): (payload: MessageButtonClicked) => {
     matched: boolean;
     params: string[];
+    namedParams?: Record<string, string>;
     match: RegExpMatchArray | null;
   } {
     const { options } = definition;
     const separator = options.separator ?? '_';
+    const patternString =
+      typeof options.pattern === 'string' ? options.pattern : null;
     const pattern =
       typeof options.pattern === 'string'
         ? new RegExp(options.pattern)
         : options.pattern ?? null;
+
+    const hasNamedParams = patternString?.includes(':');
+    let namedParamNames: string[] = [];
+    let regexPattern: RegExp | null = null;
+
+    if (hasNamedParams && patternString) {
+      namedParamNames = (patternString.match(/:(\w+)/g) || []).map((m) =>
+        m.substring(1),
+      );
+      const regexString = patternString
+        .replace(/\//g, '\\/')
+        .replace(/:\w+/g, '([^/]+)');
+      regexPattern = new RegExp(`^${regexString}$`);
+    }
 
     return (payload: MessageButtonClicked) => {
       const id = payload.button_id ?? '';
@@ -344,7 +371,25 @@ export class NezonComponentService {
       if (options.id && options.id !== id) {
         return { matched: false, params: [], match: null };
       }
+
       let match: RegExpMatchArray | null = null;
+      let namedParams: Record<string, string> | undefined = undefined;
+
+      if (hasNamedParams && regexPattern) {
+        match = id.match(regexPattern);
+        if (!match) {
+          return { matched: false, params: [], match: null };
+        }
+        namedParams = {};
+        for (let i = 0; i < namedParamNames.length; i++) {
+          if (match[i + 1]) {
+            namedParams[namedParamNames[i]] = match[i + 1];
+          }
+        }
+        const params = match.slice(1);
+        return { matched: true, params, namedParams, match };
+      }
+
       if (pattern) {
         match = id.match(pattern);
         if (!match) {
@@ -352,7 +397,7 @@ export class NezonComponentService {
         }
       }
       const params = id.split(separator);
-      return { matched: true, params, match };
+      return { matched: true, params, namedParams, match };
     };
   }
 

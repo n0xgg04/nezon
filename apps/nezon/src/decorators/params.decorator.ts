@@ -79,24 +79,47 @@ export function ComponentPayload(): ParameterDecorator {
   });
 }
 
-export function ComponentParams(): ParameterDecorator {
+export function ComponentParams(paramName?: string): ParameterDecorator {
   /**
-   * Injects the array of parameters derived from the component identifier.
+   * Injects parameters derived from the component identifier.
+   * 
+   * @param paramName Optional parameter name to get a specific named parameter.
+   * If provided, returns the value of that named parameter.
+   * If omitted, returns an object with all named parameters, or array if no named params.
+   * 
+   * @example
+   * ```ts
+   * @Component({ pattern: '/user/:user_id/:action' })
+   * async handler(
+   *   @ComponentParams() allParams: Record<string, string> | string[],
+   *   @ComponentParams('user_id') userId: string,
+   * ) {}
+   * ```
    */
   return setParamMetadata({
     type: NezonParamType.COMPONENT_PARAMS,
+    data: paramName,
   });
 }
 
-export function ComponentParam(position = 0): ParameterDecorator {
+export function ComponentParam(positionOrName: number | string = 0): ParameterDecorator {
   /**
    * Injects a specific parameter derived from the component identifier.
    *
-   * @param position Zero-based index in the component params array.
+   * @param positionOrName Zero-based index in the component params array, or parameter name for named parameters.
+   * 
+   * @example
+   * ```ts
+   * @Component({ pattern: '/user/:user_id/:action' })
+   * async handler(
+   *   @ComponentParam('user_id') userId: string,
+   *   @ComponentParam(0) firstParam: string,
+   * ) {}
+   * ```
    */
   return setParamMetadata({
     type: NezonParamType.COMPONENT_PARAM,
-    data: position,
+    data: positionOrName,
   });
 }
 

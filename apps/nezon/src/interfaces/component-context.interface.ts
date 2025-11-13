@@ -5,6 +5,7 @@ export interface NezonComponentContext {
   payload: MessageButtonClicked;
   client: MezonClient;
   params: string[];
+  namedParams?: Record<string, string>;
   match?: RegExpMatchArray | null;
   cache?: Map<symbol, unknown>;
 }
