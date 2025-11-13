@@ -18,8 +18,10 @@ import {
   SmartMessage,
   SmartMessageLike,
   NormalizedSmartMessage,
+  getButtonClickRegistry,
 } from '../messaging/smart-message';
 import { NezonCommandContext } from '../interfaces/command-context.interface';
+import type { ButtonClickContext } from '../interfaces/button-click-context.interface';
 
 interface RegisteredComponent {
   definition: NezonComponentDefinition;
@@ -114,15 +116,41 @@ export class NezonComponentService {
   }
 
   private async handleEvent(event: string, args: unknown[]) {
-    const registrations = this.components.get(event);
-    if (!registrations?.length) {
-      return;
-    }
     const payloadCandidate = args[0];
     if (!this.isMessageButtonClicked(payloadCandidate)) {
       return;
     }
     const payload = payloadCandidate;
+    const buttonId = payload.button_id ?? '';
+
+    const registry = getButtonClickRegistry();
+    if (buttonId && registry.hasHandler(buttonId)) {
+      const componentContext: NezonComponentContext = {
+        payload,
+        client: this.clientService.getClient(),
+        params: [],
+        namedParams: undefined,
+        match: null,
+        cache: new Map<symbol, unknown>(),
+      };
+      try {
+        const handler = registry.getHandler(buttonId);
+        if (handler) {
+          const clickContext = await this.createButtonClickContext(componentContext);
+          await handler(clickContext);
+          return;
+        }
+      } catch (error) {
+        const err = error as Error;
+        this.logger.error('onClick handler failed', err?.stack);
+        return;
+      }
+    }
+
+    const registrations = this.components.get(event);
+    if (!registrations?.length) {
+      return;
+    }
     for (const registration of registrations) {
       const { matched, params, namedParams, match } = registration.matcher(payload);
       if (!matched) {
@@ -279,6 +307,23 @@ export class NezonComponentService {
         }),
       ];
     });
+  }
+
+  private async createButtonClickContext(
+    componentContext: NezonComponentContext,
+  ): Promise<ButtonClickContext> {
+    const [message] = await this.getAutoContext(componentContext);
+    const channel = await this.getChannel(componentContext);
+    const user = await this.getUserFromComponent(componentContext);
+    const clan = channel?.clan;
+
+    return {
+      message,
+      channel: channel ?? undefined,
+      user: user ?? undefined,
+      clan: clan ?? undefined,
+      client: componentContext.client,
+    };
   }
 
   private async createCommandContextFromComponent(

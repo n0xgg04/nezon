@@ -8,7 +8,7 @@ import {
 import type { ChannelMessage } from 'mezon-sdk';
 import type { Message } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
 import type { NezonCommandContext } from '../interfaces/command-context.interface';
-import { ButtonBuilder, ButtonComponent } from './button-builder';
+import { ButtonBuilder, ButtonComponent, ButtonClickHandler } from './button-builder';
 import { EmbedBuilder } from './embed-builder';
 
 export interface NormalizedSmartMessage {
@@ -21,6 +21,46 @@ export type SmartMessageLike =
   | NormalizedSmartMessage
   | ChannelMessageContent
   | string;
+
+/**
+ * Global registry for button onClick handlers.
+ * This is a singleton that can be accessed without DI.
+ */
+class ButtonClickRegistry {
+  private handlers: Map<string, ButtonClickHandler> = new Map();
+
+  register(customId: string, handler: ButtonClickHandler): void {
+    this.handlers.set(customId, handler);
+  }
+
+  getHandler(customId: string): ButtonClickHandler | undefined {
+    return this.handlers.get(customId);
+  }
+
+  hasHandler(customId: string): boolean {
+    return this.handlers.has(customId);
+  }
+
+  unregister(customId: string): void {
+    this.handlers.delete(customId);
+  }
+
+  clear(): void {
+    this.handlers.clear();
+  }
+}
+
+const buttonClickRegistry = new ButtonClickRegistry();
+
+/**
+ * Gets the global button click registry.
+ * Used internally by component service to handle onClick handlers.
+ *
+ * @internal
+ */
+export function getButtonClickRegistry(): ButtonClickRegistry {
+  return buttonClickRegistry;
+}
 
 /**
  * Fluent builder for channel message payloads bundled with optional attachments, components, and embeds.
@@ -103,6 +143,7 @@ export class SmartMessage {
   /**
    * Adds a button component to the message.
    * Buttons are automatically grouped into action rows (max 5 buttons per row).
+   * If the button has an onClick handler, it will be automatically registered.
    *
    * @param button - A ButtonBuilder instance or a built ButtonComponent
    * @returns This SmartMessage instance for method chaining
@@ -117,10 +158,28 @@ export class SmartMessage {
    *       .setStyle(ButtonStyle.Primary)
    *   );
    * ```
+   *
+   * @example With onClick handler
+   * ```ts
+   * const msg = SmartMessage.text('Click the button!')
+   *   .addButton(
+   *     new ButtonBuilder()
+   *       .setLabel('Click Me')
+   *       .setStyle(ButtonStyle.Primary)
+   *       .onClick(async (context) => {
+   *         // Handler will be automatically registered
+   *       })
+   *   );
+   * ```
    */
   addButton(button: ButtonBuilder | ButtonComponent): this {
     if (button instanceof ButtonBuilder) {
-      this.components.push(button.build());
+      const handler = button.getOnClickHandler();
+      const built = button.build();
+      this.components.push(built);
+      if (handler && built.id) {
+        buttonClickRegistry.register(built.id, handler);
+      }
     } else {
       this.components.push(button);
     }

@@ -11,6 +11,7 @@ export * from './interfaces/command-options.interface';
 export * from './interfaces/parameter-metadata.interface';
 export * from './interfaces/component-options.interface';
 export * from './interfaces/component-context.interface';
+export * from './interfaces/button-click-context.interface';
 export * from './services/nezon-command.service';
 export * from './services/nezon-events.service';
 export * from './services/nezon-lifecycle.service';
