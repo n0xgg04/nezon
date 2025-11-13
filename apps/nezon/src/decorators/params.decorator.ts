@@ -1,4 +1,7 @@
 import 'reflect-metadata';
+import type { ChannelMessage } from 'mezon-sdk';
+import type { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
+import type { User as MezonUser } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
 import { NezonParamType, NezonParameterMetadata } from '../interfaces/parameter-metadata.interface';
 
 export const NEZON_PARAMS_METADATA = 'nezon:params';
@@ -31,12 +34,27 @@ export function Context(): ParameterDecorator {
   });
 }
 
-export function ChannelMessagePayload(): ParameterDecorator {
+export function ChannelMessagePayload<K extends keyof ChannelMessage = never>(
+  key?: K,
+): ParameterDecorator {
   /**
    * Injects the low-level `ChannelMessage` payload emitted by Mezon.
+   * 
+   * @param key Optional key to extract a specific property from the ChannelMessage object.
+   * If provided, returns the value of that property instead of the entire object.
+   * 
+   * @example
+   * ```ts
+   * @Command('test')
+   * async handler(
+   *   @ChannelMessagePayload() message: Nezon.ChannelMessage,
+   *   @ChannelMessagePayload('message_id') messageId: string | undefined,
+   * ) {}
+   * ```
    */
   return setParamMetadata({
     type: NezonParamType.MESSAGE,
+    data: key,
   });
 }
 
@@ -132,13 +150,28 @@ export function MessageContent(): ParameterDecorator {
   });
 }
 
-export function Channel(): ParameterDecorator {
+export function Channel<K extends keyof TextChannel = never>(
+  key?: K,
+): ParameterDecorator {
   /**
    * Injects the resolved channel entity associated with the message or component.
    * The value is cached per execution to avoid duplicate fetches.
+   * 
+   * @param key Optional key to extract a specific property from the Channel object.
+   * If provided, returns the value of that property instead of the entire object.
+   * 
+   * @example
+   * ```ts
+   * @Command('test')
+   * async handler(
+   *   @Channel() channel: Nezon.Channel | undefined,
+   *   @Channel('id') channelId: string | undefined,
+   * ) {}
+   * ```
    */
   return setParamMetadata({
     type: NezonParamType.CHANNEL,
+    data: key,
   });
 }
 
@@ -152,13 +185,29 @@ export function Clan(): ParameterDecorator {
   });
 }
 
-export function User(): ParameterDecorator {
+export function User<K extends keyof MezonUser = never>(
+  key?: K,
+): ParameterDecorator {
   /**
    * Injects the user entity who triggered the message or component.
    * The value is cached per execution to avoid duplicate fetches.
+   * 
+   * @param key Optional key to extract a specific property from the User object.
+   * If provided, returns the value of that property instead of the entire object.
+   * 
+   * @example
+   * ```ts
+   * @Command('test')
+   * async handler(
+   *   @User() user: Nezon.User | undefined,
+   *   @User('username') username: string | undefined,
+   *   @User('id') userId: string | undefined,
+   * ) {}
+   * ```
    */
   return setParamMetadata({
     type: NezonParamType.USER,
+    data: key,
   });
 }
 

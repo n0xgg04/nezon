@@ -168,8 +168,13 @@ export class NezonCommandService {
     switch (param.type) {
       case NezonParamType.CONTEXT:
         return context;
-      case NezonParamType.MESSAGE:
-        return context.message;
+      case NezonParamType.MESSAGE: {
+        const message = context.message;
+        if (typeof param.data === 'string' && param.data) {
+          return (message as any)?.[param.data];
+        }
+        return message;
+      }
       case NezonParamType.CLIENT:
         return context.client;
       case NezonParamType.ARGS:
@@ -180,12 +185,22 @@ export class NezonCommandService {
           : undefined;
       case NezonParamType.MESSAGE_CONTENT:
         return this.extractMessageContent(context.message);
-      case NezonParamType.CHANNEL:
-        return this.getChannel(context);
+      case NezonParamType.CHANNEL: {
+        const channel = await this.getChannel(context);
+        if (typeof param.data === 'string' && param.data && channel) {
+          return (channel as any)?.[param.data];
+        }
+        return channel;
+      }
       case NezonParamType.CLAN:
         return this.getClan(context);
-      case NezonParamType.USER:
-        return this.getUser(context);
+      case NezonParamType.USER: {
+        const user = await this.getUser(context);
+        if (typeof param.data === 'string' && param.data && user) {
+          return (user as any)?.[param.data];
+        }
+        return user;
+      }
       case NezonParamType.THIS_MESSAGE:
         return this.getMessageEntity(context);
       case NezonParamType.AUTO_CONTEXT:

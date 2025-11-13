@@ -1,4 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
+import { Events } from 'mezon-sdk';
 
 export const NEZON_EVENT_METADATA = 'nezon:event';
 export const NEZON_EVENT_ONCE_METADATA = 'nezon:event:once';
@@ -6,7 +7,7 @@ export const NEZON_EVENT_ONCE_METADATA = 'nezon:event:once';
 /**
  * Subscribes a method to a Mezon event. The handler is invoked every time the event fires.
  *
- * @param event Event name (e.g. `Events.ChannelMessage`, `Events.TokenSend`).
+ * @param event Event enum value from `Events` (e.g. `Events.ChannelMessage`, `Events.TokenSend`).
  *
  * @example
  * ```ts
@@ -16,24 +17,24 @@ export const NEZON_EVENT_ONCE_METADATA = 'nezon:event:once';
  * }
  * ```
  */
-export function On(event: string): MethodDecorator {
+export function On(event: Events | string): MethodDecorator {
   return SetMetadata(NEZON_EVENT_METADATA, event);
 }
 
 /**
  * Subscribes a method to a Mezon event but automatically removes the handler after the first call.
  *
- * @param event Event name (e.g. `'Ready'`, `Events.ChannelCreated`).
+ * @param event Event enum value from `Events` (e.g. `Events.Ready`, `Events.ChannelCreated`).
  *
  * @example
  * ```ts
- * @Once('Ready')
+ * @Once(Events.Ready)
  * onReady() {
  *   console.log('Bot is ready!');
  * }
  * ```
  */
-export function Once(event: string): MethodDecorator {
+export function Once(event: Events | string): MethodDecorator {
   return (target, propertyKey, descriptor) => {
     SetMetadata(NEZON_EVENT_METADATA, event)(target, propertyKey, descriptor);
     SetMetadata(NEZON_EVENT_ONCE_METADATA, true)(target, propertyKey, descriptor);

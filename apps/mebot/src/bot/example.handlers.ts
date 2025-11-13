@@ -46,7 +46,7 @@ export class ExampleHandlers {
       SmartMessage.text('Click the button to confirm.')
         .addButton(
           new ButtonBuilder()
-            .setCustomId(`demo_button_success_${referenceId}`)
+            .setCustomId(`/demo/success/${referenceId}`)
             .setLabel('Confirm')
             .setStyle(ButtonStyle.Success),
         ),
@@ -72,7 +72,7 @@ export class ExampleHandlers {
           height: 300,
         }).addButton(
           new ButtonBuilder()
-            .setCustomId(`demo_button_success`)
+            .setCustomId('/demo/success/static')
             .setLabel('Confirm')
             .setStyle(ButtonStyle.Link),
         ),
@@ -87,17 +87,14 @@ export class ExampleHandlers {
       SmartMessage.text('')
         .addEmbed(
           new EmbedBuilder()
-            .setColor('#f0a8da')
-            .setTitle('Ăn chay sống thọ is in a battle!')
-            .setThumbnail('https://cdn.mezon.ai/0/0/1832992916042158000/1758249992815IMG_8309.JPEG')
-            .addField('linh.hoangnguyenngocduy', 'Lv. 49 - Capricorn', true)
-            .addField('----------', 'Lv. 59 - White Tiger', true)
-            .addField('----------', 'Lv. 53 - Azure Dragon', true)
-            .addField('hoang.tranlehuy', 'Lv. 12 - Lunar Ox', true)
-            .addField('----------', 'Lv. 11 - Lunar Dragon', true)
-            .addField('----------', 'Lv. 12 - Aquarius', true)
-            .setImage('https://res.cloudinary.com/do2rk0jz8/image/upload/v1761730208/Ainz%20Mezon%20Bot/Battle/hncaimiiiaoyuhljsasp.png')
-            .setFooter('You WON in 11 turns! You gained 100 exp and 200 exp for each of your pets!'),
+            .setColor('#abcdef')
+            .setTitle('Example Embed Title')
+            .setThumbnail('https://example.com/example-thumbnail.jpg')
+            .addField('Field 1', 'Value 1', true)
+            .addField('Field 2', 'Value 2', true)
+            .addField('Field 3', 'Value 3', true)
+            .setImage('https://example.com/example-image.jpg')
+            .setFooter('Example footer text'),
         ),
     );
   }
@@ -138,19 +135,19 @@ export class ExampleHandlers {
         )
         .addButton(
           new ButtonBuilder()
-            .setCustomId('pollCreate_CANCEL')
+            .setCustomId('/poll/cancel')
             .setLabel('Cancel')
             .setStyle(ButtonStyle.Secondary),
         )
         .addButton(
           new ButtonBuilder()
-            .setCustomId('pollCreate_ADD')
+            .setCustomId('/poll/add-option')
             .setLabel('Add Option')
             .setStyle(ButtonStyle.Primary),
         )
         .addButton(
           new ButtonBuilder()
-            .setCustomId('pollCreate_CREATE')
+            .setCustomId('/poll/create')
             .setLabel('Create')
             .setStyle(ButtonStyle.Success),
         ),
@@ -180,8 +177,9 @@ export class ExampleHandlers {
     @MessageContent() content?: string,
   ) {
     const userText = args.length ? args.join(' ') : '';
+    const userId = user?.id ?? 'unknown';
     await message.reply(
-      SmartMessage.text(`User ID: ${user.id}\nTin nhắn: ${content}`),
+      SmartMessage.text(`User ID: ${userId}\nTin nhắn: ${content ?? userText}`),
     );
   }
 
@@ -198,41 +196,48 @@ export class ExampleHandlers {
         })
         .addButton(
           new ButtonBuilder()
-            .setCustomId(`update_cancel_${messageId}`)
+            .setCustomId(`/update/${messageId}/cancel`)
             .setLabel('Hủy')
             .setStyle(ButtonStyle.Danger),
         )
         .addButton(
           new ButtonBuilder()
-            .setCustomId(`update_success_${messageId}`)
+            .setCustomId(`/update/${messageId}/success`)
             .setLabel('Thành công')
             .setStyle(ButtonStyle.Success),
         ),
     );
   }
 
-  @Component({ pattern: '^update_cancel_.+' })
+  @Component({ pattern: '/update/:message_id/cancel' })
   async onUpdateCancel(
+    @ComponentParams('message_id') targetId: string | undefined,
     @AutoContext() [message]: Nezon.AutoContext,
   ) {
     await message.update(SmartMessage.text('Đã hủy'));
+    if (targetId) {
+      this.logger.verbose(`update cancel triggered for message ${targetId}`);
+    }
   }
 
-  @Component({ pattern: '^update_success_.+' })
+  @Component({ pattern: '/update/:message_id/success' })
   async onUpdateSuccess(
+    @ComponentParams('message_id') targetId: string | undefined,
     @AutoContext() [message]: Nezon.AutoContext,
   ) {
     await message.update(SmartMessage.text('Thành công'));
+    if (targetId) {
+      this.logger.verbose(`update success triggered for message ${targetId}`);
+    }
   }
 
-  @Component({ pattern: '^demo_button_success_.+' })
+  @Component({ pattern: '/demo/success/:source_id' })
   async onDemoButtonClicked(
     @ComponentPayload() payload: Nezon.ComponentPayload,
-    @ComponentParams() params: Nezon.ComponentParams,
+    @ComponentParams('source_id') sourceId: string | undefined,
     @Client() client: Nezon.Client,
     @ComponentTarget() targetMessage?: Nezon.Message,
   ) {
-
     if (!payload?.channel_id || !payload?.message_id) {
       return;
     }
@@ -241,13 +246,13 @@ export class ExampleHandlers {
       if (!message) {
         return;
       }
-      const sourceId = params.at(-1) ?? payload.message_id;
+      const resolvedSourceId = sourceId ?? payload.message_id;
       await message.reply({
-        t: `Button acknowledged from ${payload.user_id} (source ${sourceId}).`,
+        t: `Button acknowledged from ${payload.user_id} (source ${resolvedSourceId}).`,
       });
     } catch (error) {
       this.logger.error(
-        `failed to handle button click for message ${payload.message_id}`,
+        `failed to handle demo button for message ${payload.message_id}`,
         (error as Error)?.stack,
       );
     }
@@ -270,19 +275,23 @@ export class ExampleHandlers {
   @On(Events.ChannelMessage)
   async logChannelMessage(
     @ChannelMessagePayload() message: Nezon.ChannelMessage,
+    @ChannelMessagePayload('message_id') messageId: string | undefined,
     @MessageContent() content: string,
     @Channel() channel: Nezon.Channel | undefined,
+    @Channel('id') channelId: string | undefined,
     @User() user: Nezon.User | undefined,
+    @User('avartar') username: string | undefined,
   ) {
-    const channelLabel = channel?.id ?? message.channel_id ?? 'unknown';
+    const channelLabel = channelId ?? channel?.id ?? message.channel_id ?? 'unknown';
     const author =
+      username ??
       user?.username ??
       message.username ??
       message.display_name ??
       message.sender_id ??
       'unknown';
     this.logger.verbose(
-      `message ${message.message_id ?? 'unknown'} received from ${author} in channel ${channelLabel}: ${content}`,
+      `message ${messageId ?? message.message_id ?? 'unknown'} received from ${author} in channel ${channelLabel}: ${content}`,
     );
   }
 

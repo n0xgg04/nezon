@@ -102,9 +102,15 @@ export class NezonEventsService {
         case NezonParamType.CONTEXT:
           value = args;
           break;
-        case NezonParamType.MESSAGE:
-          value = args[0];
+        case NezonParamType.MESSAGE: {
+          const message = args[0];
+          if (typeof param.data === 'string' && param.data && message) {
+            value = (message as any)?.[param.data];
+          } else {
+            value = message;
+          }
           break;
+        }
         case NezonParamType.CLIENT:
           value = this.clientService.getClient();
           break;

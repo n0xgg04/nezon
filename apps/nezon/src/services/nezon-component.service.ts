@@ -29,7 +29,6 @@ interface RegisteredComponent {
     namedParams?: Record<string, string>;
     match: RegExpMatchArray | null;
   };
-  namedParams?: Record<string, string>;
 }
 
 interface BoundComponentHandler {
@@ -213,6 +212,33 @@ export class NezonComponentService {
         case NezonParamType.COMPONENT_TARGET:
           value = await this.getTargetMessage(context);
           break;
+        case NezonParamType.MESSAGE: {
+          const message = context.payload as any;
+          if (typeof param.data === 'string' && param.data && message) {
+            value = message[param.data];
+          } else {
+            value = message;
+          }
+          break;
+        }
+        case NezonParamType.CHANNEL: {
+          const channel = await this.getChannel(context);
+          if (typeof param.data === 'string' && param.data && channel) {
+            value = (channel as any)?.[param.data];
+          } else {
+            value = channel;
+          }
+          break;
+        }
+        case NezonParamType.USER: {
+          const user = await this.getUserFromComponent(context);
+          if (typeof param.data === 'string' && param.data && user) {
+            value = (user as any)?.[param.data];
+          } else {
+            value = user;
+          }
+          break;
+        }
         case NezonParamType.AUTO_CONTEXT:
           value = await this.getAutoContext(context);
           break;
@@ -222,6 +248,24 @@ export class NezonComponentService {
       args[param.index] = value;
     }
     return args;
+  }
+
+  private async getUserFromComponent(context: NezonComponentContext) {
+    return this.getOrSetCache(context, Symbol('nezon:component:user'), async () => {
+      if (!context.payload.user_id) {
+        return undefined;
+      }
+      try {
+        const channel = await this.getChannel(context);
+        const clan = channel?.clan;
+        if (clan?.users?.fetch) {
+          return (await clan.users.fetch(context.payload.user_id)) as User;
+        }
+      } catch {
+        return undefined;
+      }
+      return undefined;
+    });
   }
 
   private async getAutoContext(

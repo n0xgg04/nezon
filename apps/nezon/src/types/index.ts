@@ -38,7 +38,7 @@ export namespace Nezon {
   export type Clan = MezonClan;
   export type User = MezonUser;
   export type ComponentPayload = MessageButtonClicked;
-  export type ComponentParams = string[];
+  export type ComponentParams = string[] | Record<string, string>;
   export type ComponentParam = string | undefined;
   export type Args = string[];
   export type AutoContext = [ManagedMessageType];
