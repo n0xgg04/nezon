@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Copy README.md and CHANGELOG.md from apps/nezon to root
+cp apps/nezon/README.md README.md
+cp apps/nezon/CHANGELOG.md CHANGELOG.md
+
+git add README.md CHANGELOG.md
+

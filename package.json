@@ -7,9 +7,11 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "deploy:nezon": "yarn workspace @n0xgg04/nezon run build && yarn workspace @n0xgg04/nezon publish --access public"
+    "deploy:nezon": "yarn workspace @n0xgg04/nezon run build && yarn workspace @n0xgg04/nezon publish --access public",
+    "prepare": "husky install"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "turbo": "^2.6.1",
     "typescript": "5.9.2"
