@@ -200,56 +200,16 @@ export class ExampleHandlers {
 
   @Component({ pattern: '^update_cancel_.+' })
   async onUpdateCancel(
-    @ComponentPayload() payload: Nezon.ComponentPayload,
-    @Client() client: Nezon.Client,
-    @ComponentTarget() targetMessage?: Nezon.Message,
+    @AutoContext() [message]: Nezon.AutoContext,
   ) {
-    if (!payload?.channel_id || !payload?.message_id) {
-      return;
-    }
-    try {
-      const message = targetMessage ?? (await this.getMessageByIds(client, payload));
-      if (!message || typeof message.update !== 'function') {
-        return;
-      }
-      await message.update(
-        SmartMessage.text('Đã hủy').toContent(),
-        undefined,
-        undefined,
-      );
-    } catch (error) {
-      this.logger.error(
-        `failed to update message ${payload.message_id}`,
-        (error as Error)?.stack,
-      );
-    }
+    await message.update(SmartMessage.text('Đã hủy'));
   }
 
   @Component({ pattern: '^update_success_.+' })
   async onUpdateSuccess(
-    @ComponentPayload() payload: Nezon.ComponentPayload,
-    @Client() client: Nezon.Client,
-    @ComponentTarget() targetMessage?: Nezon.Message,
+    @AutoContext() [message]: Nezon.AutoContext,
   ) {
-    if (!payload?.channel_id || !payload?.message_id) {
-      return;
-    }
-    try {
-      const message = targetMessage ?? (await this.getMessageByIds(client, payload));
-      if (!message || typeof message.update !== 'function') {
-        return;
-      }
-      await message.update(
-        SmartMessage.text('Thành công').toContent(),
-        undefined,
-        undefined,
-      );
-    } catch (error) {
-      this.logger.error(
-        `failed to update message ${payload.message_id}`,
-        (error as Error)?.stack,
-      );
-    }
+    await message.update(SmartMessage.text('Thành công'));
   }
 
   @Component({ pattern: '^demo_button_success_.+' })

@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Events } from 'mezon-sdk';
+import type { ChannelMessageContent } from 'mezon-sdk/dist/cjs/interfaces/client';
 import { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
 import { Message } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
+import { User } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
 import { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
 import { NezonClientService } from '../client/nezon-client.service';
 import { NezonExplorerService } from './nezon-explorer.service';
@@ -11,6 +13,13 @@ import {
   NezonParamType,
   NezonParameterMetadata,
 } from '../interfaces/parameter-metadata.interface';
+import {
+  ManagedMessage,
+  SmartMessage,
+  SmartMessageLike,
+  NormalizedSmartMessage,
+} from '../messaging/smart-message';
+import { NezonCommandContext } from '../interfaces/command-context.interface';
 
 interface RegisteredComponent {
   definition: NezonComponentDefinition;
@@ -35,6 +44,7 @@ export class NezonComponentService {
   private readonly cacheKeys = {
     channel: Symbol('nezon:component:channel'),
     message: Symbol('nezon:component:message'),
+    autoContext: Symbol('nezon:component:autoContext'),
   };
 
   constructor(
@@ -193,12 +203,123 @@ export class NezonComponentService {
         case NezonParamType.COMPONENT_TARGET:
           value = await this.getTargetMessage(context);
           break;
+        case NezonParamType.AUTO_CONTEXT:
+          value = await this.getAutoContext(context);
+          break;
         default:
           value = undefined;
       }
       args[param.index] = value;
     }
     return args;
+  }
+
+  private async getAutoContext(
+    context: NezonComponentContext,
+  ): Promise<[ManagedMessage]> {
+    return this.getOrSetCache(context, this.cacheKeys.autoContext, async () => {
+      const commandContext = await this.createCommandContextFromComponent(context);
+      return [
+        new ManagedMessage(commandContext, {
+          normalize: (input) => this.normalizeSmartMessage(input),
+        }),
+      ];
+    });
+  }
+
+  private async createCommandContextFromComponent(
+    componentContext: NezonComponentContext,
+  ): Promise<NezonCommandContext> {
+    const targetMessage = await this.getTargetMessage(componentContext);
+    const channel = await this.getChannel(componentContext);
+    
+    const message: any = {
+      message_id: componentContext.payload.message_id,
+      channel_id: componentContext.payload.channel_id,
+      sender_id: componentContext.payload.user_id,
+    };
+
+    const commandContext: NezonCommandContext = {
+      message,
+      client: componentContext.client,
+      args: componentContext.params,
+      cache: componentContext.cache ?? new Map<symbol, unknown>(),
+      reply: async (...replyArgs) => {
+        if (!targetMessage || typeof targetMessage.reply !== 'function') {
+          return undefined;
+        }
+        return targetMessage.reply(...replyArgs);
+      },
+      getChannel: async () => channel,
+      getClan: async () => {
+        if (!channel) {
+          return undefined;
+        }
+        try {
+          return channel.clan;
+        } catch {
+          return undefined;
+        }
+      },
+      getUser: async () => {
+        if (!componentContext.payload.user_id) {
+          return undefined;
+        }
+        try {
+          const channel = await this.getChannel(componentContext);
+          const clan = channel?.clan;
+          if (clan?.users?.fetch) {
+            return (await clan.users.fetch(componentContext.payload.user_id)) as User;
+          }
+        } catch {
+          return undefined;
+        }
+        return undefined;
+      },
+      getMessage: async () => targetMessage ?? undefined,
+      getMessageByIds: async (channelId: string, messageId: string) => {
+        try {
+          const ch = await componentContext.client.channels.fetch(channelId);
+          if (ch?.messages?.fetch) {
+            return (await ch.messages.fetch(messageId)) as Message;
+          }
+        } catch {
+          return undefined;
+        }
+        return undefined;
+      },
+    };
+
+    return commandContext;
+  }
+
+  private normalizeSmartMessage(
+    input: SmartMessageLike,
+  ): NormalizedSmartMessage {
+    if (input instanceof SmartMessage) {
+      return input.toJSON();
+    }
+    if (typeof input === 'string') {
+      return { content: { t: input } };
+    }
+    if (
+      input &&
+      typeof input === 'object' &&
+      'content' in input &&
+      typeof (input as NormalizedSmartMessage).content === 'object'
+    ) {
+      const normalized = input as NormalizedSmartMessage;
+      return {
+        content: { ...normalized.content },
+        attachments: normalized.attachments?.map((attachment) => ({
+          ...attachment,
+        })),
+      };
+    }
+    if (input && typeof input === 'object') {
+      return { content: input as ChannelMessageContent };
+    }
+    return { content: { t: String(input ?? '') } };
   }
 
   private createMatcher(
