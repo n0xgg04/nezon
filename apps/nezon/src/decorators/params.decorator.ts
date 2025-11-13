@@ -159,3 +159,22 @@ export function ComponentTarget(): ParameterDecorator {
   });
 }
 
+/**
+ * Injects an auto-generated helper tuple similar to Necord's `@Context()`.
+ * Currently resolves to `[ManagedMessage]`, enabling convenience helpers:
+ *
+ * ```ts
+ * @Command('ping')
+ * async onPing(@AutoContext() [message]: Nezon.AutoContext) {
+ *   await message.reply(Nezon.SmartMessage.text('pong'));
+ * }
+ * ```
+ *
+ * Combine với `Nezon.SmartMessage` để dựng payload gửi tin nhắn một cách an toàn.
+ */
+export function AutoContext(): ParameterDecorator {
+  return setParamMetadata({
+    type: NezonParamType.AUTO_CONTEXT,
+  });
+}
+

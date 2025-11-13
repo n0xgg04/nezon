@@ -13,6 +13,7 @@ export enum NezonParamType {
   USER = 'user',
   THIS_MESSAGE = 'this_message',
   COMPONENT_TARGET = 'component_target',
+  AUTO_CONTEXT = 'auto_context',
 }
 
 export interface NezonParameterMetadata {

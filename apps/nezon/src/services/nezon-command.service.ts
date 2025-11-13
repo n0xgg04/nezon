@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ChannelMessage, Events } from 'mezon-sdk';
+import type { ChannelMessageContent } from 'mezon-sdk/dist/cjs/interfaces/client';
 import { Clan } from 'mezon-sdk/dist/cjs/mezon-client/structures/Clan';
 import { Message } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
 import { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
@@ -12,6 +13,12 @@ import {
   NezonParamType,
   NezonParameterMetadata,
 } from '../interfaces/parameter-metadata.interface';
+import {
+  ManagedMessage,
+  SmartMessage,
+  SmartMessageLike,
+  NormalizedSmartMessage,
+} from '../messaging/smart-message';
 
 @Injectable()
 export class NezonCommandService {
@@ -27,6 +34,7 @@ export class NezonCommandService {
     clan: Symbol('nezon:command:clan'),
     message: Symbol('nezon:command:message'),
     user: Symbol('nezon:command:user'),
+    autoContext: Symbol('nezon:command:auto-context'),
   };
 
   constructor(
@@ -180,6 +188,8 @@ export class NezonCommandService {
         return this.getUser(context);
       case NezonParamType.THIS_MESSAGE:
         return this.getMessageEntity(context);
+      case NezonParamType.AUTO_CONTEXT:
+        return this.getAutoContext(context);
       default:
         return undefined;
     }
@@ -313,6 +323,45 @@ export class NezonCommandService {
       }
       return undefined;
     });
+  }
+
+  private async getAutoContext(
+    context: NezonCommandContext,
+  ): Promise<[ManagedMessage]> {
+    return this.getOrSetCache(context, this.cacheKeys.autoContext, async () => [
+      new ManagedMessage(context, {
+        normalize: (input) => this.normalizeSmartMessage(input),
+      }),
+    ]);
+  }
+
+  private normalizeSmartMessage(
+    input: SmartMessageLike,
+  ): NormalizedSmartMessage {
+    if (input instanceof SmartMessage) {
+      return input.toJSON();
+    }
+    if (typeof input === 'string') {
+      return { content: { t: input } };
+    }
+    if (
+      input &&
+      typeof input === 'object' &&
+      'content' in input &&
+      typeof (input as NormalizedSmartMessage).content === 'object'
+    ) {
+      const normalized = input as NormalizedSmartMessage;
+      return {
+        content: { ...normalized.content },
+        attachments: normalized.attachments?.map((attachment) => ({
+          ...attachment,
+        })),
+      };
+    }
+    if (input && typeof input === 'object') {
+      return { content: input as ChannelMessageContent };
+    }
+    return { content: { t: String(input ?? '') } };
   }
 
   private createCommandContext(

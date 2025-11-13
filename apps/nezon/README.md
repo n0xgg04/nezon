@@ -6,7 +6,8 @@ Nezon là thư viện NestJS giúp xây dựng bot cho nền tảng Mezon nhanh 
 
 - **Decorator command**: Định nghĩa text command bằng `@Command`, hỗ trợ alias, prefix riêng và tự động phân tích tham số.
 - **Decorator component**: Bắt sự kiện nút bấm (và các component khác) qua `@Component`, hỗ trợ pattern/regex cho `button_id`, kèm `@ComponentTarget` để lấy ngay `Message` đã cache.
-- **Injection ngữ cảnh typed**: Các decorator `@Message`, `@Channel`, `@Clan`, `@User`, `@MessageContent`, `@Args`… trả về đối tượng typed từ `mezon-sdk`. Đi kèm namespace `Nezon` để truy cập type alias (`Nezon.Message`, `Nezon.Channel`, ...).
+- **Injection ngữ cảnh typed**: Các decorator `@Message`, `@Channel`, `@Clan`, `@User`, `@MessageContent`, `@Args`, `@AutoContext`… trả về đối tượng typed từ `mezon-sdk` hoặc helper của Nezon. Namespace `Nezon` cung cấp alias type (`Nezon.Message`, `Nezon.AutoContext`, ...).
+- **SmartMessage builder**: `SmartMessage.text/system/image/voice` giúp dựng payload gửi tin nhắn mà không phải thao tác trực tiếp với `ChannelMessageContent`.
 - **Lifecycle tự động**: Khởi tạo, đăng nhập bot, binding event/command/component và shutdown được xử lý trong `NezonModule`.
 - **Caching nội bộ**: Hạn chế gọi API lặp lại khi truy cập channel/clan/user/message trong cùng một lần xử lý command.
 
@@ -43,7 +44,13 @@ export class AppModule {}
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { Command, Args, Message, MessageContent } from '@n0xgg04/nezon';
+import {
+  Command,
+  Args,
+  AutoContext,
+  MessageContent,
+  SmartMessage,
+} from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Injectable()
@@ -51,14 +58,11 @@ export class PingHandler {
   @Command({ name: 'ping', aliases: ['pong'] })
   async onPing(
     @Args() args: Nezon.Args,
-    @Message() message?: Nezon.Message,
+    @AutoContext() [message]: Nezon.AutoContext,
     @MessageContent() content?: string,
   ) {
-    if (!message) {
-      return;
-    }
     const suffix = args.length ? args.join(' ') : 'pong';
-    await message.reply({ t: `✅ ${suffix} (${content})` });
+    await message.reply(SmartMessage.text(`✅ ${suffix} (${content})`));
   }
 }
 ```
@@ -69,25 +73,19 @@ export class PingHandler {
 import { Injectable } from '@nestjs/common';
 import {
   Command,
+  AutoContext,
   Component,
   ComponentPayload,
   Client,
   ComponentTarget,
-  Message,
 } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
-import {
-  EButtonMessageStyle,
-  EMessageComponentType,
-} from 'mezon-sdk';
+import { EButtonMessageStyle, EMessageComponentType } from 'mezon-sdk';
 
 @Injectable()
 export class ButtonHandler {
   @Command('button')
-  async askForConfirm(@Message() message?: Nezon.Message) {
-    if (!message) {
-      return;
-    }
+  async askForConfirm(@AutoContext() [message]: Nezon.AutoContext) {
     await message.reply({
       t: 'Nhấn nút để xác nhận.',
       components: [
@@ -135,6 +133,13 @@ yarn start
 ```
 
 Đừng quên set `MEZON_TOKEN` và `MEZON_BOT_ID` vào biến môi trường.
+
+## SmartMessage builder
+
+- `Nezon.SmartMessage.text(content)` dựng payload text cơ bản.
+- `Nezon.SmartMessage.system(content)` áp dụng markdown triple (`EMarkdownType.TRIPLE`) cho toàn bộ nội dung.
+- `Nezon.SmartMessage.image(url, { alt, filename })` và `Nezon.SmartMessage.voice(url, { transcript })` hỗ trợ đính kèm media.
+- Trả về object có thể truyền thẳng vào `message.reply(...)` khi dùng `@AutoContext`.
 
 ## Góp ý & phát triển
 
