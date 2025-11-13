@@ -23,7 +23,7 @@ const config: Config = {
   organizationName: "n0xgg04",
   projectName: "nezon",
 
-  onBrokenLinks: "throw",
+  onBrokenLinks: "warn",
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -40,6 +40,7 @@ const config: Config = {
         docs: {
           sidebarPath: "./sidebars.ts",
           editUrl: "https://github.com/n0xgg04/nezon/tree/main/apps/docs",
+          routeBasePath: "/docs",
         },
         blog: false,
         theme: {
@@ -58,7 +59,8 @@ const config: Config = {
       title: "Nezon",
       logo: {
         alt: "Nezon Logo",
-        src: "img/logo.svg",
+        src: "img/mezon-logo-white.svg",
+        href: "https://github.com/n0xgg04/nezon",
       },
       items: [
         {
