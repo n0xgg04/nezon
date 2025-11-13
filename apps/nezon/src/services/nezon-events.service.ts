@@ -121,6 +121,9 @@ export class NezonEventsService {
           value =
             typeof param.data === 'number' ? args[param.data] ?? undefined : undefined;
           break;
+        case NezonParamType.EVENT_PAYLOAD:
+          value = args[0];
+          break;
         default:
           value = undefined;
       }

@@ -141,10 +141,22 @@ async onButtonClick(
 Lắng nghe khi có token được gửi:
 
 ```ts
+import { On, EventPayload } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+import { Events } from 'mezon-sdk';
+
 @On(Events.TokenSend)
-async onTokenSend(payload: any) {
+async onTokenSend(@EventPayload() payload: Nezon.TokenSendPayload) {
   console.log('Token sent:', payload);
+  // payload có type: TokenSentEvent
+  // Có thể truy cập: payload.from_user_id, payload.to_user_id, payload.amount, etc.
 }
+```
+
+**Type:**
+```ts
+type TokenSendPayload = TokenSentEvent;
+// Bao gồm: from_user_id, to_user_id, amount, token_type, etc.
 ```
 
 ### AddClanUser
@@ -152,10 +164,25 @@ async onTokenSend(payload: any) {
 Lắng nghe khi user được thêm vào clan:
 
 ```ts
+import { On, EventPayload } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+import { Events } from 'mezon-sdk';
+
 @On(Events.AddClanUser)
-async onAddClanUser(payload: any) {
-  console.log('User added to clan:', payload);
+async onAddClanUser(@EventPayload() payload: Nezon.AddClanUserPayload) {
+  console.log('User added to clan:', payload.user_id);
+  console.log('Clan ID:', payload.clan_id);
+  // payload có type: { user_id: string; clan_id: string; ... }
 }
+```
+
+**Type:**
+```ts
+type AddClanUserPayload = {
+  user_id: string;
+  clan_id: string;
+  [key: string]: unknown;
+};
 ```
 
 ## Event Payload Injection

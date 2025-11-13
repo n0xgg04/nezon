@@ -4,7 +4,7 @@ title: Giới thiệu Nezon
 sidebar_position: 1
 ---
 
-Nezon là thư viện NestJS giúp xây dựng bot cho nền tảng **Mezon** nhanh chóng, tương tự trải nghiệm của Necord với Discord. Thư viện cung cấp decorator-first API, typed injection, và các builder tiện dụng để giúp bạn tập trung vào logic kinh doanh thay vì wiring chi tiết với Mezon SDK.
+Nezon là thư viện NestJS giúp xây dựng bot cho nền tảng **Mezon** nhanh chóng. Thư viện cung cấp decorator-first API, typed injection, và các builder tiện dụng để giúp bạn tập trung vào logic thay vì wiring chi tiết với Mezon SDK.
 
 ## Tại sao chọn Nezon?
 

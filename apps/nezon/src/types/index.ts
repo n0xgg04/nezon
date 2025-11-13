@@ -1,10 +1,40 @@
 import type { ChannelMessage as MezonChannelMessage } from 'mezon-sdk';
 import type { MezonClient } from 'mezon-sdk';
+import type { TokenSentEvent } from 'mezon-sdk';
 import type { Message as MezonMessage } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
 import type { TextChannel as MezonTextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
 import type { Clan as MezonClan } from 'mezon-sdk/dist/cjs/mezon-client/structures/Clan';
 import type { User as MezonUser } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
-import type { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
+import type {
+  MessageButtonClicked,
+  UserChannelRemoved,
+  ChannelCreatedEvent,
+  ChannelDeletedEvent,
+  ChannelUpdatedEvent,
+  RoleEvent,
+  RoleAssignedEvent,
+  AddClanUserEvent,
+  StreamingJoinedEvent,
+  StreamingLeavedEvent,
+  DropdownBoxSelected,
+  WebrtcSignalingFwd,
+  VoiceStartedEvent,
+  VoiceEndedEvent,
+  VoiceJoinedEvent,
+  VoiceLeavedEvent,
+  Notifications,
+  QuickMenuDataEvent,
+} from 'mezon-sdk/dist/cjs/rtapi/realtime';
+import type {
+  MessageReaction,
+  UserClanRemovedEvent,
+  UserChannelAddedEvent,
+  GiveCoffeeEvent,
+} from 'mezon-sdk/dist/cjs/interfaces/socket';
+import type {
+  StreamingJoinedEvent as ClientStreamingJoinedEvent,
+  StreamingLeavedEvent as ClientStreamingLeavedEvent,
+} from 'mezon-sdk/dist/cjs/interfaces/client';
 import * as Messaging from '../messaging/smart-message';
 import type {
   ManagedMessage as ManagedMessageType,
@@ -50,4 +80,26 @@ export namespace Nezon {
   export const ButtonStyle = ButtonModule.ButtonStyle;
   export type Embed = EmbedData;
   export const EmbedBuilder = EmbedModule.EmbedBuilder;
+  export type TokenSendPayload = TokenSentEvent;
+  export type AddClanUserPayload = AddClanUserEvent;
+  export type MessageReactionPayload = MessageReaction;
+  export type UserChannelRemovedPayload = UserChannelRemoved;
+  export type UserClanRemovedPayload = UserClanRemovedEvent;
+  export type UserChannelAddedPayload = UserChannelAddedEvent;
+  export type ChannelCreatedPayload = ChannelCreatedEvent;
+  export type ChannelDeletedPayload = ChannelDeletedEvent;
+  export type ChannelUpdatedPayload = ChannelUpdatedEvent;
+  export type RoleEventPayload = RoleEvent;
+  export type GiveCoffeePayload = GiveCoffeeEvent;
+  export type RoleAssignPayload = RoleAssignedEvent;
+  export type StreamingJoinedPayload = StreamingJoinedEvent | ClientStreamingJoinedEvent;
+  export type StreamingLeavedPayload = StreamingLeavedEvent | ClientStreamingLeavedEvent;
+  export type DropdownBoxSelectedPayload = DropdownBoxSelected;
+  export type WebrtcSignalingFwdPayload = WebrtcSignalingFwd;
+  export type VoiceStartedPayload = VoiceStartedEvent;
+  export type VoiceEndedPayload = VoiceEndedEvent;
+  export type VoiceJoinedPayload = VoiceJoinedEvent;
+  export type VoiceLeavedPayload = VoiceLeavedEvent;
+  export type NotificationsPayload = Notifications;
+  export type QuickMenuPayload = QuickMenuDataEvent;
 }

@@ -363,6 +363,28 @@ async confirm(@ComponentTarget() target: Nezon.Message | undefined) {
 }
 ```
 
+### @EventPayload
+
+Lấy event payload từ @On hoặc @Once handlers.
+
+```ts
+@EventPayload(): ParameterDecorator
+// Trả về: Event payload (type depends on event)
+```
+
+**Ví dụ:**
+```ts
+@On(Events.TokenSend)
+async onTokenSend(@EventPayload() payload: Nezon.TokenSendPayload) {
+  // payload: TokenSentEvent
+}
+
+@On(Events.AddClanUser)
+async onAddClanUser(@EventPayload() payload: Nezon.AddClanUserPayload) {
+  // payload: { user_id: string; clan_id: string; ... }
+}
+```
+
 ## Bảng tóm tắt
 
 | Decorator | Type | Use Case |
@@ -385,6 +407,7 @@ async confirm(@ComponentTarget() target: Nezon.Message | undefined) {
 | `@ComponentParams` | Parameter | Component parameters |
 | `@ComponentParam` | Parameter | Component parameter cụ thể |
 | `@ComponentTarget` | Parameter | Target message (cached) |
+| `@EventPayload` | Parameter | Event payload (typed) |
 
 ## Xem thêm
 

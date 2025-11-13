@@ -13,18 +13,19 @@ const sidebars: SidebarsConfig = {
         "message-template/embed-form-button",
       ],
     },
-    {
-      type: "category",
-      label: "Interaction",
-      items: [
-        "interaction/command",
-        "interaction/component",
-        "interaction/events",
-        "interaction/onclick",
-      ],
-    },
-    "decorators",
-    "examples",
+          {
+            type: "category",
+            label: "Tương tác",
+            items: [
+              "interaction/command",
+              "interaction/component",
+              "interaction/events",
+              "interaction/onclick",
+            ],
+          },
+          "events-list",
+          "decorators",
+          "examples",
   ],
 };
 

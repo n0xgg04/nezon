@@ -250,3 +250,29 @@ export function AutoContext(): ParameterDecorator {
   });
 }
 
+/**
+ * Injects the event payload from @On or @Once handlers.
+ * The payload type depends on the event being listened to.
+ *
+ * @example
+ * ```ts
+ * @On(Events.TokenSend)
+ * async onTokenSend(@EventPayload() payload: Nezon.TokenSendPayload) {
+ *   console.log('Token sent:', payload);
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * @On(Events.AddClanUser)
+ * async onAddClanUser(@EventPayload() payload: Nezon.AddClanUserPayload) {
+ *   console.log('User added:', payload.user_id);
+ * }
+ * ```
+ */
+export function EventPayload(): ParameterDecorator {
+  return setParamMetadata({
+    type: NezonParamType.EVENT_PAYLOAD,
+  });
+}
+
