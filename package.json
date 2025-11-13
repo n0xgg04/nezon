@@ -19,6 +19,9 @@
   "engines": {
     "node": ">=18"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "packageManager": "yarn@1.22.19",
   "workspaces": [
     "apps/*",
