@@ -9,7 +9,7 @@
       }
     }
   ],
-  "buildCommand": "cd apps/docs && yarn install && yarn build",
+  "buildCommand": "yarn --cwd apps/docs install && yarn --cwd apps/docs build",
   "outputDirectory": "apps/docs/build",
   "framework": "docusaurus"
 }
