@@ -1,7 +1,31 @@
 import type { SidebarsConfig } from "@docusaurus/plugin-content-docs";
 
 const sidebars: SidebarsConfig = {
-  tutorialSidebar: ["overview"],
+  tutorialSidebar: [
+    "overview",
+    "installation",
+    {
+      type: "category",
+      label: "Message Template",
+      items: [
+        "message-template/text-message",
+        "message-template/attachments",
+        "message-template/embed-form-button",
+      ],
+    },
+    {
+      type: "category",
+      label: "Interaction",
+      items: [
+        "interaction/command",
+        "interaction/component",
+        "interaction/events",
+        "interaction/onclick",
+      ],
+    },
+    "decorators",
+    "examples",
+  ],
 };
 
 export default sidebars;
