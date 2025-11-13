@@ -82,7 +82,7 @@ const config: Config = {
           items: [
             {
               label: "Giới thiệu",
-              to: "/docs/nezon/overview",
+              to: "/docs/",
             },
           ],
         },

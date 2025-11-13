@@ -18,10 +18,7 @@ function HomepageHeader() {
         </Heading>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
         <div className={styles.buttons}>
-          <Link
-            className="button button--secondary button--lg"
-            to="/docs/nezon/overview"
-          >
+          <Link className="button button--secondary button--lg" to="/docs/">
             Bắt đầu với Nezon
           </Link>
           <Link
