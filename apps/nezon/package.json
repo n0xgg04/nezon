@@ -1,9 +1,9 @@
 {
   "name": "@n0xgg04/nezon",
   "version": "1.0.0",
-  "description": "Mezon SDK for NestJS",
+  "description": "NestJS framework for building Mezon bots",
   "author": "@n0xgg04",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -57,9 +57,10 @@
     "mezon bot",
     "mezon bot api"
   ],
+  "homepage": "https://www.npmjs.com/package/@n0xgg04/nezon",
   "repository": {
     "type": "git",
-    "url": "https://github.com/n0xgg04/nezon"
+    "url": "https://github.com/n0xgg04/nezon.git"
   },
   "bugs": {
     "url": "https://github.com/n0xgg04/nezon/issues"
