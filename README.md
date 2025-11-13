@@ -2,6 +2,8 @@
 
 Nezon là thư viện NestJS giúp xây dựng bot cho nền tảng Mezon nhanh chóng, tương tự trải nghiệm của Necord với Discord.
 
+📚 **[Xem tài liệu đầy đủ](https://nezon-docs.vercel.app/)**
+
 ## Tính năng chính
 
 - **Decorator command**: Định nghĩa text command bằng `@Command`, hỗ trợ alias, prefix riêng và tự động phân tích tham số.
