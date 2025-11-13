@@ -70,6 +70,7 @@ export class ExampleHandlers {
     @Client() client: Nezon.Client,
     @ComponentTarget() targetMessage?: Nezon.Message,
   ) {
+
     if (!payload?.channel_id || !payload?.message_id) {
       return;
     }

@@ -12,6 +12,10 @@ import { NezonComponentService } from './services/nezon-component.service';
 import { NezonEventBridgeService } from './services/nezon-event-bridge.service';
 
 @Global()
+/**
+ * Root module that wires Nezon into a NestJS application.
+ * Provides the configured `MezonClient` along with discovery, command, event and component services.
+ */
 @Module({
   imports: [DiscoveryModule, EventEmitterModule.forRoot()],
   providers: [
