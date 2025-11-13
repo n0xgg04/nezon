@@ -1,0 +1,311 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { Events } from 'mezon-sdk';
+import { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
+import { Message } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
+import { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
+import { NezonClientService } from '../client/nezon-client.service';
+import { NezonExplorerService } from './nezon-explorer.service';
+import { NezonComponentDefinition } from '../interfaces/component-definition.interface';
+import { NezonComponentContext } from '../interfaces/component-context.interface';
+import {
+  NezonParamType,
+  NezonParameterMetadata,
+} from '../interfaces/parameter-metadata.interface';
+
+interface RegisteredComponent {
+  definition: NezonComponentDefinition;
+  matcher: (payload: MessageButtonClicked) => {
+    matched: boolean;
+    params: string[];
+    match: RegExpMatchArray | null;
+  };
+}
+
+interface BoundComponentHandler {
+  event: string;
+  handler: (...args: unknown[]) => void;
+}
+
+@Injectable()
+export class NezonComponentService {
+  private readonly logger = new Logger(NezonComponentService.name);
+  private components: Map<string, RegisteredComponent[]> = new Map();
+  private isInitialized = false;
+  private handlers: BoundComponentHandler[] = [];
+  private readonly cacheKeys = {
+    channel: Symbol('nezon:component:channel'),
+    message: Symbol('nezon:component:message'),
+  };
+
+  constructor(
+    private readonly explorer: NezonExplorerService,
+    private readonly clientService: NezonClientService,
+  ) {}
+
+  initialize() {
+    if (this.isInitialized) {
+      return;
+    }
+    const definitions = this.explorer.exploreComponents();
+    this.registerComponents(definitions);
+    this.bindListeners();
+    this.isInitialized = true;
+  }
+
+  dispose() {
+    const client = this.clientService.getClient();
+    for (const bound of this.handlers) {
+      const withOff = client as unknown as {
+        off?: (event: string, listener: (...args: unknown[]) => void) => void;
+      };
+      if (typeof withOff.off === 'function') {
+        withOff.off(bound.event, bound.handler);
+        continue;
+      }
+      client.removeListener(
+        bound.event,
+        bound.handler as (...args: any[]) => void,
+      );
+    }
+    this.handlers = [];
+    this.components.clear();
+    this.isInitialized = false;
+  }
+
+  private registerComponents(definitions: NezonComponentDefinition[]) {
+    this.components.clear();
+    for (const definition of definitions) {
+      const event =
+        definition.options.event ?? Events.MessageButtonClicked;
+      const matcher = this.createMatcher(definition);
+      const list = this.components.get(event) ?? [];
+      list.push({ definition, matcher });
+      this.components.set(event, list);
+    }
+  }
+
+  private bindListeners() {
+    const client = this.clientService.getClient();
+    this.handlers = [];
+    for (const [event, handlers] of this.components.entries()) {
+      if (!handlers.length) {
+        continue;
+      }
+      const boundHandler = (...args: unknown[]) => {
+        this.handleEvent(event, args).catch((error) => {
+          const err = error as Error;
+          this.logger.error('component handler failed', err?.stack);
+        });
+      };
+      client.on(event, boundHandler as (...args: any[]) => void);
+      this.handlers.push({ event, handler: boundHandler });
+    }
+  }
+
+  private async handleEvent(event: string, args: unknown[]) {
+    const registrations = this.components.get(event);
+    if (!registrations?.length) {
+      return;
+    }
+    const payloadCandidate = args[0];
+    if (!this.isMessageButtonClicked(payloadCandidate)) {
+      return;
+    }
+    const payload = payloadCandidate;
+    for (const registration of registrations) {
+      const { matched, params, match } = registration.matcher(payload);
+      if (!matched) {
+        continue;
+      }
+      const context: NezonComponentContext = {
+        payload,
+        client: this.clientService.getClient(),
+        params,
+        match,
+        cache: new Map<symbol, unknown>(),
+      };
+      try {
+        await this.executeComponent(registration.definition, context);
+      } catch (error) {
+        const err = error as Error;
+        this.logger.error('component handler failed', err?.stack);
+      }
+    }
+  }
+
+  private async executeComponent(
+    definition: NezonComponentDefinition,
+    context: NezonComponentContext,
+  ) {
+    const method = definition.instance[definition.methodName];
+    if (typeof method !== 'function') {
+      return;
+    }
+    const parameters = definition.parameters ?? [];
+    if (!parameters.length) {
+      await method.call(definition.instance, context);
+      return;
+    }
+    const args = await this.resolveComponentArguments(parameters, context);
+    await method.apply(definition.instance, args);
+  }
+
+  private async resolveComponentArguments(
+    parameters: NezonParameterMetadata[],
+    context: NezonComponentContext,
+  ) {
+    const size =
+      Math.max(
+        ...parameters.map((param) => param.index),
+        -1,
+      ) + 1;
+    const args = new Array<unknown>(size).fill(undefined);
+    for (const param of parameters) {
+      let value: unknown = undefined;
+      switch (param.type) {
+        case NezonParamType.CONTEXT:
+          value = context;
+          break;
+        case NezonParamType.COMPONENT:
+          value = context.payload;
+          break;
+        case NezonParamType.COMPONENT_PARAMS:
+          value = context.params;
+          break;
+        case NezonParamType.COMPONENT_PARAM:
+          value =
+            typeof param.data === 'number'
+              ? context.params[param.data] ?? undefined
+              : undefined;
+          break;
+        case NezonParamType.CLIENT:
+          value = context.client;
+          break;
+        case NezonParamType.ARGS:
+          value = context.params;
+          break;
+        case NezonParamType.ARG:
+          value =
+            typeof param.data === 'number'
+              ? context.params[param.data] ?? undefined
+              : undefined;
+          break;
+        case NezonParamType.COMPONENT_TARGET:
+          value = await this.getTargetMessage(context);
+          break;
+        default:
+          value = undefined;
+      }
+      args[param.index] = value;
+    }
+    return args;
+  }
+
+  private createMatcher(
+    definition: NezonComponentDefinition,
+  ): (payload: MessageButtonClicked) => {
+    matched: boolean;
+    params: string[];
+    match: RegExpMatchArray | null;
+  } {
+    const { options } = definition;
+    const separator = options.separator ?? '_';
+    const pattern =
+      typeof options.pattern === 'string'
+        ? new RegExp(options.pattern)
+        : options.pattern ?? null;
+
+    return (payload: MessageButtonClicked) => {
+      const id = payload.button_id ?? '';
+      if (!id) {
+        return { matched: false, params: [], match: null };
+      }
+      if (options.id && options.id !== id) {
+        return { matched: false, params: [], match: null };
+      }
+      let match: RegExpMatchArray | null = null;
+      if (pattern) {
+        match = id.match(pattern);
+        if (!match) {
+          return { matched: false, params: [], match: null };
+        }
+      }
+      const params = id.split(separator);
+      return { matched: true, params, match };
+    };
+  }
+
+  private isMessageButtonClicked(
+    payload: unknown,
+  ): payload is MessageButtonClicked {
+    return (
+      typeof payload === 'object' &&
+      payload !== null &&
+      typeof (payload as MessageButtonClicked).button_id === 'string' &&
+      typeof (payload as MessageButtonClicked).channel_id === 'string' &&
+      typeof (payload as MessageButtonClicked).message_id === 'string'
+    );
+  }
+
+  private ensureCache(context: NezonComponentContext) {
+    if (!context.cache) {
+      context.cache = new Map<symbol, unknown>();
+    }
+    return context.cache;
+  }
+
+  private async getTargetMessage(context: NezonComponentContext) {
+    return this.getOrSetCache(context, this.cacheKeys.message, async () => {
+      try {
+        const channel = await this.getChannel(context);
+        if (!channel?.messages?.fetch) {
+          return undefined;
+        }
+        return (await channel.messages.fetch(
+          context.payload.message_id,
+        )) as Message;
+      } catch (error) {
+        this.logger.warn(
+          `failed to resolve component target for ${context.payload.message_id}`,
+          (error as Error)?.stack,
+        );
+        return undefined;
+      }
+    });
+  }
+
+  private async getChannel(context: NezonComponentContext) {
+    return this.getOrSetCache(context, this.cacheKeys.channel, async () => {
+      try {
+        if (!context.payload.channel_id) {
+          return undefined;
+        }
+        const fetched = await context.client.channels.fetch(
+          context.payload.channel_id,
+        );
+        return fetched as TextChannel;
+      } catch (error) {
+        this.logger.warn(
+          `failed to resolve component channel for ${context.payload.channel_id}`,
+          (error as Error)?.stack,
+        );
+        return undefined;
+      }
+    });
+  }
+
+  private async getOrSetCache<T>(
+    context: NezonComponentContext,
+    key: symbol,
+    factory: () => Promise<T>,
+  ): Promise<T> {
+    const cache = this.ensureCache(context);
+    if (cache.has(key)) {
+      return cache.get(key) as T;
+    }
+    const value = await factory();
+    cache.set(key, value);
+    return value;
+  }
+}
+
