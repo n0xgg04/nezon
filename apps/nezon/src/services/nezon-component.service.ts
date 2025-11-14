@@ -268,9 +268,21 @@ export class NezonComponentService {
           }
           break;
         }
-        case NezonParamType.AUTO_CONTEXT:
-          value = await this.getAutoContext(context);
+        case NezonParamType.AUTO_CONTEXT: {
+          const autoContext = await this.getAutoContext(context);
+          if (typeof param.data === 'string' && param.data) {
+            if (param.data === 'message') {
+              value = autoContext[0];
+            } else if (param.data === 'dm') {
+              value = autoContext[1];
+            } else {
+              value = autoContext;
+            }
+          } else {
+            value = autoContext;
+          }
           break;
+        }
         default:
           value = undefined;
       }

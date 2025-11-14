@@ -149,11 +149,13 @@ async echo(@MessageContent() content: string | undefined) {
 Lấy ManagedMessage và DMHelper với các methods tiện dụng.
 
 ```ts
-@AutoContext(): ParameterDecorator
-// Trả về: Nezon.AutoContext = [ManagedMessage, DMHelper]
+@AutoContext(key?: 'message' | 'dm'): ParameterDecorator
+// Không có key: Trả về Nezon.AutoContext = [ManagedMessage, DMHelper]
+// Với key 'message': Trả về Nezon.AutoContextType.Message
+// Với key 'dm': Trả về Nezon.AutoContextType.DM
 ```
 
-**Ví dụ cơ bản:**
+**Cách 1: Lấy toàn bộ tuple (backward compatible)**
 ```ts
 @Command('ping')
 async ping(@AutoContext() [message]: Nezon.AutoContext) {
@@ -163,17 +165,23 @@ async ping(@AutoContext() [message]: Nezon.AutoContext) {
 }
 ```
 
-**Ví dụ với DM:**
+**Cách 2: Lấy phần tử cụ thể bằng key**
 ```ts
 @Command('dm')
 async sendDM(
   @Args() args: Nezon.Args,
-  @AutoContext() [message, dm]: Nezon.AutoContext,
+  @AutoContext('message') message: Nezon.AutoContextType.Message,
+  @AutoContext('dm') dm: Nezon.AutoContextType.DM,
 ) {
   const userId = args[0];
   await dm.send(userId, SmartMessage.text('Hello via DM!'));
 }
 ```
+
+**Type definitions:**
+- `Nezon.AutoContext` - Tuple type `[ManagedMessage, DMHelper]`
+- `Nezon.AutoContextType.Message` - Type cho ManagedMessage
+- `Nezon.AutoContextType.DM` - Type cho DMHelper
 
 ### @Message
 

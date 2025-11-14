@@ -219,7 +219,8 @@ export class ExampleHandlers {
   @Command('dm')
   async onDMDemo(
     @Args() args: Nezon.Args,
-    @AutoContext() [message, dm]: Nezon.AutoContext,
+    @AutoContext('message') message: Nezon.AutoContextType.Message,
+    @AutoContext('dm') dm: Nezon.AutoContextType.DM,
     @User() user?: Nezon.User,
   ) {
     const targetUserId = args[0];
@@ -248,7 +249,7 @@ export class ExampleHandlers {
 
   @Command('senddm')
   async onSendDMToSender(
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext('message') message: Nezon.AutoContextType.Message,
     @User() user?: Nezon.User,
   ) {
     try {

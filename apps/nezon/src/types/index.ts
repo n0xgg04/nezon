@@ -77,6 +77,12 @@ export namespace Nezon {
   export const SmartMessage = Messaging.SmartMessage;
   export type ManagedMessage = ManagedMessageType;
   export type DMHelper = DMHelperType;
+  
+  export namespace AutoContextType {
+    export type Message = ManagedMessageType;
+    export type DM = DMHelperType;
+  }
+  
   export type Button = ButtonComponent;
   export const ButtonBuilder = ButtonModule.ButtonBuilder;
   export const ButtonStyle = ButtonModule.ButtonStyle;

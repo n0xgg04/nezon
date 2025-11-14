@@ -212,17 +212,27 @@ Xem file `src/bot/example.handlers.ts` để học cách sử dụng các tính 
 @AutoContext() [message]: Nezon.AutoContext
 ```
 
-- Trả về tuple `[ManagedMessage, DMHelper]`
+- **Không có key**: Trả về tuple `[ManagedMessage, DMHelper]`
+- **Với key `'message'`**: Trả về `ManagedMessage` (type: `Nezon.AutoContextType.Message`)
+- **Với key `'dm'`**: Trả về `DMHelper` (type: `Nezon.AutoContextType.DM`)
 - `ManagedMessage` có các methods: `reply()`, `update()`, `delete()`, `sendDM()`
 - `DMHelper` có method: `send(userId, message)` để gửi DM
-- Type: `Nezon.AutoContext` = `[ManagedMessage, DMHelper]`
 
-**Ví dụ với DM:**
+**Ví dụ 1: Lấy toàn bộ tuple (backward compatible)**
+```ts
+@Command('ping')
+async onPing(@AutoContext() [message]: Nezon.AutoContext) {
+  await message.reply(SmartMessage.text('pong!'));
+}
+```
+
+**Ví dụ 2: Lấy phần tử cụ thể bằng key**
 ```ts
 @Command('dm')
 async onDM(
   @Args() args: Nezon.Args,
-  @AutoContext() [message, dm]: Nezon.AutoContext,
+  @AutoContext('message') message: Nezon.AutoContextType.Message,
+  @AutoContext('dm') dm: Nezon.AutoContextType.DM,
 ) {
   const userId = args[0];
   await dm.send(userId, SmartMessage.text('Hello via DM!'));

@@ -233,8 +233,9 @@ export function ComponentTarget(): ParameterDecorator {
 
 /**
  * Injects an auto-generated helper tuple similar to Necord's `@Context()`.
- * Currently resolves to `[ManagedMessage]`, enabling convenience helpers:
+ * Resolves to `[ManagedMessage, DMHelper]`, enabling convenience helpers.
  *
+ * **Cách 1: Lấy toàn bộ tuple (backward compatible)**
  * ```ts
  * @Command('ping')
  * async onPing(@AutoContext() [message]: Nezon.AutoContext) {
@@ -242,11 +243,27 @@ export function ComponentTarget(): ParameterDecorator {
  * }
  * ```
  *
+ * **Cách 2: Lấy phần tử cụ thể bằng key**
+ * ```ts
+ * @Command('dm')
+ * async onDM(
+ *   @AutoContext('message') message: Nezon.AutoContextType.Message,
+ *   @AutoContext('dm') dm: Nezon.AutoContextType.DM,
+ * ) {
+ *   await dm.send(userId, SmartMessage.text('Hello!'));
+ * }
+ * ```
+ *
+ * Available keys:
+ * - `'message'` - Returns `ManagedMessage` (type: `Nezon.AutoContextType.Message`)
+ * - `'dm'` - Returns `DMHelper` (type: `Nezon.AutoContextType.DM`)
+ *
  * Combine với `Nezon.SmartMessage` để dựng payload gửi tin nhắn một cách an toàn.
  */
-export function AutoContext(): ParameterDecorator {
+export function AutoContext(key?: 'message' | 'dm'): ParameterDecorator {
   return setParamMetadata({
     type: NezonParamType.AUTO_CONTEXT,
+    data: key,
   });
 }
 

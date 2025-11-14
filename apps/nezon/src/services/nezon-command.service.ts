@@ -204,8 +204,18 @@ export class NezonCommandService {
       }
       case NezonParamType.THIS_MESSAGE:
         return this.getMessageEntity(context);
-      case NezonParamType.AUTO_CONTEXT:
-        return this.getAutoContext(context);
+      case NezonParamType.AUTO_CONTEXT: {
+        const autoContext = await this.getAutoContext(context);
+        if (typeof param.data === 'string' && param.data) {
+          if (param.data === 'message') {
+            return autoContext[0];
+          }
+          if (param.data === 'dm') {
+            return autoContext[1];
+          }
+        }
+        return autoContext;
+      }
       default:
         return undefined;
     }
