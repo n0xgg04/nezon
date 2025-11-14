@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChannelMessage, Events, MezonClient, TokenSentEvent } from 'mezon-sdk';
-import { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
+import { MessageButtonClicked, AddClanUserEvent } from 'mezon-sdk/dist/cjs/rtapi/realtime';
 import { NezonClientService } from '../client/nezon-client.service';
 
 type EventHandler = (...args: unknown[]) => void;
@@ -26,7 +26,8 @@ export class NezonEventBridgeService
   async onApplicationBootstrap() {
     const client = this.clientService.getClient();
     this.bindChannelMessage(client);
-    const ignore = new Set<Events>([Events.ChannelMessage]);
+    this.bindAddClanUser(client);
+    const ignore = new Set<Events>([Events.ChannelMessage, Events.AddClanUser]);
     const events = Array.from(new Set(Object.values(Events)));
     for (const event of events) {
       if (ignore.has(event)) {
@@ -67,6 +68,21 @@ export class NezonEventBridgeService
       this.eventEmitter.emit(Events.ChannelMessage, message);
     };
     this.registerListener(client, Events.ChannelMessage, handler);
+  }
+
+  private bindAddClanUser(client: MezonClient) {
+    if (typeof (client as any).onAddClanUser === 'function') {
+      (client as any).onAddClanUser(async (user: AddClanUserEvent) => {
+        this.eventEmitter.emit(Events.AddClanUser, user);
+      }).catch((error: any) =>
+        this.logger.error('failed to bind add clan user listener', error?.stack),
+      );
+      return;
+    }
+    const handler = (user: AddClanUserEvent) => {
+      this.eventEmitter.emit(Events.AddClanUser, user);
+    };
+    this.registerListener(client, Events.AddClanUser, handler);
   }
 
   private bindSimpleEvent(client: MezonClient, event: Events) {
