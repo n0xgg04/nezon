@@ -72,11 +72,18 @@ export class NezonEventBridgeService
 
   private bindAddClanUser(client: MezonClient) {
     if (typeof (client as any).onAddClanUser === 'function') {
-      (client as any).onAddClanUser(async (user: AddClanUserEvent) => {
-        this.eventEmitter.emit(Events.AddClanUser, user);
-      }).catch((error: any) =>
-        this.logger.error('failed to bind add clan user listener', error?.stack),
-      );
+      try {
+        const result = (client as any).onAddClanUser(async (user: AddClanUserEvent) => {
+          this.eventEmitter.emit(Events.AddClanUser, user);
+        });
+        if (result && typeof result.catch === 'function') {
+          result.catch((error: any) =>
+            this.logger.error('failed to bind add clan user listener', error?.stack),
+          );
+        }
+      } catch (error) {
+        this.logger.error('failed to bind add clan user listener', (error as Error)?.stack);
+      }
       return;
     }
     const handler = (user: AddClanUserEvent) => {
