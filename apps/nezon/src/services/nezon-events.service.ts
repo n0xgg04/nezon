@@ -7,6 +7,13 @@ import {
   NezonParamType,
   NezonParameterMetadata,
 } from '../interfaces/parameter-metadata.interface';
+import {
+  DMHelper,
+  SmartMessage,
+  type SmartMessageLike,
+  type NormalizedSmartMessage,
+} from '../messaging/smart-message';
+import type { ChannelMessageContent } from 'mezon-sdk';
 
 interface BoundEventHandler {
   event: string;
@@ -120,12 +127,60 @@ export class NezonEventsService {
         case NezonParamType.EVENT_PAYLOAD:
           value = args[0];
           break;
+        case NezonParamType.AUTO_CONTEXT: {
+          const client = this.clientService.getClient();
+          const helpers = {
+            normalize: (input: any) => this.normalizeSmartMessage(input),
+          };
+          const dmHelper = new DMHelper(client, helpers);
+          if (typeof param.data === 'string' && param.data) {
+            if (param.data === 'dm') {
+              value = dmHelper;
+            } else if (param.data === 'message') {
+              value = null;
+            } else {
+              value = [null, dmHelper];
+            }
+          } else {
+            value = [null, dmHelper];
+          }
+          break;
+        }
         default:
           value = undefined;
       }
       resolved[param.index] = value;
     }
     return resolved;
+  }
+
+  private normalizeSmartMessage(
+    input: SmartMessageLike,
+  ): NormalizedSmartMessage {
+    if (input instanceof SmartMessage) {
+      return input.toJSON();
+    }
+    if (typeof input === 'string') {
+      return { content: { t: input } };
+    }
+    if (
+      input &&
+      typeof input === 'object' &&
+      'content' in input &&
+      typeof (input as NormalizedSmartMessage).content === 'object'
+    ) {
+      const normalized = input as NormalizedSmartMessage;
+      return {
+        content: { ...normalized.content },
+        attachments: normalized.attachments?.map((attachment) => ({
+          ...attachment,
+        })),
+      };
+    }
+    if (input && typeof input === 'object') {
+      return { content: input as ChannelMessageContent };
+    }
+    return { content: { t: String(input ?? '') } };
   }
 }
 
