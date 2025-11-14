@@ -8,6 +8,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "deploy:nezon": "yarn workspace @n0xgg04/nezon run build && yarn workspace @n0xgg04/nezon publish --access public",
+    "deploy:create-mezon-bot": "yarn workspace create-mezon-bot publish --access public",
     "prepare": "husky install"
   },
   "devDependencies": {

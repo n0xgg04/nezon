@@ -238,6 +238,22 @@ export class NezonComponentService {
               ? context.params[param.data] ?? undefined
               : undefined;
           break;
+        case NezonParamType.ATTACHMENTS: {
+          const attachments = Array.isArray((context.payload as any)?.attachments)
+            ? (context.payload as any).attachments
+            : [];
+          value =
+            typeof param.data === 'number' ? attachments[param.data] : attachments;
+          break;
+        }
+        case NezonParamType.MENTIONS: {
+          const mentions = Array.isArray((context.payload as any)?.mentions)
+            ? (context.payload as any).mentions
+            : [];
+          value =
+            typeof param.data === 'number' ? mentions[param.data] : mentions;
+          break;
+        }
         case NezonParamType.COMPONENT_TARGET:
           value = await this.getTargetMessage(context);
           break;

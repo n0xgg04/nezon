@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Events } from 'mezon-sdk';
 import {
   Args,
+  Attachments,
   AutoContext,
   Channel,
   Client,
@@ -12,6 +13,7 @@ import {
   ComponentTarget,
   ChannelMessagePayload,
   MessageContent,
+  Mentions,
   On,
   EventPayload,
   SmartMessage,
@@ -215,6 +217,41 @@ export class ExampleHandlers {
     await message.reply(
       SmartMessage.text(`User ID: ${userId}\nTin nhắn: ${content ?? userText}`),
     );
+  }
+
+  @Command('inspect')
+  async onInspect(
+    @Attachments() attachments: Nezon.Attachments,
+    @Attachments(0) firstAttachment: Nezon.Attachment | undefined,
+    @Mentions() mentions: Nezon.Mentions,
+    @Mentions(0) firstMention: Nezon.Mention | undefined,
+    @AutoContext('message') message: Nezon.AutoContextType.Message,
+  ) {
+    const attachmentLines = attachments.length
+      ? attachments
+          .map((file, index) => {
+            const label = file.filename ?? file.url ?? 'unknown';
+            return `${index + 1}. ${label}`;
+          })
+          .join('\n')
+      : 'Không có file đính kèm';
+    const mentionLabels = mentions.length
+      ? mentions
+          .map((item) => item.username ?? item.user_id ?? 'unknown')
+          .join(', ')
+      : 'Không có mention';
+    const summary = [
+      `Tổng số file: ${attachments.length}`,
+      `File đầu tiên: ${firstAttachment?.filename ?? firstAttachment?.url ?? 'không có'}`,
+      `Tổng số mention: ${mentions.length}`,
+      `Mention đầu tiên: ${firstMention?.username ?? firstMention?.user_id ?? 'không có'}`,
+      '',
+      'Danh sách file:',
+      attachmentLines,
+      '',
+      `Mentions: ${mentionLabels}`,
+    ].join('\n');
+    await message.reply(SmartMessage.text(summary));
   }
 
   @Command('dm')

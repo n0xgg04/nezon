@@ -6,6 +6,28 @@ sidebar_position: 2
 
 Hướng dẫn thêm attachments (ảnh, file, audio) vào message với SmartMessage.
 
+## Lấy attachments người dùng gửi
+
+Sử dụng decorator `@Attachments()` để đọc danh sách file mà user gửi cùng command.
+
+```ts
+import { Command, Attachments, AutoContext, SmartMessage } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+
+@Command('inspect')
+async onInspect(
+  @Attachments() files: Nezon.Attachments,
+  @Attachments(0) firstFile: Nezon.Attachment | undefined,
+  @AutoContext('message') message: Nezon.AutoContextType.Message,
+) {
+  const summary = [
+    `Tổng số file: ${files.length}`,
+    `File đầu tiên: ${firstFile?.filename ?? firstFile?.url ?? 'không có'}`,
+  ].join('\n');
+  await message.reply(SmartMessage.text(summary));
+}
+```
+
 ## Image Attachments
 
 Thêm ảnh vào message với `addImage()`.

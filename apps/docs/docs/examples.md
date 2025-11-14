@@ -42,6 +42,36 @@ async onHelp(@AutoContext() [message]: Nezon.AutoContext) {
 }
 ```
 
+### Command đọc Attachments & Mentions
+
+```ts
+import {
+  Command,
+  Attachments,
+  Mentions,
+  AutoContext,
+  SmartMessage,
+} from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+
+@Command('inspect')
+async onInspect(
+  @Attachments() files: Nezon.Attachments,
+  @Attachments(0) firstFile: Nezon.Attachment | undefined,
+  @Mentions() mentions: Nezon.Mentions,
+  @Mentions(0) firstMention: Nezon.Mention | undefined,
+  @AutoContext('message') message: Nezon.AutoContextType.Message,
+) {
+  const summary = [
+    `Tổng số file: ${files.length}`,
+    `File đầu tiên: ${firstFile?.filename ?? firstFile?.url ?? 'không có'}`,
+    `Tổng số mention: ${mentions.length}`,
+    `Mention đầu tiên: ${firstMention?.username ?? firstMention?.user_id ?? 'không có'}`,
+  ].join('\n');
+  await message.reply(SmartMessage.text(summary));
+}
+```
+
 ## @Component Examples
 
 ### Basic Component

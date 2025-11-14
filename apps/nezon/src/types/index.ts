@@ -64,6 +64,10 @@ import type { EmbedData } from '../messaging/embed-builder';
 export namespace Nezon {
   export type Client = MezonClient;
   export type ChannelMessage = MezonChannelMessage;
+  export type Attachments = NonNullable<MezonChannelMessage['attachments']>;
+  export type Attachment = Attachments[number];
+  export type Mentions = NonNullable<MezonChannelMessage['mentions']>;
+  export type Mention = Mentions[number];
   export type Message = MezonMessage;
   export type Channel = MezonTextChannel;
   export type Clan = MezonClan;

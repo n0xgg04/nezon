@@ -184,6 +184,24 @@ export class NezonCommandService {
         return typeof param.data === 'number'
           ? context.args[param.data] ?? undefined
           : undefined;
+      case NezonParamType.ATTACHMENTS: {
+        const attachments = Array.isArray(context.message?.attachments)
+          ? context.message.attachments
+          : [];
+        if (typeof param.data === 'number') {
+          return attachments[param.data];
+        }
+        return attachments;
+      }
+      case NezonParamType.MENTIONS: {
+        const mentions = Array.isArray(context.message?.mentions)
+          ? context.message.mentions
+          : [];
+        if (typeof param.data === 'number') {
+          return mentions[param.data];
+        }
+        return mentions;
+      }
       case NezonParamType.MESSAGE_CONTENT:
         return this.extractMessageContent(context.message);
       case NezonParamType.CHANNEL: {

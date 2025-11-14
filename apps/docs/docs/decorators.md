@@ -127,6 +127,48 @@ async greet(@Arg(0) name: string | undefined) {
 }
 ```
 
+### @Attachments
+
+Lấy danh sách file đính kèm từ message.
+
+```ts
+@Attachments(index?: number): ParameterDecorator
+// Không có index: Nezon.Attachments
+// Có index: Nezon.Attachment | undefined
+```
+
+**Ví dụ:**
+```ts
+@Command('inspect')
+async inspect(
+  @Attachments() files: Nezon.Attachments,
+  @Attachments(0) firstFile: Nezon.Attachment | undefined,
+) {
+  // ...
+}
+```
+
+### @Mentions
+
+Lấy danh sách mentions từ message.
+
+```ts
+@Mentions(index?: number): ParameterDecorator
+// Không có index: Nezon.Mentions
+// Có index: Nezon.Mention | undefined
+```
+
+**Ví dụ:**
+```ts
+@Command('inspect')
+async inspectMentions(
+  @Mentions() mentions: Nezon.Mentions,
+  @Mentions(0) firstMention: Nezon.Mention | undefined,
+) {
+  // ...
+}
+```
+
 ### @MessageContent
 
 Lấy toàn bộ nội dung message (bao gồm cả command).

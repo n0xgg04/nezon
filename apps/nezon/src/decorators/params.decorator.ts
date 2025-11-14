@@ -88,6 +88,20 @@ export function Arg(position = 0): ParameterDecorator {
   });
 }
 
+export function Attachments(position?: number): ParameterDecorator {
+  return setParamMetadata({
+    type: NezonParamType.ATTACHMENTS,
+    data: typeof position === 'number' ? position : undefined,
+  });
+}
+
+export function Mentions(position?: number): ParameterDecorator {
+  return setParamMetadata({
+    type: NezonParamType.MENTIONS,
+    data: typeof position === 'number' ? position : undefined,
+  });
+}
+
 export function ComponentPayload(): ParameterDecorator {
   /**
    * Injects the raw component payload (e.g. `MessageButtonClicked`).

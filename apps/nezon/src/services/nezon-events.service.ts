@@ -124,6 +124,22 @@ export class NezonEventsService {
           value =
             typeof param.data === 'number' ? args[param.data] ?? undefined : undefined;
           break;
+        case NezonParamType.ATTACHMENTS: {
+          const attachments = Array.isArray((args[0] as any)?.attachments)
+            ? (args[0] as any).attachments
+            : [];
+          value =
+            typeof param.data === 'number' ? attachments[param.data] : attachments;
+          break;
+        }
+        case NezonParamType.MENTIONS: {
+          const mentions = Array.isArray((args[0] as any)?.mentions)
+            ? (args[0] as any).mentions
+            : [];
+          value =
+            typeof param.data === 'number' ? mentions[param.data] : mentions;
+          break;
+        }
         case NezonParamType.EVENT_PAYLOAD:
           value = args[0];
           break;

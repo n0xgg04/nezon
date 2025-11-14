@@ -4,6 +4,8 @@ export enum NezonParamType {
   CLIENT = 'client',
   ARGS = 'args',
   ARG = 'arg',
+  ATTACHMENTS = 'attachments',
+  MENTIONS = 'mentions',
   COMPONENT = 'component',
   COMPONENT_PARAMS = 'component_params',
   COMPONENT_PARAM = 'component_param',
