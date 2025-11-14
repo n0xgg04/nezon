@@ -1,0 +1,105 @@
+name: Generate Changelog
+
+on:
+  release:
+    types:
+      - created
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to generate changelog for'
+        required: false
+        type: string
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: read
+      pull-requests: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        uses: janheinrichmerker/action-github-changelog-generator@v2.4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          output: CHANGELOG_GENERATED.md
+          base: apps/nezon/CHANGELOG.md
+          user: n0xgg04
+          project: nezon
+          issues: true
+          pullRequests: true
+          addSections: |
+            {
+              "breaking": {
+                "prefix": "### Breaking Changes",
+                "labels": ["breaking"]
+              },
+              "enhancement": {
+                "prefix": "### Added",
+                "labels": ["enhancement", "feature"]
+              },
+              "bug": {
+                "prefix": "### Fixed",
+                "labels": ["bug", "fix"]
+              },
+              "deprecated": {
+                "prefix": "### Deprecated",
+                "labels": ["deprecated"]
+              },
+              "removed": {
+                "prefix": "### Removed",
+                "labels": ["removed"]
+              },
+              "security": {
+                "prefix": "### Security",
+                "labels": ["security"]
+              }
+            }
+          breakingLabels: breaking
+          enhancementLabels: enhancement,feature
+          bugLabels: bug,fix
+          deprecatedLabels: deprecated
+          removedLabels: removed
+          securityLabels: security
+          headerLabel: "# Changelog"
+          stripGeneratorNotice: true
+
+      - name: Copy changelog to root and apps/nezon
+        run: |
+          if [ -f CHANGELOG_GENERATED.md ]; then
+            cp CHANGELOG_GENERATED.md CHANGELOG.md
+            cp CHANGELOG_GENERATED.md apps/nezon/CHANGELOG.md
+            echo "✅ Changelog generated and copied"
+          else
+            echo "❌ Changelog file not found"
+            exit 1
+          fi
+
+      - name: Commit changelog
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add CHANGELOG.md apps/nezon/CHANGELOG.md
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update changelog [skip ci]"
+            git push
+            echo "✅ Changelog committed"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
+
+      - name: Create release notes
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ steps.changelog.outputs.changelog }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
