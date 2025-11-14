@@ -19,14 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     ```ts
     await message.sendDM(SmartMessage.text('Private response!'));
     ```
-- **AutoContext enhancement**: `AutoContext` giờ trả về `[ManagedMessage, DMHelper]` thay vì chỉ `[ManagedMessage]`, cho phép truy cập DMHelper khi cần:
+- **AutoContext với key parameter**: `@AutoContext` giờ hỗ trợ key parameter để lấy phần tử cụ thể thay vì phải destructure tuple:
   ```ts
-  // Vẫn hoạt động như cũ (backward compatible)
+  // Cách cũ (vẫn hoạt động - backward compatible)
   @AutoContext() [message]: Nezon.AutoContext
-  
-  // Hoặc sử dụng DMHelper
   @AutoContext() [message, dm]: Nezon.AutoContext
+  
+  // Cách mới với key (tiện lợi hơn)
+  @AutoContext('message') message: Nezon.AutoContextType.Message
+  @AutoContext('dm') dm: Nezon.AutoContextType.DM
   ```
+  - Type safety đầy đủ với `Nezon.AutoContextType.Message` và `Nezon.AutoContextType.DM`
+  - Autocomplete tự động khi gõ `@AutoContext('...')` - TypeScript sẽ gợi ý `'message'` hoặc `'dm'`
+- **AutoContext enhancement**: `AutoContext` giờ trả về `[ManagedMessage, DMHelper]` thay vì chỉ `[ManagedMessage]`, cho phép truy cập DMHelper khi cần
 - **DM Documentation**: Thêm trang documentation đầy đủ về DM tại `/docs/message-template/dm` với:
   - Hướng dẫn sử dụng DMHelper và sendDM()
   - Ví dụ code chi tiết
@@ -36,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **AutoContext type**: Cập nhật type definition từ `[ManagedMessage]` thành `[ManagedMessage, DMHelper]` để hỗ trợ DM functionality. Code cũ vẫn hoạt động bình thường do TypeScript cho phép destructure một phần của tuple.
+- **@AutoContext decorator**: Thêm optional key parameter (`'message'` | `'dm'`) để lấy phần tử cụ thể. Khi không có key, trả về tuple như cũ để đảm bảo backward compatibility.
 
 ## [1.0.0] - 2025-01-XX
 
