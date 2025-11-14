@@ -137,6 +137,44 @@ async onMessage(
 }
 ```
 
+### Voice Joined Event với DM
+
+```ts
+import { On, EventPayload, AutoContext, SmartMessage } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+import { Events } from 'mezon-sdk';
+
+@On(Events.VoiceJoinedEvent)
+async onVoice(
+  @EventPayload() event: Nezon.VoiceJoinedPayload,
+  @AutoContext() [_, dm]: Nezon.AutoContext,
+) {
+  await dm.send(event.user_id, SmartMessage.text('Đã join'));
+}
+```
+
+### Token Send Event với DM
+
+```ts
+import { On, EventPayload, AutoContext, SmartMessage } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+import { Events } from 'mezon-sdk';
+
+@On(Events.TokenSend)
+async onTokenSend(
+  @EventPayload() event: Nezon.TokenSendPayload,
+  @AutoContext() [_, dm]: Nezon.AutoContext,
+) {
+  await dm.send(
+    event.sender_id,
+    SmartMessage.text(
+      `Bạn đã gửi ${event.amount} token đến ${event.transaction_id}`,
+    ),
+  );
+  this.logger.verbose(`token send received: ${event.amount}`);
+}
+```
+
 ## DM Examples
 
 ### Gửi DM với DMHelper

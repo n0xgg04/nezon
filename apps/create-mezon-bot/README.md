@@ -17,9 +17,11 @@ This will create a new directory `my-bot` with a complete Mezon bot project setu
 - Example handlers demonstrating:
   - Commands (`@Command`)
   - Components (`@Component`)
-  - Event listeners (`@On`)
+  - Event listeners (`@On`) with DM support
+  - Direct Messages (DM) with `DMHelper` and `sendDM()`
   - ButtonBuilder with onClick handlers
   - SmartMessage usage
+  - Voice and Token events with DM notifications
 - TypeScript configuration
 - All necessary dependencies
 
@@ -42,6 +44,8 @@ After creating the project:
    MEZON_TOKEN=your_mezon_token_here
    MEZON_BOT_ID=your_bot_id_here
    ```
+   
+   > **Get your bot token and bot ID:** Create a new bot at [https://mezon.ai/developers/applications](https://mezon.ai/developers/applications)
 
 4. Start the development server:
    ```bash

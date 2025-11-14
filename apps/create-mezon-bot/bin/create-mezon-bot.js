@@ -29,6 +29,7 @@ function createProject() {
   console.log(`Next steps:`);
   console.log(`  cd ${projectName}`);
   console.log(`  cp .env.example .env`);
+  console.log(`  # Get your bot token and bot ID at: https://mezon.ai/developers/applications`);
   console.log(`  # Edit .env and add your MEZON_TOKEN and MEZON_BOT_ID`);
   console.log(`  yarn start:dev\n`);
 }

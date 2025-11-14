@@ -13,6 +13,7 @@ import {
   ChannelMessagePayload,
   MessageContent,
   On,
+  EventPayload,
   SmartMessage,
   ButtonBuilder,
   ButtonStyle,
@@ -376,6 +377,28 @@ export class ExampleHandlers {
     this.logger.verbose(
       `message ${messageId ?? message.message_id ?? 'unknown'} received from ${author} in channel ${channelLabel}: ${content}`,
     );
+  }
+
+  @On(Events.VoiceJoinedEvent)
+  async onVoice(
+    @EventPayload() event: Nezon.VoiceJoinedPayload,
+    @AutoContext() [_, dm]: Nezon.AutoContext,
+  ) {
+    await dm.send(event.user_id, SmartMessage.text('Đã join'));
+  }
+
+  @On(Events.TokenSend)
+  async onTokenSend(
+    @EventPayload() event: Nezon.TokenSendPayload,
+    @AutoContext() [_, dm]: Nezon.AutoContext,
+  ) {
+    await dm.send(
+      event.sender_id,
+      SmartMessage.text(
+        `Bạn đã gửi ${event.amount} token đến ${event.transaction_id}`,
+      ),
+    );
+    this.logger.verbose(`token send received: ${event.amount}`);
   }
 
   private async getMessageByIds(
