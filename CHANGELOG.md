@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.1] - 2025-01-XX
+## [1.0.1] - 2025-11-14
 
 ### Added
 
@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AutoContext type**: Cập nhật type definition từ `[ManagedMessage]` thành `[ManagedMessage, DMHelper]` để hỗ trợ DM functionality. Code cũ vẫn hoạt động bình thường do TypeScript cho phép destructure một phần của tuple.
 - **@AutoContext decorator**: Thêm optional key parameter (`'message'` | `'dm'`) để lấy phần tử cụ thể. Khi không có key, trả về tuple như cũ để đảm bảo backward compatibility.
 
-## [1.0.0] - 2025-01-XX
+## [1.0.0] - 2025-11-14
 
 ### Added
 
@@ -100,7 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Type safety cho event payloads**: Loại bỏ hoàn toàn việc sử dụng `any` trong event handlers. Tất cả events giờ đây có type definitions rõ ràng.
 - **ID generation cho onClick**: Sử dụng `crypto.randomUUID()` để đảm bảo uniqueness cho onClick button IDs, tránh collision giữa các users và instances.
 
-## [0.0.7] - 2025-01-XX
+## [0.0.7] - 2025-11-14
 
 ### Added
 

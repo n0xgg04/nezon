@@ -1,11 +1,22 @@
 {
   "name": "@n0xgg04/nezon",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "NestJS framework for building Mezon bots",
   "author": "@n0xgg04",
   "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json",
     "start": "nest start",
