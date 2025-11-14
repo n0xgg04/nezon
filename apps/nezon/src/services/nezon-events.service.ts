@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NezonClientService } from '../client/nezon-client.service';
 import { NezonExplorerService } from './nezon-explorer.service';
 import { NezonEventDefinition } from '../interfaces/event-definition.interface';
@@ -21,6 +22,7 @@ export class NezonEventsService {
   constructor(
     private readonly explorer: NezonExplorerService,
     private readonly clientService: NezonClientService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   initialize() {
@@ -33,20 +35,14 @@ export class NezonEventsService {
   }
 
   dispose() {
-    const client = this.clientService.getClient();
     for (const bound of this.handlers) {
-      if (typeof (client as any).off === 'function') {
-        (client as any).off(bound.event, bound.handler);
-      } else {
-        client.removeListener(bound.event, bound.handler);
-      }
+      this.eventEmitter.off(bound.event, bound.handler);
     }
     this.handlers = [];
     this.isInitialized = false;
   }
 
   private bind(definitions: NezonEventDefinition[]) {
-    const client = this.clientService.getClient();
     for (const definition of definitions) {
       const boundHandler = (...args: any[]) => {
         try {
@@ -62,9 +58,9 @@ export class NezonEventsService {
         }
       };
       if (definition.once) {
-        client.once(definition.event, boundHandler);
+        this.eventEmitter.once(definition.event, boundHandler);
       } else {
-        client.on(definition.event, boundHandler);
+        this.eventEmitter.on(definition.event, boundHandler);
       }
       this.handlers.push({
         event: definition.event,
