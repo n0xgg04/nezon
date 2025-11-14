@@ -31,10 +31,10 @@ export class ExampleHandlers {
   @Command({ name: 'ping', aliases: ['pong'] })
   async onPing(
     @Args() args: Nezon.Args,
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
   ) {
     const suffix = args.length ? args.join(' ') : 'pong';
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.system(`ehehhe`),
     );
   }
@@ -42,10 +42,10 @@ export class ExampleHandlers {
   @Command('button')
   async onButtonDemo(
     @ChannelMessagePayload() payload: Nezon.ChannelMessage,
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
   ) {
-    const referenceId = payload.message_id ?? message.id ?? 'unknown';
-    await message.reply(
+    const referenceId = payload.message_id ?? managedMessage.id ?? 'unknown';
+    await managedMessage.reply(
       SmartMessage.text('Click the button to confirm.')
         .addButton(
           new ButtonBuilder()
@@ -58,9 +58,9 @@ export class ExampleHandlers {
 
   @Command('onclick')
   async onClickDemo(
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
   ) {
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.text('Click the buttons below to see onClick handlers in action!')
         .addButton(
           new ButtonBuilder()
@@ -92,10 +92,10 @@ export class ExampleHandlers {
   @Command('image')
   async onImageDemo(
     @Args() args: Nezon.Args,
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
   ) {
     const imageUrl = args[0] || 'https://picsum.photos/800/600';
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.text('Here are some example images!')
         .addImage(imageUrl, {
           filename: 'example1.jpg',
@@ -117,9 +117,9 @@ export class ExampleHandlers {
 
   @Command('embed')
   async onEmbedDemo(
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
   ) {
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.text('')
         .addEmbed(
           new EmbedBuilder()
@@ -137,9 +137,9 @@ export class ExampleHandlers {
 
   @Command('form')
   async onFormDemo(
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
   ) {
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.build()
         .addEmbed(
           new EmbedBuilder()
@@ -192,9 +192,9 @@ export class ExampleHandlers {
 
   @Command('file')
   async onFileDemo(
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
   ) {
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.text('Here is a file attachment!')
         .addFile(
           'https://cdn.mezon.ai/1779484504377790464/1840658523503988736/1838769001518338000/1762397837280_apps.apple.com_main.zip',
@@ -208,13 +208,13 @@ export class ExampleHandlers {
   @Command('prompt')
   async onPrompt(
     @Args() args: Nezon.Args,
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
     @User() user?: Nezon.User,
     @MessageContent() content?: string,
   ) {
     const userText = args.length ? args.join(' ') : '';
     const userId = user?.id ?? 'unknown';
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.text(`User ID: ${userId}\nTin nhắn: ${content ?? userText}`),
     );
   }
@@ -225,7 +225,7 @@ export class ExampleHandlers {
     @Attachments(0) firstAttachment: Nezon.Attachment | undefined,
     @Mentions() mentions: Nezon.Mentions,
     @Mentions(0) firstMention: Nezon.Mention | undefined,
-    @AutoContext('message') message: Nezon.AutoContextType.Message,
+    @AutoContext('message') managedMessage: Nezon.AutoContextType.Message,
   ) {
     const attachmentLines = attachments.length
       ? attachments
@@ -251,20 +251,20 @@ export class ExampleHandlers {
       '',
       `Mentions: ${mentionLabels}`,
     ].join('\n');
-    await message.reply(SmartMessage.text(summary));
+    await managedMessage.reply(SmartMessage.text(summary));
   }
 
   @Command('dm')
   async onDMDemo(
     @Args() args: Nezon.Args,
-    @AutoContext('message') message: Nezon.AutoContextType.Message,
+    @AutoContext('message') managedMessage: Nezon.AutoContextType.Message,
     @AutoContext('dm') dm: Nezon.AutoContextType.DM,
     @User() user?: Nezon.User,
   ) {
     const targetUserId = args[0];
     
     if (!targetUserId) {
-      await message.reply(
+      await managedMessage.reply(
         SmartMessage.text('Sử dụng: *dm <user_id>\n\nHoặc dùng *senddm để gửi DM cho người gửi tin nhắn này.'),
       );
       return;
@@ -275,11 +275,11 @@ export class ExampleHandlers {
         targetUserId,
         SmartMessage.text('Đây là tin nhắn DM được gửi từ bot!'),
       );
-      await message.reply(
+      await managedMessage.reply(
         SmartMessage.text(`✅ Đã gửi DM đến user ${targetUserId}`),
       );
     } catch (error) {
-      await message.reply(
+      await managedMessage.reply(
         SmartMessage.text(`❌ Lỗi khi gửi DM: ${(error as Error).message}`),
       );
     }
@@ -287,18 +287,18 @@ export class ExampleHandlers {
 
   @Command('senddm')
   async onSendDMToSender(
-    @AutoContext('message') message: Nezon.AutoContextType.Message,
+    @AutoContext('message') managedMessage: Nezon.AutoContextType.Message,
     @User() user?: Nezon.User,
   ) {
     try {
-      await message.sendDM(
+      await managedMessage.sendDM(
         SmartMessage.text('Đây là tin nhắn DM được gửi tự động cho bạn!'),
       );
-      await message.reply(
+      await managedMessage.reply(
         SmartMessage.text(`✅ Đã gửi DM đến ${user?.username ?? user?.display_name ?? 'bạn'}`),
       );
     } catch (error) {
-      await message.reply(
+      await managedMessage.reply(
         SmartMessage.text(`❌ Lỗi khi gửi DM: ${(error as Error).message}`),
       );
     }
@@ -307,10 +307,10 @@ export class ExampleHandlers {
   @Command('update')
   async onUpdateDemo(
     @ChannelMessagePayload() payload: Nezon.ChannelMessage,
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
   ) {
-    const messageId = payload.message_id ?? message.id ?? 'unknown';
-    await message.reply(
+    const messageId = payload.message_id ?? managedMessage.id ?? 'unknown';
+    await managedMessage.reply(
       SmartMessage.text('Chọn một hành động:')
         .addImage('https://picsum.photos/800/600', {
           filename: 'example.jpg',
@@ -333,9 +333,9 @@ export class ExampleHandlers {
   @Component({ pattern: '/update/:message_id/cancel' })
   async onUpdateCancel(
     @ComponentParams('message_id') targetId: string | undefined,
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
   ) {
-    await message.update(SmartMessage.text('Đã hủy'));
+    await managedMessage.update(SmartMessage.text('Đã hủy'));
     if (targetId) {
       this.logger.verbose(`update cancel triggered for message ${targetId}`);
     }
@@ -344,9 +344,9 @@ export class ExampleHandlers {
   @Component({ pattern: '/update/:message_id/success' })
   async onUpdateSuccess(
     @ComponentParams('message_id') targetId: string | undefined,
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
   ) {
-    await message.update(SmartMessage.text('Thành công'));
+    await managedMessage.update(SmartMessage.text('Thành công'));
     if (targetId) {
       this.logger.verbose(`update success triggered for message ${targetId}`);
     }
@@ -381,12 +381,12 @@ export class ExampleHandlers {
 
   @Component({ pattern: '/user/:user_id/:action' })
   async onUserAction(
-    @AutoContext() [message]: Nezon.AutoContext,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
     @ComponentParams() allParams: Record<string, string> | string[],
     @ComponentParams('user_id') userId: string,
     @ComponentParams('action') action: string,
   ) {
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.text(
         `User ID: ${userId}\nAction: ${action}\nAll params: ${JSON.stringify(allParams)}`,
       ),

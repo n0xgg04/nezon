@@ -31,8 +31,8 @@ import { Command, AutoContext, SmartMessage, EmbedBuilder } from '@n0xgg04/nezon
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('embed')
-async onEmbed(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onEmbed(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('')
       .addEmbed(
         new EmbedBuilder()
@@ -58,8 +58,8 @@ addField(name: string, value: string, inline?: boolean): EmbedBuilder
 
 ```ts
 @Command('embed')
-async onEmbed(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onEmbed(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('')
       .addEmbed(
         new EmbedBuilder()
@@ -85,8 +85,8 @@ addField(name: string, value: string, inline?: boolean): EmbedBuilder
 
 ```ts
 @Command('embed')
-async onEmbed(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onEmbed(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('')
       .addEmbed(
         new EmbedBuilder()
@@ -126,8 +126,8 @@ addTextField(
 
 ```ts
 @Command('form')
-async onForm(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onForm(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.build()
       .addEmbed(
         new EmbedBuilder()
@@ -165,8 +165,8 @@ addSelectField(
 
 ```ts
 @Command('form')
-async onForm(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onForm(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.build()
       .addEmbed(
         new EmbedBuilder()
@@ -187,8 +187,8 @@ Kết hợp buttons với embeds:
 
 ```ts
 @Command('embed-button')
-async onEmbedButton(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onEmbedButton(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('')
       .addEmbed(
         new EmbedBuilder()
@@ -262,8 +262,8 @@ import { Command, AutoContext, SmartMessage, EmbedBuilder, ButtonBuilder, Button
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('poll')
-async onPoll(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onPoll(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.build()
       .addEmbed(
         new EmbedBuilder()

@@ -31,8 +31,8 @@ import { Command, AutoContext, SmartMessage, ButtonBuilder, ButtonStyle } from '
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('button')
-async onButton(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onButton(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Click the button!')
       .addButton(
         new ButtonBuilder()
@@ -44,8 +44,8 @@ async onButton(@AutoContext() [message]: Nezon.AutoContext) {
 }
 
 @Component({ pattern: 'click/confirm' })
-async onConfirm(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(SmartMessage.text('Confirmed!'));
+async onConfirm(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(SmartMessage.text('Confirmed!'));
 }
 ```
 
@@ -53,9 +53,9 @@ async onConfirm(@AutoContext() [message]: Nezon.AutoContext) {
 
 ```ts
 @Command('button')
-async onButton(@AutoContext() [message]: Nezon.AutoContext) {
-  const messageId = message.id ?? 'unknown';
-  await message.reply(
+async onButton(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  const messageId = managedMessage.id ?? 'unknown';
+  await managedMessage.reply(
     SmartMessage.text('Click the button!')
       .addButton(
         new ButtonBuilder()
@@ -69,9 +69,9 @@ async onButton(@AutoContext() [message]: Nezon.AutoContext) {
 @Component({ pattern: '/demo/success/:message_id' })
 async onConfirm(
   @ComponentParams('message_id') targetId: string | undefined,
-  @AutoContext() [message]: Nezon.AutoContext,
+  @AutoContext() [managedMessage]: Nezon.AutoContext,
 ) {
-  await message.reply(SmartMessage.text(`Confirmed! ID: ${targetId}`));
+  await managedMessage.reply(SmartMessage.text(`Confirmed! ID: ${targetId}`));
 }
 ```
 
@@ -99,8 +99,8 @@ import { Command, AutoContext, SmartMessage, ButtonBuilder, ButtonStyle } from '
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('button')
-async onButton(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onButton(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Click the button!')
       .addButton(
         new ButtonBuilder()
@@ -132,8 +132,8 @@ interface ButtonClickContext {
 
 ```ts
 @Command('button')
-async onButton(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onButton(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Click the button!')
       .addButton(
         new ButtonBuilder()
@@ -159,8 +159,8 @@ async onButton(@AutoContext() [message]: Nezon.AutoContext) {
 
 ```ts
 @Command('menu')
-async onMenu(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onMenu(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Choose an option:')
       .addButton(
         new ButtonBuilder()

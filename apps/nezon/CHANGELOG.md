@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2025-11-14
+
+### Added
+
+- **@Attachments decorator**: Lấy danh sách file đính kèm từ command hoặc event payload, với hỗ trợ `@Attachments(0)` để lấy file đầu tiên. Trả về `Nezon.Attachments` (array) hoặc `Nezon.Attachment`.
+- **@Mentions decorator**: Lấy danh sách mentions từ message với cú pháp tương tự `@Mentions()` và `@Mentions(0)`. Trả về `Nezon.Mentions` hoặc `Nezon.Mention`.
+- **Type exports mới**: `Nezon.Attachments`, `Nezon.Attachment`, `Nezon.Mentions`, `Nezon.Mention` để tăng autocomplete và type safety khi làm việc với payload.
+- **Examples & Template updates**: Thêm command `*inspect` trong `mebot` và `create-mezon-bot` template để minh họa cách đọc attachments/mentions và phản hồi lại người dùng.
+- **Documentation**: Bổ sung hướng dẫn cho `@Attachments`, `@Mentions`, cùng ví dụ mới trong trang decorators, examples và message-template/attachments.
+
+### Changed
+
+- **Parameter resolution**: `NezonCommandService`, `NezonComponentService` và `NezonEventsService` hỗ trợ inject attachments/mentions cho commands, components và event handlers.
+
 ## [1.0.8] - 2025-11-14
 
 ### Added

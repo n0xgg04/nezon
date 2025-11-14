@@ -124,8 +124,8 @@ import type { Nezon } from '@n0xgg04/nezon';
 @Injectable()
 export class PingHandler {
   @Command({ name: 'ping', aliases: ['pong'] })
-  async onPing(@AutoContext() [message]: Nezon.AutoContext) {
-    await message.reply(SmartMessage.text('pong!'));
+  async onPing(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+    await managedMessage.reply(SmartMessage.text('pong!'));
   }
 }
 ```

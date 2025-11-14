@@ -16,8 +16,8 @@ Thay vì phải tự quản lý event listeners và command handlers, bạn ch�
 
 ```ts
 @Command('ping')
-async onPing(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(SmartMessage.text('pong!'));
+async onPing(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(SmartMessage.text('pong!'));
 }
 ```
 
@@ -132,8 +132,8 @@ import { Command, AutoContext, SmartMessage } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('ping')
-async onPing(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(SmartMessage.text('pong!'));
+async onPing(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(SmartMessage.text('pong!'));
 }
 ```
 

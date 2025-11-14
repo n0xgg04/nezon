@@ -15,8 +15,8 @@ import { Command, AutoContext, SmartMessage } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('ping')
-async onPing(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(SmartMessage.text('pong!'));
+async onPing(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(SmartMessage.text('pong!'));
 }
 ```
 
@@ -26,10 +26,10 @@ async onPing(@AutoContext() [message]: Nezon.AutoContext) {
 @Command('greet')
 async onGreet(
   @Args() args: Nezon.Args,
-  @AutoContext() [message]: Nezon.AutoContext,
+  @AutoContext() [managedMessage]: Nezon.AutoContext,
 ) {
   const name = args[0] ?? 'Anonymous';
-  await message.reply(SmartMessage.text(`Hello, ${name}!`));
+  await managedMessage.reply(SmartMessage.text(`Hello, ${name}!`));
 }
 ```
 
@@ -37,8 +37,8 @@ async onGreet(
 
 ```ts
 @Command({ name: 'help', aliases: ['h', '?'] })
-async onHelp(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(SmartMessage.text('Help message'));
+async onHelp(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(SmartMessage.text('Help message'));
 }
 ```
 
@@ -60,7 +60,7 @@ async onInspect(
   @Attachments(0) firstFile: Nezon.Attachment | undefined,
   @Mentions() mentions: Nezon.Mentions,
   @Mentions(0) firstMention: Nezon.Mention | undefined,
-  @AutoContext('message') message: Nezon.AutoContextType.Message,
+  @AutoContext('message') managedMessage: Nezon.AutoContextType.Message,
 ) {
   const summary = [
     `Tổng số file: ${files.length}`,
@@ -68,7 +68,7 @@ async onInspect(
     `Tổng số mention: ${mentions.length}`,
     `Mention đầu tiên: ${firstMention?.username ?? firstMention?.user_id ?? 'không có'}`,
   ].join('\n');
-  await message.reply(SmartMessage.text(summary));
+  await managedMessage.reply(SmartMessage.text(summary));
 }
 ```
 
@@ -81,8 +81,8 @@ import { Component, AutoContext, SmartMessage } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Component('click/confirm')
-async onConfirm(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(SmartMessage.text('Confirmed!'));
+async onConfirm(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(SmartMessage.text('Confirmed!'));
 }
 ```
 
@@ -93,7 +93,7 @@ async onConfirm(@AutoContext() [message]: Nezon.AutoContext) {
 async onUserAction(
   @ComponentParams('user_id') userId: string | undefined,
   @ComponentParams('action') action: string | undefined,
-  @AutoContext() [message]: Nezon.AutoContext,
+  @AutoContext() [managedMessage]: Nezon.AutoContext,
 ) {
   await message.reply(
     SmartMessage.text(`User ${userId}: ${action}`)
@@ -110,8 +110,8 @@ import { Command, AutoContext, SmartMessage, ButtonBuilder, ButtonStyle } from '
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('button')
-async onButton(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onButton(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Click the button!')
       .addButton(
         new ButtonBuilder()
@@ -129,8 +129,8 @@ async onButton(@AutoContext() [message]: Nezon.AutoContext) {
 
 ```ts
 @Command('info')
-async onInfo(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onInfo(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Get info:')
       .addButton(
         new ButtonBuilder()
@@ -243,9 +243,9 @@ async onDM(
 
 ```ts
 @Command('senddm')
-async onSendDM(@AutoContext() [message]: Nezon.AutoContext) {
+async onSendDM(@AutoContext() [managedMessage]: Nezon.AutoContext) {
   try {
-    await message.sendDM(
+    await managedMessage.sendDM(
       SmartMessage.text('Đây là tin nhắn DM được gửi tự động cho bạn!'),
     );
     await message.reply(SmartMessage.text('✅ Đã gửi DM cho bạn!'));
@@ -294,8 +294,8 @@ async onDMRich(
 
 ```ts
 @Command('menu')
-async onMenu(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onMenu(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Choose an option:')
       .addButton(new ButtonBuilder().setLabel('Option 1'))
       .addButton(new ButtonBuilder().setLabel('Option 2'))
@@ -307,8 +307,8 @@ async onMenu(@AutoContext() [message]: Nezon.AutoContext) {
 
 ```ts
 @Command('poll')
-async onPoll(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onPoll(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.build()
       .addEmbed(
         new EmbedBuilder()

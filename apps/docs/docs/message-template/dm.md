@@ -124,16 +124,16 @@ import { Command, AutoContext, SmartMessage } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('senddm')
-async onSendDM(@AutoContext() [message]: Nezon.AutoContext) {
+async onSendDM(@AutoContext() [managedMessage]: Nezon.AutoContext) {
   try {
-    await message.sendDM(
+    await managedMessage.sendDM(
       SmartMessage.text('Đây là tin nhắn DM được gửi tự động cho bạn!'),
     );
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.text('✅ Đã gửi DM cho bạn!'),
     );
   } catch (error) {
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.text(`❌ Lỗi: ${(error as Error).message}`),
     );
   }
@@ -154,8 +154,8 @@ interface ManagedMessage {
 
 ```ts
 @Command('senddm-file')
-async onSendDMFile(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.sendDM(
+async onSendDMFile(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.sendDM(
     SmartMessage.text('DM với file đính kèm!')
       .addFile(
         'https://example.com/file.pdf',
@@ -184,14 +184,14 @@ async onSendDMFile(@AutoContext() [message]: Nezon.AutoContext) {
 @Command('notify')
 async onNotify(
   @Args() args: Nezon.Args,
-  @AutoContext() [message, dm]: Nezon.AutoContext,
+  @AutoContext() [managedMessage, dm]: Nezon.AutoContext,
   @User() user?: Nezon.User,
 ) {
   const targetUserId = args[0];
   const notification = args.slice(1).join(' ') || 'Bạn có thông báo mới!';
   
   if (!targetUserId) {
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.text('Sử dụng: *notify <user_id> <message>'),
     );
     return;
@@ -202,11 +202,11 @@ async onNotify(
       targetUserId,
       SmartMessage.system(`🔔 Thông báo từ ${user?.username || 'Bot'}:\n\n${notification}`),
     );
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.text(`✅ Đã gửi thông báo đến ${targetUserId}`),
     );
   } catch (error) {
-    await message.reply(
+    await managedMessage.reply(
       SmartMessage.text(`❌ Không thể gửi DM: ${(error as Error).message}`),
     );
   }
@@ -218,16 +218,16 @@ async onNotify(
 ```ts
 @Command('private')
 async onPrivate(
-  @AutoContext() [message]: Nezon.AutoContext,
+  @AutoContext() [managedMessage]: Nezon.AutoContext,
   @Args() args: Nezon.Args,
 ) {
   const response = args.join(' ') || 'Đây là phản hồi riêng tư!';
   
-  await message.sendDM(
+  await managedMessage.sendDM(
     SmartMessage.text(response),
   );
   
-  await message.reply(
+  await managedMessage.reply(
     SmartMessage.system('✅ Đã gửi phản hồi riêng tư cho bạn!'),
   );
 }

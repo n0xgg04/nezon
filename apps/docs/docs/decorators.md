@@ -200,10 +200,8 @@ Lấy ManagedMessage và DMHelper với các methods tiện dụng.
 **Cách 1: Lấy toàn bộ tuple (backward compatible)**
 ```ts
 @Command('ping')
-async ping(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(SmartMessage.text('pong!'));
-  await message.update(SmartMessage.text('updated!'));
-  await message.delete();
+async ping(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(SmartMessage.text('pong!'));
 }
 ```
 
@@ -212,7 +210,7 @@ async ping(@AutoContext() [message]: Nezon.AutoContext) {
 @Command('dm')
 async sendDM(
   @Args() args: Nezon.Args,
-  @AutoContext('message') message: Nezon.AutoContextType.Message,
+  @AutoContext('message') managedMessage: Nezon.AutoContextType.Message,
   @AutoContext('dm') dm: Nezon.AutoContextType.DM,
 ) {
   const userId = args[0];
@@ -224,6 +222,14 @@ async sendDM(
 - `Nezon.AutoContext` - Tuple type `[ManagedMessage, DMHelper]`
 - `Nezon.AutoContextType.Message` - Type cho ManagedMessage
 - `Nezon.AutoContextType.DM` - Type cho DMHelper
+
+> **Lưu ý về ManagedMessage**
+>
+> `ManagedMessage` đại diện cho message của context hiện tại:
+> - Với **text commands**, đây chính là **tin nhắn người dùng gửi**, nên bạn chỉ nên dùng `reply()` hoặc `sendDM()`. Các method như `update()`/`delete()` sẽ **không hoạt động** vì bot không sở hữu message đó.
+> - Với **component handlers** (hoặc khi dùng `@ComponentTarget`), `ManagedMessage` trỏ tới **message do bot gửi**, vì vậy bạn có thể gọi `update()` hoặc `delete()` để chỉnh sửa/chôn message của bot.
+>
+> Best practice: đặt tên biến là `managedMessage` hoặc tương tự để phân biệt với raw payload (`ChannelMessagePayload`).
 
 ### @Message
 

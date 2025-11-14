@@ -18,13 +18,13 @@ import type { Nezon } from '@n0xgg04/nezon';
 async onInspect(
   @Attachments() files: Nezon.Attachments,
   @Attachments(0) firstFile: Nezon.Attachment | undefined,
-  @AutoContext('message') message: Nezon.AutoContextType.Message,
+  @AutoContext('message') managedMessage: Nezon.AutoContextType.Message,
 ) {
   const summary = [
     `Tổng số file: ${files.length}`,
     `File đầu tiên: ${firstFile?.filename ?? firstFile?.url ?? 'không có'}`,
   ].join('\n');
-  await message.reply(SmartMessage.text(summary));
+  await managedMessage.reply(SmartMessage.text(summary));
 }
 ```
 
@@ -52,8 +52,8 @@ import { Command, AutoContext, SmartMessage } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('image')
-async onImage(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onImage(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Check out this image!')
       .addImage('https://example.com/image.jpg')
   );
@@ -64,8 +64,8 @@ async onImage(@AutoContext() [message]: Nezon.AutoContext) {
 
 ```ts
 @Command('image')
-async onImage(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onImage(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('High quality image')
       .addImage('https://example.com/image.jpg', {
         filename: 'my-image.jpg',
@@ -92,8 +92,8 @@ interface ImageOptions {
 
 ```ts
 @Command('gallery')
-async onGallery(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onGallery(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Image gallery')
       .addImage('https://example.com/image1.jpg', { filename: 'img1.jpg' })
       .addImage('https://example.com/image2.jpg', { filename: 'img2.jpg' })
@@ -126,8 +126,8 @@ import { Command, AutoContext, SmartMessage } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('file')
-async onFile(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onFile(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Download this file:')
       .addFile(
         'https://example.com/document.pdf',
@@ -158,8 +158,8 @@ interface FileOptions {
 
 ```ts
 @Command('download')
-async onDownload(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onDownload(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Archive file:')
       .addFile(
         'https://example.com/archive.zip',
@@ -193,8 +193,8 @@ import { Command, AutoContext, SmartMessage } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('voice')
-async onVoice(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onVoice(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.voice('https://example.com/audio.mp3', {
       transcript: 'This is a voice message transcript',
     })
@@ -216,8 +216,8 @@ interface VoiceOptions {
 
 ```ts
 @Command('mixed')
-async onMixed(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onMixed(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Mixed content:')
       .addImage('https://example.com/image.jpg', { filename: 'img.jpg' })
       .addFile('https://example.com/doc.pdf', 'doc.pdf', 'application/pdf')
@@ -245,8 +245,8 @@ SmartMessage.image(url: string, options?: {
 
 ```ts
 @Command('photo')
-async onPhoto(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onPhoto(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.image('https://example.com/photo.jpg', {
       alt: 'A beautiful photo',
       filename: 'photo.jpg',

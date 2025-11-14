@@ -23,8 +23,8 @@ import { Command, AutoContext, SmartMessage } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('hello')
-async onHello(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(SmartMessage.text('Hello, World!'));
+async onHello(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(SmartMessage.text('Hello, World!'));
 }
 ```
 
@@ -65,8 +65,8 @@ import { Command, AutoContext, SmartMessage } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('announce')
-async onAnnounce(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onAnnounce(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.system('⚠️ Thông báo quan trọng!\n\nBot sẽ bảo trì vào 2h sáng.')
   );
 }
@@ -96,8 +96,8 @@ import { Command, AutoContext, SmartMessage, ButtonBuilder, ButtonStyle } from '
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('menu')
-async onMenu(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onMenu(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.text('Chọn một tùy chọn:')
       .addButton(
         new ButtonBuilder()
@@ -120,8 +120,8 @@ import { Command, AutoContext, SmartMessage, EmbedBuilder } from '@n0xgg04/nezon
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Command('notice')
-async onNotice(@AutoContext() [message]: Nezon.AutoContext) {
-  await message.reply(
+async onNotice(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
     SmartMessage.system('Thông báo hệ thống')
       .addEmbed(
         new EmbedBuilder()
