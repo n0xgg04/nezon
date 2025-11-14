@@ -15,6 +15,7 @@ import {
 } from '../interfaces/parameter-metadata.interface';
 import {
   ManagedMessage,
+  DMHelper,
   SmartMessage,
   SmartMessageLike,
   NormalizedSmartMessage,
@@ -342,12 +343,16 @@ export class NezonCommandService {
 
   private async getAutoContext(
     context: NezonCommandContext,
-  ): Promise<[ManagedMessage]> {
-    return this.getOrSetCache(context, this.cacheKeys.autoContext, async () => [
-      new ManagedMessage(context, {
+  ): Promise<[ManagedMessage, DMHelper]> {
+    return this.getOrSetCache(context, this.cacheKeys.autoContext, async () => {
+      const helpers = {
         normalize: (input) => this.normalizeSmartMessage(input),
-      }),
-    ]);
+      };
+      return [
+        new ManagedMessage(context, helpers),
+        new DMHelper(context.client, helpers),
+      ];
+    });
   }
 
   private normalizeSmartMessage(

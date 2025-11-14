@@ -137,6 +137,89 @@ async onMessage(
 }
 ```
 
+## DM Examples
+
+### Gửi DM với DMHelper
+
+```ts
+import { Command, AutoContext, SmartMessage, Args } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+
+@Command('dm')
+async onDM(
+  @Args() args: Nezon.Args,
+  @AutoContext() [message, dm]: Nezon.AutoContext,
+) {
+  const userId = args[0];
+  
+  if (!userId) {
+    await message.reply(SmartMessage.text('Sử dụng: *dm <user_id>'));
+    return;
+  }
+
+  try {
+    await dm.send(
+      userId,
+      SmartMessage.text('Đây là tin nhắn DM được gửi từ bot!'),
+    );
+    await message.reply(SmartMessage.text(`✅ Đã gửi DM đến ${userId}`));
+  } catch (error) {
+    await message.reply(
+      SmartMessage.text(`❌ Lỗi: ${(error as Error).message}`),
+    );
+  }
+}
+```
+
+### Gửi DM tự động với sendDM()
+
+```ts
+@Command('senddm')
+async onSendDM(@AutoContext() [message]: Nezon.AutoContext) {
+  try {
+    await message.sendDM(
+      SmartMessage.text('Đây là tin nhắn DM được gửi tự động cho bạn!'),
+    );
+    await message.reply(SmartMessage.text('✅ Đã gửi DM cho bạn!'));
+  } catch (error) {
+    await message.reply(
+      SmartMessage.text(`❌ Lỗi: ${(error as Error).message}`),
+    );
+  }
+}
+```
+
+### DM với Rich Content
+
+```ts
+@Command('dm-rich')
+async onDMRich(
+  @Args() args: Nezon.Args,
+  @AutoContext() [message, dm]: Nezon.AutoContext,
+) {
+  const userId = args[0];
+  
+  await dm.send(
+    userId,
+    SmartMessage.text('DM với embed và button!')
+      .addEmbed(
+        new EmbedBuilder()
+          .setTitle('Rich DM')
+          .setDescription('Đây là DM với embed')
+          .setColor('#00ff00'),
+      )
+      .addButton(
+        new ButtonBuilder()
+          .setLabel('Click Me')
+          .setStyle(ButtonStyle.Primary)
+          .onClick(async (context) => {
+            await context.message.reply(SmartMessage.text('Button trong DM được click!'));
+          }),
+      ),
+  );
+}
+```
+
 ## SmartMessage Examples
 
 ### Text với Buttons

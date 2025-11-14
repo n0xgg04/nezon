@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-01-XX
+
+### Added
+
+- **Direct Message (DM) Support**: Thêm hỗ trợ gửi Direct Message cho người dùng với 2 cách:
+  - **DMHelper**: Class mới trong `AutoContext` để gửi DM đến user cụ thể bằng `user_id`:
+    ```ts
+    @AutoContext() [message, dm]: Nezon.AutoContext
+    await dm.send(userId, SmartMessage.text('Hello!'));
+    ```
+  - **ManagedMessage.sendDM()**: Method mới để tự động gửi DM cho người gửi tin nhắn hiện tại:
+    ```ts
+    await message.sendDM(SmartMessage.text('Private response!'));
+    ```
+- **AutoContext enhancement**: `AutoContext` giờ trả về `[ManagedMessage, DMHelper]` thay vì chỉ `[ManagedMessage]`, cho phép truy cập DMHelper khi cần:
+  ```ts
+  // Vẫn hoạt động như cũ (backward compatible)
+  @AutoContext() [message]: Nezon.AutoContext
+  
+  // Hoặc sử dụng DMHelper
+  @AutoContext() [message, dm]: Nezon.AutoContext
+  ```
+- **DM Documentation**: Thêm trang documentation đầy đủ về DM tại `/docs/message-template/dm` với:
+  - Hướng dẫn sử dụng DMHelper và sendDM()
+  - Ví dụ code chi tiết
+  - So sánh 2 cách sử dụng
+  - Best practices và troubleshooting
+
+### Changed
+
+- **AutoContext type**: Cập nhật type definition từ `[ManagedMessage]` thành `[ManagedMessage, DMHelper]` để hỗ trợ DM functionality. Code cũ vẫn hoạt động bình thường do TypeScript cho phép destructure một phần của tuple.
+
 ## [1.0.0] - 2025-01-XX
 
 ### Added

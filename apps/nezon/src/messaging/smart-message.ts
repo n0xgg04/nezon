@@ -341,6 +341,33 @@ interface ManagedMessageHelpers {
   normalize: (input: SmartMessageLike) => NormalizedSmartMessage;
 }
 
+export class DMHelper {
+  constructor(
+    private readonly client: import('mezon-sdk').MezonClient,
+    private readonly helpers: ManagedMessageHelpers,
+  ) {}
+
+  async send(userId: string, message: SmartMessageLike) {
+    const payload = this.helpers.normalize(message);
+    
+    const dmChannel = await (this.client as any).createDMchannel(userId);
+    if (!dmChannel?.channel_id) {
+      throw new Error(`Failed to create DM channel with user ${userId}`);
+    }
+
+    const channel = await (this.client as any).channels.fetch(dmChannel.channel_id);
+    if (!channel) {
+      throw new Error(`Failed to fetch DM channel ${dmChannel.channel_id}`);
+    }
+
+    return channel.send(
+      payload.content,
+      undefined,
+      payload.attachments,
+    );
+  }
+}
+
 /**
  * Wrapper around the current message entity providing convenience helpers
  * for replying or updating messages using {@link SmartMessage}.
@@ -393,5 +420,30 @@ export class ManagedMessage {
 
   async fetch(): Promise<Message | undefined> {
     return this.context.getMessage();
+  }
+
+  async sendDM(message: SmartMessageLike) {
+    const senderId = this.context.message.sender_id;
+    if (!senderId) {
+      throw new Error('Cannot send DM: sender_id is not available');
+    }
+    const payload = this.helpers.normalize(message);
+    
+    const clientAny = this.context.client as any;
+    const dmChannel = await clientAny.createDMchannel(senderId);
+    if (!dmChannel?.channel_id) {
+      throw new Error(`Failed to create DM channel with user ${senderId}`);
+    }
+
+    const channel = await clientAny.channels.fetch(dmChannel.channel_id);
+    if (!channel) {
+      throw new Error(`Failed to fetch DM channel ${dmChannel.channel_id}`);
+    }
+
+    return channel.send(
+      payload.content,
+      undefined,
+      payload.attachments,
+    );
   }
 }

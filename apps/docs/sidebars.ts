@@ -6,11 +6,12 @@ const sidebars: SidebarsConfig = {
     "installation",
     {
       type: "category",
-      label: "Message Template",
+      label: "Message",
       items: [
         "message-template/text-message",
         "message-template/attachments",
         "message-template/embed-form-button",
+        "message-template/dm",
       ],
     },
           {

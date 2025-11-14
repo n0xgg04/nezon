@@ -38,6 +38,7 @@ import type {
 import * as Messaging from '../messaging/smart-message';
 import type {
   ManagedMessage as ManagedMessageType,
+  DMHelper as DMHelperType,
   SmartMessageLike,
 } from '../messaging/smart-message';
 import * as ButtonModule from '../messaging/button-builder';
@@ -71,10 +72,11 @@ export namespace Nezon {
   export type ComponentParams = string[] | Record<string, string>;
   export type ComponentParam = string | undefined;
   export type Args = string[];
-  export type AutoContext = [ManagedMessageType];
+  export type AutoContext = [ManagedMessageType, DMHelperType];
   export type SmartMessageInput = SmartMessageLike;
   export const SmartMessage = Messaging.SmartMessage;
   export type ManagedMessage = ManagedMessageType;
+  export type DMHelper = DMHelperType;
   export type Button = ButtonComponent;
   export const ButtonBuilder = ButtonModule.ButtonBuilder;
   export const ButtonStyle = ButtonModule.ButtonStyle;

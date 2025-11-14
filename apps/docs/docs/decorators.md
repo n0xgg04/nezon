@@ -146,20 +146,32 @@ async echo(@MessageContent() content: string | undefined) {
 
 ### @AutoContext
 
-Lấy ManagedMessage với các methods tiện dụng.
+Lấy ManagedMessage và DMHelper với các methods tiện dụng.
 
 ```ts
 @AutoContext(): ParameterDecorator
-// Trả về: Nezon.AutoContext = [ManagedMessage]
+// Trả về: Nezon.AutoContext = [ManagedMessage, DMHelper]
 ```
 
-**Ví dụ:**
+**Ví dụ cơ bản:**
 ```ts
 @Command('ping')
 async ping(@AutoContext() [message]: Nezon.AutoContext) {
   await message.reply(SmartMessage.text('pong!'));
   await message.update(SmartMessage.text('updated!'));
   await message.delete();
+}
+```
+
+**Ví dụ với DM:**
+```ts
+@Command('dm')
+async sendDM(
+  @Args() args: Nezon.Args,
+  @AutoContext() [message, dm]: Nezon.AutoContext,
+) {
+  const userId = args[0];
+  await dm.send(userId, SmartMessage.text('Hello via DM!'));
 }
 ```
 

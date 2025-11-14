@@ -78,7 +78,7 @@ new ButtonBuilder()
 - ✅ **ButtonBuilder**: Fluent API với onClick handlers
 - ✅ **EmbedBuilder**: Rich embeds với form inputs
 - ✅ **Named Parameters**: RESTful pattern trong component IDs (`/user/:id/:action`)
-- ✅ **Auto Context**: `ManagedMessage` với `reply`, `update`, `delete` methods
+- ✅ **Auto Context**: `ManagedMessage` với `reply`, `update`, `delete`, `sendDM` methods và `DMHelper` để gửi DM
 
 ## So sánh với Mezon SDK
 
