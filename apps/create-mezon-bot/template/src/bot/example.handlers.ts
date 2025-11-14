@@ -356,28 +356,6 @@ export class ExampleHandlers {
     );
   }
 
-  @On(Events.ChannelMessage)
-  async logChannelMessage(
-    @ChannelMessagePayload() message: Nezon.ChannelMessage,
-    @ChannelMessagePayload('message_id') messageId: string | undefined,
-    @MessageContent() content: string,
-    @Channel() channel: Nezon.Channel | undefined,
-    @Channel('id') channelId: string | undefined,
-    @User() user: Nezon.User | undefined,
-    @User('avartar') username: string | undefined,
-  ) {
-    const channelLabel = channelId ?? channel?.id ?? message.channel_id ?? 'unknown';
-    const author =
-      username ??
-      user?.username ??
-      message.username ??
-      message.display_name ??
-      message.sender_id ??
-      'unknown';
-    this.logger.verbose(
-      `message ${messageId ?? message.message_id ?? 'unknown'} received from ${author} in channel ${channelLabel}: ${content}`,
-    );
-  }
 
   @On(Events.VoiceJoinedEvent)
   async onVoice(
