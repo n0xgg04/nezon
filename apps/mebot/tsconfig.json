@@ -11,6 +11,8 @@
     "outDir": "./dist",
     "rootDir": "./",
     "baseUrl": "./",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
     "types": ["node"],
     "incremental": true,
     "skipLibCheck": true,
