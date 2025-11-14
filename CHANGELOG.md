@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2025-11-14
+
+### Added
+
+- **@AutoContext trong Event Handlers**: Hỗ trợ sử dụng `@AutoContext` trong `@On` và `@Once` event handlers để truy cập `DMHelper`:
+  ```ts
+  @On(Events.TokenSend)
+  async onTokenSend(
+    @EventPayload() event: Nezon.TokenSendPayload,
+    @AutoContext() [_, dm]: Nezon.AutoContext,
+  ) {
+    await dm.send(event.sender_id, SmartMessage.text('Token sent!'));
+  }
+  ```
+  - Trong event handlers, `@AutoContext()` trả về `[null, DMHelper]` vì không có message context
+  - Có thể sử dụng `@AutoContext('dm')` để lấy trực tiếp `DMHelper`
+  - `ManagedMessage` sẽ là `null` trong event handlers vì không có message context
+- **Event Examples với DM**: Thêm examples mới cho VoiceJoinedEvent và TokenSend event với DM notifications:
+  ```ts
+  @On(Events.VoiceJoinedEvent)
+  async onVoice(
+    @EventPayload() event: Nezon.VoiceJoinedPayload,
+    @AutoContext() [_, dm]: Nezon.AutoContext,
+  ) {
+    await dm.send(event.user_id, SmartMessage.text('Đã join'));
+  }
+  ```
+- **Documentation Updates**: Cập nhật documentation với các ví dụ mới về event handlers và DM:
+  - Thêm section "Voice Joined Event với DM" và "Token Send Event với DM" trong examples
+  - Cập nhật create-mezon-bot template với các ví dụ mới
+  - Cập nhật README của create-mezon-bot với thông tin về DM support
+
+### Fixed
+
+- **Event Binding Error Handling**: Sửa lỗi `onAddClanUser(...).catch is not a function` bằng cách thêm kiểm tra xem method có trả về Promise hay không trước khi gọi `.catch()`:
+  ```ts
+  const result = (client as any).onAddClanUser(async (user) => {
+    this.eventEmitter.emit(Events.AddClanUser, user);
+  });
+  if (result && typeof result.catch === 'function') {
+    result.catch((error) => this.logger.error('...', error?.stack));
+  }
+  ```
+  - Áp dụng error handling an toàn cho tất cả event binding methods
+  - Tránh crash khi event methods không trả về Promise
+
+### Changed
+
+- **create-mezon-bot Template**: Cập nhật template project với:
+  - Examples mới cho VoiceJoinedEvent và TokenSend events
+  - Import `EventPayload` decorator
+  - Cập nhật README với link đến trang tạo bot và thông tin về DM support
+  - Cập nhật console output với link tạo bot
+
 ## [1.0.1] - 2025-11-14
 
 ### Added
