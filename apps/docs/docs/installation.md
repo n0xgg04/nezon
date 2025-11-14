@@ -11,6 +11,8 @@ Hướng dẫn cài đặt Nezon và tạo bot đầu tiên với tính năng pi
 - Node.js >= 18
 - Mezon bot token và bot ID
 
+> **Lấy bot token và bot ID:** Tạo bot mới tại [https://mezon.ai/developers/applications](https://mezon.ai/developers/applications)
+
 ## Cài đặt
 
 Có 2 cách để bắt đầu với Nezon:

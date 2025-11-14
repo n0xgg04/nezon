@@ -94,6 +94,8 @@ new ButtonBuilder()
 
 ## Bắt đầu nhanh
 
+> **Bước đầu tiên:** Tạo bot mới tại [https://mezon.ai/developers/applications](https://mezon.ai/developers/applications) để lấy `MEZON_TOKEN` và `MEZON_BOT_ID`
+
 ### Tạo project mới (Khuyến nghị)
 
 ```bash
