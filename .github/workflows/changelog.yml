@@ -35,6 +35,7 @@ jobs:
           project: nezon
           issues: true
           pullRequests: true
+          unreleasedOnly: true
           addSections: |
             {
               "breaking": {
