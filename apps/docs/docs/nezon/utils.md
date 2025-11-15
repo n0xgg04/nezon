@@ -221,6 +221,75 @@ async onFindMessage(
 - Method này tự động log warning nếu có lỗi xảy ra
 - Trả về `undefined` thay vì throw error
 
+### `getManagedMessage(id: string, channelId?: string): Promise<ManagedMessage | undefined>`
+
+Lấy message entity và wrap trong `ManagedMessage` để sử dụng các helper methods như `reply()`, `update()`, `delete()`, `react()`, etc.
+
+**Parameters:**
+- `id: string` - Message ID cần lấy
+- `channelId?: string` - (Optional) Channel ID chứa message. Nếu không cung cấp, sẽ tìm trong tất cả channels
+
+**Returns:**
+- `Promise<ManagedMessage | undefined>` - ManagedMessage instance hoặc `undefined` nếu không tìm thấy
+
+**Ví dụ:**
+```ts
+@Command('react-message')
+async onReactMessage(
+  @NezonUtils() utils: Nezon.NezonUtilsService,
+  @Args() args: Nezon.Args,
+  @AutoContext() [message]: Nezon.AutoContext,
+) {
+  const messageId = args[0];
+  if (!messageId) {
+    await message.reply(SmartMessage.text('Sử dụng: *react-message <message_id>'));
+    return;
+  }
+
+  const managedMsg = await utils.getManagedMessage(messageId, message.channelId);
+  if (managedMsg) {
+    await managedMsg.addReaction('👍');
+    await managedMsg.reply(SmartMessage.text('Đã react!'));
+  } else {
+    await message.reply(SmartMessage.text('Không tìm thấy message'));
+  }
+}
+```
+
+**Ví dụ với update và delete:**
+```ts
+@Command('edit-message')
+async onEditMessage(
+  @NezonUtils() utils: Nezon.NezonUtilsService,
+  @Args() args: Nezon.Args,
+  @AutoContext() [message]: Nezon.AutoContext,
+) {
+  const messageId = args[0];
+  const newText = args.slice(1).join(' ');
+
+  if (!messageId || !newText) {
+    await message.reply(SmartMessage.text('Sử dụng: *edit-message <message_id> <new_text>'));
+    return;
+  }
+
+  const managedMsg = await utils.getManagedMessage(messageId, message.channelId);
+  if (managedMsg) {
+    try {
+      await managedMsg.update(SmartMessage.text(newText));
+      await message.reply(SmartMessage.text('✅ Đã cập nhật message'));
+    } catch (error) {
+      await message.reply(SmartMessage.text('❌ Không thể cập nhật message (chỉ có thể update message của bot)'));
+    }
+  }
+}
+```
+
+**Lưu ý:**
+- `ManagedMessage` cung cấp các methods: `reply()`, `update()`, `delete()`, `react()`, `addReaction()`, `removeReaction()`, `sendDM()`, `fetch()`
+- `update()` và `delete()` chỉ hoạt động với message của bot (sẽ throw error nếu không phải)
+- `react()` hoạt động với cả message của user và bot
+- Nên cung cấp `channelId` để tối ưu performance
+
 ### `sendToken(recipientId: string, amount: number, note?: string): Promise<{ ok: boolean; tx_hash: string; error: string } | undefined>`
 
 Gửi token cho một người dùng.

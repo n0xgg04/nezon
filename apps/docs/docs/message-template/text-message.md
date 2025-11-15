@@ -189,8 +189,53 @@ static system(content: string): SmartMessage
 **Returns:**
 - `SmartMessage` - Instance có thể chain với `.addButton()`, `.addEmbed()`, etc.
 
+## Reaction Methods
+
+ManagedMessage cung cấp các methods để tương tác với reactions trên message:
+
+### `react(emoji: string, emojiId?: string, actionDelete?: boolean)`
+
+React hoặc remove reaction trên message.
+
+```ts
+await managedMessage.react('👍');
+await managedMessage.react('👍', undefined, true); // Remove reaction
+```
+
+### `addReaction(emoji: string, emojiId?: string)`
+
+Thêm reaction (convenience method).
+
+```ts
+await managedMessage.addReaction('👍');
+await managedMessage.addReaction('❤️');
+```
+
+### `removeReaction(emoji: string, emojiId?: string)`
+
+Xóa reaction (convenience method).
+
+```ts
+await managedMessage.removeReaction('👍');
+```
+
+**Ví dụ:**
+```ts
+@Command('react')
+async onReact(@AutoContext() [message]: Nezon.AutoContext) {
+  await message.addReaction('👍');
+  await message.reply(SmartMessage.text('Đã thêm reaction!'));
+}
+```
+
+**Lưu ý:**
+- Reaction methods hoạt động với cả message của user và bot
+- Nếu message entity không tìm thấy, sẽ throw error
+- Có thể dùng với `getManagedMessage()` từ `NezonUtilsService` để react vào message khác
+
 ## Xem thêm
 
 - [Attachments](/docs/message-template/attachments) - Tìm hiểu về attachments
 - [Embed, Form, Button](/docs/message-template/embed-form-button) - Tìm hiểu về embeds và forms
+- [Nezon Utils](/docs/nezon/utils) - Sử dụng `getManagedMessage()` để lấy message và react
 
