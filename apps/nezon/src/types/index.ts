@@ -1,6 +1,7 @@
 import type { ChannelMessage as MezonChannelMessage } from 'mezon-sdk';
 import type { MezonClient } from 'mezon-sdk';
 import type { TokenSentEvent } from 'mezon-sdk';
+import { Events as MezonEvents } from 'mezon-sdk';
 import type { Message as MezonMessage } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
 import type { TextChannel as MezonTextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
 import type { Clan as MezonClan } from 'mezon-sdk/dist/cjs/mezon-client/structures/Clan';
@@ -114,4 +115,8 @@ export namespace Nezon {
   export type VoiceLeavedPayload = VoiceLeavedEvent;
   export type NotificationsPayload = Notifications;
   export type QuickMenuPayload = QuickMenuDataEvent;
+  
+  export const Events = MezonEvents;
 }
+
+export type { NezonUtilsService } from '../services/nezon-utils.service';

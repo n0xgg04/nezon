@@ -17,6 +17,7 @@ export enum NezonParamType {
   COMPONENT_TARGET = 'component_target',
   AUTO_CONTEXT = 'auto_context',
   EVENT_PAYLOAD = 'event_payload',
+  NEZON_UTILS = 'nezon_utils',
 }
 
 export interface NezonParameterMetadata {
