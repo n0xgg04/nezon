@@ -10,6 +10,7 @@ import { NezonEventsService } from './services/nezon-events.service';
 import { NezonLifecycleService } from './services/nezon-lifecycle.service';
 import { NezonComponentService } from './services/nezon-component.service';
 import { NezonEventBridgeService } from './services/nezon-event-bridge.service';
+import { NezonUtilsService } from './services/nezon-utils.service';
 
 @Global()
 /**
@@ -26,6 +27,7 @@ import { NezonEventBridgeService } from './services/nezon-event-bridge.service';
     NezonComponentService,
     NezonEventBridgeService,
     NezonLifecycleService,
+    NezonUtilsService,
     {
       provide: MezonClient,
       useFactory: (clientService: NezonClientService) =>
@@ -39,6 +41,7 @@ import { NezonEventBridgeService } from './services/nezon-event-bridge.service';
     NezonEventsService,
     NezonComponentService,
     NezonEventBridgeService,
+    NezonUtilsService,
     MezonClient,
   ],
 })

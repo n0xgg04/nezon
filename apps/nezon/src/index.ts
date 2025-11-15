@@ -17,6 +17,7 @@ export * from './services/nezon-events.service';
 export * from './services/nezon-lifecycle.service';
 export * from './services/nezon-component.service';
 export * from './services/nezon-event-bridge.service';
+export * from './services/nezon-utils.service';
 export * from './messaging/smart-message';
 export * from './messaging/button-builder';
 export * from './messaging/embed-builder';

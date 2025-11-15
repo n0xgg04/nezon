@@ -8,6 +8,7 @@ const sidebars: SidebarsConfig = {
       type: "category",
       label: "Message",
       items: [
+        "message-template/smart-message",
         "message-template/text-message",
         "message-template/attachments",
         "message-template/embed-form-button",

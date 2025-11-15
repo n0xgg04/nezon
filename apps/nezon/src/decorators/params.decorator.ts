@@ -59,9 +59,12 @@ export function ChannelMessagePayload<K extends keyof ChannelMessage = never>(
 }
 
 export function Client(): ParameterDecorator {
-  /**
-   * Injects the shared `MezonClient` instance.
-   */
+  return setParamMetadata({
+    type: NezonParamType.CLIENT,
+  });
+}
+
+export function MezonClient(): ParameterDecorator {
   return setParamMetadata({
     type: NezonParamType.CLIENT,
   });
@@ -304,6 +307,12 @@ export function AutoContext(key?: 'message' | 'dm'): ParameterDecorator {
 export function EventPayload(): ParameterDecorator {
   return setParamMetadata({
     type: NezonParamType.EVENT_PAYLOAD,
+  });
+}
+
+export function NezonUtils(): ParameterDecorator {
+  return setParamMetadata({
+    type: NezonParamType.NEZON_UTILS,
   });
 }
 
