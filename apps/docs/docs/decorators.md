@@ -226,8 +226,9 @@ async sendDM(
 > **Lưu ý về ManagedMessage**
 >
 > `ManagedMessage` đại diện cho message của context hiện tại:
-> - Với **text commands**, đây chính là **tin nhắn người dùng gửi**, nên bạn chỉ nên dùng `reply()` hoặc `sendDM()`. Các method như `update()`/`delete()` sẽ **không hoạt động** vì bot không sở hữu message đó.
-> - Với **component handlers** (hoặc khi dùng `@ComponentTarget`), `ManagedMessage` trỏ tới **message do bot gửi**, vì vậy bạn có thể gọi `update()` hoặc `delete()` để chỉnh sửa/chôn message của bot.
+> - Với **text commands**, đây chính là **tin nhắn người dùng gửi**, nên bạn chỉ nên dùng `reply()`, `sendDM()`, hoặc `react()`. Các method như `update()`/`delete()` sẽ **throw error** nếu không phải message của bot.
+> - Với **component handlers** (hoặc khi dùng `@ComponentTarget`), `ManagedMessage` trỏ tới **message do bot gửi**, vì vậy bạn có thể gọi `update()` hoặc `delete()` để chỉnh sửa/xóa message của bot.
+> - **Reaction methods** (`react()`, `addReaction()`, `removeReaction()`) hoạt động với cả message của user và bot.
 >
 > Best practice: đặt tên biến là `managedMessage` hoặc tương tự để phân biệt với raw payload (`ChannelMessagePayload`).
 
@@ -476,6 +477,8 @@ async onAddClanUser(@EventPayload() payload: Nezon.AddClanUserPayload) {
 | `@ComponentParam` | Parameter | Component parameter cụ thể |
 | `@ComponentTarget` | Parameter | Target message (cached) |
 | `@EventPayload` | Parameter | Event payload (typed) |
+| `@MezonClient` | Parameter | MezonClient instance |
+| `@NezonUtils` | Parameter | NezonUtilsService instance |
 
 ## Xem thêm
 

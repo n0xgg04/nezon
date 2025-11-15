@@ -156,9 +156,8 @@ Clan: ${clan?.name ?? 'unknown'}
 ```ts
 import { On, ChannelMessagePayload, MessageContent } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
-import { Events } from 'mezon-sdk';
 
-@On(Events.ChannelMessage)
+@On(Nezon.Events.ChannelMessage)
 async onMessage(
   @ChannelMessagePayload() payload: Nezon.ChannelMessage,
   @MessageContent() content: string | undefined,
@@ -172,9 +171,8 @@ async onMessage(
 ```ts
 import { On, EventPayload, AutoContext, SmartMessage } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
-import { Events } from 'mezon-sdk';
 
-@On(Events.VoiceJoinedEvent)
+@On(Nezon.Events.VoiceJoinedEvent)
 async onVoice(
   @EventPayload() event: Nezon.VoiceJoinedPayload,
   @AutoContext() [_, dm]: Nezon.AutoContext,
@@ -188,9 +186,8 @@ async onVoice(
 ```ts
 import { On, EventPayload, AutoContext, SmartMessage } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
-import { Events } from 'mezon-sdk';
 
-@On(Events.TokenSend)
+@On(Nezon.Events.TokenSend)
 async onTokenSend(
   @EventPayload() event: Nezon.TokenSendPayload,
   @AutoContext() [_, dm]: Nezon.AutoContext,
@@ -285,6 +282,111 @@ async onDMRich(
           }),
       ),
   );
+}
+```
+
+## Nezon.Events Examples
+
+### Sử dụng Nezon.Events thay vì import từ mezon-sdk
+
+```ts
+import { On, EventPayload } from '@n0xgg04/nezon';
+import { Nezon } from '@n0xgg04/nezon';
+
+@On(Nezon.Events.ChannelMessage)
+async onMessage(@EventPayload() payload: Nezon.ChannelMessage) {
+  console.log('New message:', payload.message_id);
+}
+
+@On(Nezon.Events.TokenSend)
+async onTokenSend(@EventPayload() payload: Nezon.TokenSendPayload) {
+  console.log('Token sent:', payload.amount);
+}
+```
+
+## Reaction Examples
+
+### Thêm reaction vào message
+
+```ts
+import { Command, AutoContext, SmartMessage } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+
+@Command('like')
+async onLike(@AutoContext() [message]: Nezon.AutoContext) {
+  await message.addReaction('👍');
+  await message.reply(SmartMessage.text('Đã thêm like!'));
+}
+```
+
+### React vào message khác với getManagedMessage
+
+```ts
+import { Command, NezonUtils, AutoContext, SmartMessage, Args } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+
+@Command('react-message')
+async onReactMessage(
+  @NezonUtils() utils: Nezon.NezonUtilsService,
+  @Args() args: Nezon.Args,
+  @AutoContext() [message]: Nezon.AutoContext,
+) {
+  const messageId = args[0];
+  if (!messageId) {
+    await message.reply(SmartMessage.text('Sử dụng: *react-message <message_id>'));
+    return;
+  }
+
+  const managedMsg = await utils.getManagedMessage(messageId, message.channelId);
+  if (managedMsg) {
+    await managedMsg.addReaction('👍');
+    await managedMsg.addReaction('❤️');
+    await message.reply(SmartMessage.text('✅ Đã thêm reactions!'));
+  } else {
+    await message.reply(SmartMessage.text('❌ Không tìm thấy message'));
+  }
+}
+```
+
+### Toggle reaction
+
+```ts
+@Command('toggle-react')
+async onToggleReact(@AutoContext() [message]: Nezon.AutoContext) {
+  try {
+    await message.react('👍', undefined, false);
+    await message.reply(SmartMessage.text('Đã thêm reaction'));
+  } catch (error) {
+    await message.reply(SmartMessage.text('Lỗi khi thêm reaction'));
+  }
+}
+```
+
+## Constructor Injection Examples
+
+### Inject MezonClient và NezonUtilsService
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { Command, MezonClient, NezonUtils, AutoContext, SmartMessage } from '@n0xgg04/nezon';
+import type { Nezon } from '@n0xgg04/nezon';
+
+@Injectable()
+export class MyHandlers {
+  constructor(
+    @MezonClient() private readonly client: Nezon.Client,
+    @NezonUtils() private readonly utils: Nezon.NezonUtilsService,
+  ) {}
+
+  @Command('info')
+  async onInfo(@AutoContext() [message]: Nezon.AutoContext) {
+    const clan = await this.utils.getClan('clan-id');
+    if (clan) {
+      await message.reply(
+        SmartMessage.text(`Clan: ${clan.name}\nBot: ${this.client.user?.username}`)
+      );
+    }
+  }
 }
 ```
 
