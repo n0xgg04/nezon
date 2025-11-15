@@ -28,6 +28,13 @@ const sidebars: SidebarsConfig = {
           "events-list",
           "decorators",
           "examples",
+          {
+            type: "category",
+            label: "Nezon",
+            items: [
+              "nezon/utils",
+            ],
+          },
   ],
 };
 

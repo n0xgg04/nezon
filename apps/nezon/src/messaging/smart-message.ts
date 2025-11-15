@@ -4,6 +4,7 @@ import {
   EMarkdownType,
   IMessageActionRow,
   IInteractiveMessageProps,
+  ReactMessagePayload,
 } from 'mezon-sdk/dist/cjs/interfaces/client';
 import type { ChannelMessage } from 'mezon-sdk';
 import type { Message } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
@@ -390,6 +391,22 @@ export class ManagedMessage {
     return this.context.message.channel_id;
   }
 
+  get senderId(): string | undefined {
+    return this.context.message.sender_id;
+  }
+
+  get isBotMessage(): boolean {
+    try {
+      const clientAny = this.context.client as any;
+      const clientId = clientAny.user?.id || 
+                       clientAny.getClientId?.() ||
+                       clientAny.botId;
+      return this.context.message.sender_id === clientId;
+    } catch {
+      return false;
+    }
+  }
+
   async reply(message: SmartMessageLike) {
     const payload = this.helpers.normalize(message);
     return this.context.reply(payload.content, undefined, payload.attachments);
@@ -398,24 +415,49 @@ export class ManagedMessage {
   async update(message: SmartMessageLike) {
     const entity = await this.context.getMessage();
     if (!entity) {
-      return undefined;
+      throw new Error('Cannot update message: message entity not found');
     }
     const payload = this.helpers.normalize(message);
     if (typeof entity.update === 'function') {
       return entity.update(payload.content, undefined, payload.attachments);
     }
-    return undefined;
+    throw new Error('Cannot update message: update method not available');
   }
 
   async delete() {
     const entity = await this.context.getMessage();
     if (!entity) {
-      return undefined;
+      throw new Error('Cannot delete message: message entity not found');
     }
     if (typeof entity.delete === 'function') {
       return entity.delete();
     }
-    return undefined;
+    throw new Error('Cannot delete message: delete method not available');
+  }
+
+  async react(emoji: string, emojiId?: string, actionDelete: boolean = false) {
+    const entity = await this.context.getMessage();
+    if (!entity) {
+      throw new Error('Cannot react to message: message entity not found');
+    }
+    if (typeof entity.react !== 'function') {
+      throw new Error('Cannot react to message: react method not available');
+    }
+    const reactData: ReactMessagePayload = {
+      emoji_id: emojiId || emoji,
+      emoji: emoji,
+      count: 1,
+      action_delete: actionDelete,
+    };
+    return entity.react(reactData);
+  }
+
+  async addReaction(emoji: string, emojiId?: string) {
+    return this.react(emoji, emojiId, false);
+  }
+
+  async removeReaction(emoji: string, emojiId?: string) {
+    return this.react(emoji, emojiId, true);
   }
 
   async fetch(): Promise<Message | undefined> {
