@@ -7,7 +7,12 @@ import type { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/Tex
 import type { Message } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
 import type { User } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
 import { NezonClientService } from '../client/nezon-client.service';
-import { ManagedMessage, type SmartMessageLike, type NormalizedSmartMessage } from '../messaging/smart-message';
+import {
+  ManagedMessage,
+  SmartMessage,
+  type SmartMessageLike,
+  type NormalizedSmartMessage,
+} from '../messaging/smart-message';
 import type { NezonCommandContext } from '../interfaces/command-context.interface';
 
 @Injectable()
@@ -30,10 +35,7 @@ export class NezonUtilsService {
         return (await this.client.clans.fetch(id)) as Clan;
       }
     } catch (error) {
-      this.logger.warn(
-        `failed to fetch clan ${id}`,
-        (error as Error)?.stack,
-      );
+      this.logger.warn(`failed to fetch clan ${id}`, (error as Error)?.stack);
     }
     return undefined;
   }
@@ -55,7 +57,10 @@ export class NezonUtilsService {
     return undefined;
   }
 
-  async getMessage(id: string, channelId?: string): Promise<Message | undefined> {
+  async getMessage(
+    id: string,
+    channelId?: string,
+  ): Promise<Message | undefined> {
     try {
       if (channelId) {
         const channel = await this.getChannel(channelId);
@@ -120,7 +125,9 @@ export class NezonUtilsService {
         return undefined;
       }
 
-      const channel = message.channel || (channelId ? await this.getChannel(channelId) : undefined);
+      const channel =
+        message.channel ||
+        (channelId ? await this.getChannel(channelId) : undefined);
       if (!channel) {
         return undefined;
       }
@@ -136,15 +143,22 @@ export class NezonUtilsService {
         avatar: '',
         content: this.convertMessageContent(message.content),
         code: 0,
-        create_time: message.create_time_seconds ? new Date(message.create_time_seconds * 1000).toISOString() : undefined,
+        create_time: message.create_time_seconds
+          ? new Date(message.create_time_seconds * 1000).toISOString()
+          : undefined,
         update_time: undefined,
         attachments: this.convertAttachments(message.attachments),
         mentions: this.convertMentions(message.mentions),
       } as ChannelMessage;
 
-      const context = this.createContextFromMessage(channelMessage, message, channel);
+      const context = this.createContextFromMessage(
+        channelMessage,
+        message,
+        channel,
+      );
       const helpers = {
-        normalize: (input: SmartMessageLike) => this.normalizeSmartMessage(input),
+        normalize: (input: SmartMessageLike) =>
+          this.normalizeSmartMessage(input),
       };
 
       return new ManagedMessage(context, helpers);
@@ -188,7 +202,9 @@ export class NezonUtilsService {
         }
         try {
           if (channel.clan.users?.fetch) {
-            return (await channel.clan.users.fetch(channelMessage.sender_id)) as User;
+            return (await channel.clan.users.fetch(
+              channelMessage.sender_id,
+            )) as User;
           }
         } catch {
           return undefined;
@@ -210,15 +226,31 @@ export class NezonUtilsService {
     };
   }
 
-  private normalizeSmartMessage(input: SmartMessageLike): NormalizedSmartMessage {
+  private normalizeSmartMessage(
+    input: SmartMessageLike,
+  ): NormalizedSmartMessage {
+    if (input instanceof SmartMessage) {
+      return input.toJSON();
+    }
     if (typeof input === 'string') {
       return { content: { t: input } };
     }
-    if (input && typeof input === 'object' && 'content' in input) {
+    if (
+      input &&
+      typeof input === 'object' &&
+      'content' in input &&
+      typeof (input as NormalizedSmartMessage).content === 'object'
+    ) {
       const normalized = input as NormalizedSmartMessage;
       return {
-        content: normalized.content,
-        attachments: normalized.attachments,
+        content: { ...normalized.content },
+        attachments: normalized.attachments?.map((attachment) => ({
+          ...attachment,
+        })),
+        mentions: normalized.mentions?.map((mention) => ({ ...mention })),
+        mentionPlaceholders: normalized.mentionPlaceholders
+          ? { ...normalized.mentionPlaceholders }
+          : undefined,
       };
     }
     if (input && typeof input === 'object') {
@@ -231,20 +263,29 @@ export class NezonUtilsService {
     if (typeof content === 'string') {
       return content;
     }
-    if (content && typeof content === 'object' && 't' in content && typeof (content as { t: unknown }).t === 'string') {
+    if (
+      content &&
+      typeof content === 'object' &&
+      't' in content &&
+      typeof (content as { t: unknown }).t === 'string'
+    ) {
       return (content as { t: string }).t;
     }
     return '';
   }
 
-  private convertAttachments(attachments: unknown): ApiMessageAttachment[] | undefined {
+  private convertAttachments(
+    attachments: unknown,
+  ): ApiMessageAttachment[] | undefined {
     if (Array.isArray(attachments)) {
       return attachments as ApiMessageAttachment[];
     }
     return undefined;
   }
 
-  private convertMentions(mentions: unknown): Array<{ user_id: string }> | undefined {
+  private convertMentions(
+    mentions: unknown,
+  ): Array<{ user_id: string }> | undefined {
     if (Array.isArray(mentions)) {
       return mentions.map((m) => {
         if (typeof m === 'object' && m !== null && 'user_id' in m) {
@@ -256,4 +297,3 @@ export class NezonUtilsService {
     return undefined;
   }
 }
-

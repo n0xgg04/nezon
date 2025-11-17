@@ -63,6 +63,10 @@ function copyTemplateFiles() {
       src: "src/bot/examples/example-event.handlers.ts",
       dest: "src/bot/examples/example-event.handlers.ts",
     },
+    {
+      src: "src/bot/examples/example-mention.handlers.ts",
+      dest: "src/bot/examples/example-mention.handlers.ts",
+    },
     { src: "tsconfig.json", dest: "tsconfig.json" },
     { src: "tsconfig.build.json", dest: "tsconfig.build.json" },
     { src: "nest-cli.json", dest: "nest-cli.json" },

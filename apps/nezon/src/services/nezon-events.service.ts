@@ -93,11 +93,7 @@ export class NezonEventsService {
     parameters: NezonParameterMetadata[],
     args: any[],
   ) {
-    const size =
-      Math.max(
-        ...parameters.map((param) => param.index),
-        -1,
-      ) + 1;
+    const size = Math.max(...parameters.map((param) => param.index), -1) + 1;
     const resolved = new Array(size).fill(undefined);
     for (const param of parameters) {
       let value: any = undefined;
@@ -122,14 +118,18 @@ export class NezonEventsService {
           break;
         case NezonParamType.ARG:
           value =
-            typeof param.data === 'number' ? args[param.data] ?? undefined : undefined;
+            typeof param.data === 'number'
+              ? args[param.data] ?? undefined
+              : undefined;
           break;
         case NezonParamType.ATTACHMENTS: {
           const attachments = Array.isArray((args[0] as any)?.attachments)
             ? (args[0] as any).attachments
             : [];
           value =
-            typeof param.data === 'number' ? attachments[param.data] : attachments;
+            typeof param.data === 'number'
+              ? attachments[param.data]
+              : attachments;
           break;
         }
         case NezonParamType.MENTIONS: {
@@ -191,6 +191,10 @@ export class NezonEventsService {
         attachments: normalized.attachments?.map((attachment) => ({
           ...attachment,
         })),
+        mentions: normalized.mentions?.map((mention) => ({ ...mention })),
+        mentionPlaceholders: normalized.mentionPlaceholders
+          ? { ...normalized.mentionPlaceholders }
+          : undefined,
       };
     }
     if (input && typeof input === 'object') {
@@ -199,4 +203,3 @@ export class NezonEventsService {
     return { content: { t: String(input ?? '') } };
   }
 }
-

@@ -8,6 +8,7 @@ import {
   ExampleDMHandlers,
   ExampleEmbedHandlers,
   ExampleEventHandlers,
+  ExampleMentionHandlers,
 } from "./bot/examples";
 import { NezonModule } from "@n0xgg04/nezon";
 
@@ -29,6 +30,7 @@ import { NezonModule } from "@n0xgg04/nezon";
     ExampleDMHandlers,
     ExampleEmbedHandlers,
     ExampleEventHandlers,
+    ExampleMentionHandlers,
   ],
 })
 export class AppModule {}

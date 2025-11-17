@@ -89,8 +89,7 @@ export class NezonComponentService {
   private registerComponents(definitions: NezonComponentDefinition[]) {
     this.components.clear();
     for (const definition of definitions) {
-      const event =
-        definition.options.event ?? Events.MessageButtonClicked;
+      const event = definition.options.event ?? Events.MessageButtonClicked;
       const matcher = this.createMatcher(definition);
       const list = this.components.get(event) ?? [];
       list.push({ definition, matcher });
@@ -137,7 +136,9 @@ export class NezonComponentService {
       try {
         const handler = registry.getHandler(buttonId);
         if (handler) {
-          const clickContext = await this.createButtonClickContext(componentContext);
+          const clickContext = await this.createButtonClickContext(
+            componentContext,
+          );
           await handler(clickContext);
           return;
         }
@@ -153,7 +154,8 @@ export class NezonComponentService {
       return;
     }
     for (const registration of registrations) {
-      const { matched, params, namedParams, match } = registration.matcher(payload);
+      const { matched, params, namedParams, match } =
+        registration.matcher(payload);
       if (!matched) {
         continue;
       }
@@ -195,11 +197,7 @@ export class NezonComponentService {
     parameters: NezonParameterMetadata[],
     context: NezonComponentContext,
   ) {
-    const size =
-      Math.max(
-        ...parameters.map((param) => param.index),
-        -1,
-      ) + 1;
+    const size = Math.max(...parameters.map((param) => param.index), -1) + 1;
     const args = new Array<unknown>(size).fill(undefined);
     for (const param of parameters) {
       let value: unknown = undefined;
@@ -239,11 +237,15 @@ export class NezonComponentService {
               : undefined;
           break;
         case NezonParamType.ATTACHMENTS: {
-          const attachments = Array.isArray((context.payload as any)?.attachments)
+          const attachments = Array.isArray(
+            (context.payload as any)?.attachments,
+          )
             ? (context.payload as any).attachments
             : [];
           value =
-            typeof param.data === 'number' ? attachments[param.data] : attachments;
+            typeof param.data === 'number'
+              ? attachments[param.data]
+              : attachments;
           break;
         }
         case NezonParamType.MENTIONS: {
@@ -308,28 +310,34 @@ export class NezonComponentService {
   }
 
   private async getUserFromComponent(context: NezonComponentContext) {
-    return this.getOrSetCache(context, Symbol('nezon:component:user'), async () => {
-      if (!context.payload.user_id) {
-        return undefined;
-      }
-      try {
-        const channel = await this.getChannel(context);
-        const clan = channel?.clan;
-        if (clan?.users?.fetch) {
-          return (await clan.users.fetch(context.payload.user_id)) as User;
+    return this.getOrSetCache(
+      context,
+      Symbol('nezon:component:user'),
+      async () => {
+        if (!context.payload.user_id) {
+          return undefined;
         }
-      } catch {
+        try {
+          const channel = await this.getChannel(context);
+          const clan = channel?.clan;
+          if (clan?.users?.fetch) {
+            return (await clan.users.fetch(context.payload.user_id)) as User;
+          }
+        } catch {
+          return undefined;
+        }
         return undefined;
-      }
-      return undefined;
-    });
+      },
+    );
   }
 
   private async getAutoContext(
     context: NezonComponentContext,
   ): Promise<[ManagedMessage, DMHelper]> {
     return this.getOrSetCache(context, this.cacheKeys.autoContext, async () => {
-      const commandContext = await this.createCommandContextFromComponent(context);
+      const commandContext = await this.createCommandContextFromComponent(
+        context,
+      );
       const helpers = {
         normalize: (input) => this.normalizeSmartMessage(input),
       };
@@ -362,7 +370,7 @@ export class NezonComponentService {
   ): Promise<NezonCommandContext> {
     const targetMessage = await this.getTargetMessage(componentContext);
     const channel = await this.getChannel(componentContext);
-    
+
     const message: any = {
       message_id: componentContext.payload.message_id,
       channel_id: componentContext.payload.channel_id,
@@ -399,7 +407,9 @@ export class NezonComponentService {
           const channel = await this.getChannel(componentContext);
           const clan = channel?.clan;
           if (clan?.users?.fetch) {
-            return (await clan.users.fetch(componentContext.payload.user_id)) as User;
+            return (await clan.users.fetch(
+              componentContext.payload.user_id,
+            )) as User;
           }
         } catch {
           return undefined;
@@ -444,6 +454,10 @@ export class NezonComponentService {
         attachments: normalized.attachments?.map((attachment) => ({
           ...attachment,
         })),
+        mentions: normalized.mentions?.map((mention) => ({ ...mention })),
+        mentionPlaceholders: normalized.mentionPlaceholders
+          ? { ...normalized.mentionPlaceholders }
+          : undefined,
       };
     }
     if (input && typeof input === 'object') {
@@ -452,9 +466,9 @@ export class NezonComponentService {
     return { content: { t: String(input ?? '') } };
   }
 
-  private createMatcher(
-    definition: NezonComponentDefinition,
-  ): (payload: MessageButtonClicked) => {
+  private createMatcher(definition: NezonComponentDefinition): (
+    payload: MessageButtonClicked,
+  ) => {
     matched: boolean;
     params: string[];
     namedParams?: Record<string, string>;
@@ -594,4 +608,3 @@ export class NezonComponentService {
     return value;
   }
 }
-

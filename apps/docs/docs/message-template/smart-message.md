@@ -34,7 +34,7 @@ Mezon API
 Khi bạn gọi `message.reply(SmartMessage.text('Hello'))`, Nezon sẽ:
 
 1. **Normalize**: Chuyển SmartMessage thành `NormalizedSmartMessage`
-2. **Extract**: Tách `content` và `attachments` 
+2. **Extract**: Tách `content` và `attachments`
 3. **Send**: Gọi Mezon SDK với payload đã chuẩn hóa
 
 ```ts
@@ -61,13 +61,15 @@ SmartMessage.text(content: string): SmartMessage
 ```
 
 **Ví dụ:**
+
 ```ts
-const message = SmartMessage.text('Hello, World!');
+const message = SmartMessage.text("Hello, World!");
 ```
 
 **Tương đương Mezon SDK:**
+
 ```ts
-const content: ChannelMessageContent = { t: 'Hello, World!' };
+const content: ChannelMessageContent = { t: "Hello, World!" };
 ```
 
 #### `SmartMessage.system()`
@@ -79,19 +81,23 @@ SmartMessage.system(content: string): SmartMessage
 ```
 
 **Ví dụ:**
+
 ```ts
-const message = SmartMessage.system('⚠️ Thông báo quan trọng!');
+const message = SmartMessage.system("⚠️ Thông báo quan trọng!");
 ```
 
 **Tương đương Mezon SDK:**
+
 ```ts
 const content: ChannelMessageContent = {
-  t: '⚠️ Thông báo quan trọng!',
-  mk: [{
-    type: EMarkdownType.PRE,
-    s: 0,
-    e: content.length
-  }]
+  t: "⚠️ Thông báo quan trọng!",
+  mk: [
+    {
+      type: EMarkdownType.PRE,
+      s: 0,
+      e: content.length,
+    },
+  ],
 };
 ```
 
@@ -112,25 +118,29 @@ SmartMessage.image(
 ```
 
 **Ví dụ:**
+
 ```ts
-const message = SmartMessage.image('https://example.com/image.jpg', {
-  alt: 'A beautiful image',
-  filename: 'image.jpg',
+const message = SmartMessage.image("https://example.com/image.jpg", {
+  alt: "A beautiful image",
+  filename: "image.jpg",
   width: 1920,
-  height: 1080
+  height: 1080,
 });
 ```
 
 **Tương đương Mezon SDK:**
+
 ```ts
-const content: ChannelMessageContent = { t: 'A beautiful image' };
-const attachments: ApiMessageAttachment[] = [{
-  url: 'https://example.com/image.jpg',
-  filetype: 'image',
-  filename: 'image.jpg',
-  width: 1920,
-  height: 1080
-}];
+const content: ChannelMessageContent = { t: "A beautiful image" };
+const attachments: ApiMessageAttachment[] = [
+  {
+    url: "https://example.com/image.jpg",
+    filetype: "image",
+    filename: "image.jpg",
+    width: 1920,
+    height: 1080,
+  },
+];
 ```
 
 #### `SmartMessage.voice()`
@@ -147,19 +157,23 @@ SmartMessage.voice(
 ```
 
 **Ví dụ:**
+
 ```ts
-const message = SmartMessage.voice('https://example.com/audio.mp3', {
-  transcript: 'This is a voice message'
+const message = SmartMessage.voice("https://example.com/audio.mp3", {
+  transcript: "This is a voice message",
 });
 ```
 
 **Tương đương Mezon SDK:**
+
 ```ts
-const content: ChannelMessageContent = { t: 'This is a voice message' };
-const attachments: ApiMessageAttachment[] = [{
-  url: 'https://example.com/audio.mp3',
-  filetype: 'audio'
-}];
+const content: ChannelMessageContent = { t: "This is a voice message" };
+const attachments: ApiMessageAttachment[] = [
+  {
+    url: "https://example.com/audio.mp3",
+    filetype: "audio",
+  },
+];
 ```
 
 #### `SmartMessage.build()`
@@ -171,17 +185,19 @@ SmartMessage.build(): SmartMessage
 ```
 
 **Ví dụ:**
+
 ```ts
 const message = SmartMessage.build()
-  .addEmbed(new EmbedBuilder().setTitle('Title'))
-  .addButton(new ButtonBuilder().setLabel('Click'));
+  .addEmbed(new EmbedBuilder().setTitle("Title"))
+  .addButton(new ButtonBuilder().setLabel("Click"));
 ```
 
 **Tương đương Mezon SDK:**
+
 ```ts
 const content: ChannelMessageContent = {
-  embed: [{ title: 'Title' }],
-  components: [{ components: [{ label: 'Click' }] }]
+  embed: [{ title: "Title" }],
+  components: [{ components: [{ label: "Click" }] }],
 };
 ```
 
@@ -197,14 +213,17 @@ SmartMessage.raw(
 ```
 
 **Ví dụ:**
+
 ```ts
 const customContent: ChannelMessageContent = {
-  t: 'Custom message',
-  mk: [/* custom markdown */]
+  t: "Custom message",
+  mk: [
+    /* custom markdown */
+  ],
 };
 
 const message = SmartMessage.raw(customContent, [
-  { url: 'https://example.com/file.pdf', filetype: 'application/pdf' }
+  { url: "https://example.com/file.pdf", filetype: "application/pdf" },
 ]);
 ```
 
@@ -221,32 +240,36 @@ addButton(button: ButtonBuilder | ButtonComponent): this
 ```
 
 **Ví dụ:**
+
 ```ts
-const message = SmartMessage.text('Choose an option:')
+const message = SmartMessage.text("Choose an option:")
   .addButton(
     new ButtonBuilder()
-      .setLabel('Option 1')
+      .setLabel("Option 1")
       .setStyle(ButtonStyle.Primary)
-      .setCustomId('option/1')
+      .setCustomId("option/1")
   )
   .addButton(
     new ButtonBuilder()
-      .setLabel('Option 2')
+      .setLabel("Option 2")
       .setStyle(ButtonStyle.Secondary)
-      .setCustomId('option/2')
+      .setCustomId("option/2")
   );
 ```
 
 **Tương đương Mezon SDK:**
+
 ```ts
 const content: ChannelMessageContent = {
-  t: 'Choose an option:',
-  components: [{
-    components: [
-      { label: 'Option 1', style: 1, custom_id: 'option/1' },
-      { label: 'Option 2', style: 2, custom_id: 'option/2' }
-    ]
-  }]
+  t: "Choose an option:",
+  components: [
+    {
+      components: [
+        { label: "Option 1", style: 1, custom_id: "option/1" },
+        { label: "Option 2", style: 2, custom_id: "option/2" },
+      ],
+    },
+  ],
 };
 ```
 
@@ -266,10 +289,11 @@ addImage(
 ```
 
 **Ví dụ:**
+
 ```ts
-const message = SmartMessage.text('Check out these images!')
-  .addImage('https://example.com/img1.jpg', { filename: 'img1.jpg' })
-  .addImage('https://example.com/img2.jpg', { filename: 'img2.jpg' });
+const message = SmartMessage.text("Check out these images!")
+  .addImage("https://example.com/img1.jpg", { filename: "img1.jpg" })
+  .addImage("https://example.com/img2.jpg", { filename: "img2.jpg" });
 ```
 
 ### `.addFile()`
@@ -288,14 +312,14 @@ addFile(
 ```
 
 **Ví dụ:**
+
 ```ts
-const message = SmartMessage.text('Download the file:')
-  .addFile(
-    'https://example.com/document.pdf',
-    'document.pdf',
-    'application/pdf',
-    { size: 1024000 }
-  );
+const message = SmartMessage.text("Download the file:").addFile(
+  "https://example.com/document.pdf",
+  "document.pdf",
+  "application/pdf",
+  { size: 1024000 }
+);
 ```
 
 ### `.addEmbed()`
@@ -307,17 +331,51 @@ addEmbed(embed: EmbedBuilder | IInteractiveMessageProps): this
 ```
 
 **Ví dụ:**
+
 ```ts
-const message = SmartMessage.text('Rich embed:')
-  .addEmbed(
-    new EmbedBuilder()
-      .setTitle('Title')
-      .setDescription('Description')
-      .setColor('#f0a8da')
-      .addField('Field 1', 'Value 1', true)
-      .addField('Field 2', 'Value 2', true)
-  );
+const message = SmartMessage.text("Rich embed:").addEmbed(
+  new EmbedBuilder()
+    .setTitle("Title")
+    .setDescription("Description")
+    .setColor("#f0a8da")
+    .addField("Field 1", "Value 1", true)
+    .addField("Field 2", "Value 2", true)
+);
 ```
+
+### `.addMention()`
+
+Map placeholder → user_id để SmartMessage tự render mention với `@username` và metadata `mentions`.
+
+```ts
+addMention(key: string, userId: string): this
+addMention(mentions: Record<string, string>): this
+```
+
+**Cách sử dụng**
+
+1. Trong nội dung text, đặt `{{placeholder_name}}` tại vị trí cần mention.
+2. Gọi `.addMention({ placeholder_name: 'USER_ID' })` hoặc `.addMention('placeholder_name', 'USER_ID')`.
+3. Khi gửi qua `ManagedMessage`/`DMHelper`, SDK sẽ tìm username trong clan, thay thế bằng `@username`, đồng thời truyền `mentions` với `s`/`e`.
+
+**Ví dụ**
+
+```ts
+@Command("hi")
+async function onHi(@AutoContext() [managedMessage]: Nezon.AutoContext) {
+  await managedMessage.reply(
+    SmartMessage.text("Hello {{user_id_anh_luongtuan}} 👋")
+      .addMention({ user_id_anh_luongtuan: "12132124214" })
+  );
+}
+```
+
+Output thực tế:
+
+- Nội dung: `Hello @anh.luongtuan 👋`.
+- Mentions: `[{ user_id: "12132124214", username: "anh.luongtuan", s: 6, e: 20 }]`.
+
+Nếu không tìm được username, SDK fallback về user_id.
 
 ## Chuyển đổi sang Mezon SDK
 
@@ -333,14 +391,17 @@ toJSON(): NormalizedSmartMessage
 interface NormalizedSmartMessage {
   content: ChannelMessageContent;
   attachments?: ApiMessageAttachment[];
+  mentions?: ApiMessageMention[];
+  mentionPlaceholders?: Record<string, string>;
 }
 ```
 
 **Ví dụ:**
+
 ```ts
-const smartMessage = SmartMessage.text('Hello')
-  .addImage('https://example.com/img.jpg')
-  .addButton(new ButtonBuilder().setLabel('Click'));
+const smartMessage = SmartMessage.text("Hello")
+  .addImage("https://example.com/img.jpg")
+  .addButton(new ButtonBuilder().setLabel("Click"));
 
 const payload = smartMessage.toJSON();
 // payload = {
@@ -351,7 +412,7 @@ const payload = smartMessage.toJSON();
 //   attachments: [{ url: '...', filetype: 'image' }]
 // }
 
-await channel.send(payload.content, undefined, payload.attachments);
+await channel.send(payload.content, payload.mentions, payload.attachments);
 ```
 
 ### `.toContent()`
@@ -363,9 +424,11 @@ toContent(): ChannelMessageContent
 ```
 
 **Ví dụ:**
+
 ```ts
-const smartMessage = SmartMessage.text('Hello')
-  .addButton(new ButtonBuilder().setLabel('Click'));
+const smartMessage = SmartMessage.text("Hello").addButton(
+  new ButtonBuilder().setLabel("Click")
+);
 
 const content = smartMessage.toContent();
 // content = {
@@ -385,10 +448,11 @@ toAttachments(): ApiMessageAttachment[] | undefined
 ```
 
 **Ví dụ:**
+
 ```ts
-const smartMessage = SmartMessage.text('Files:')
-  .addFile('https://example.com/file1.pdf', 'file1.pdf', 'application/pdf')
-  .addFile('https://example.com/file2.zip', 'file2.zip', 'application/zip');
+const smartMessage = SmartMessage.text("Files:")
+  .addFile("https://example.com/file1.pdf", "file1.pdf", "application/pdf")
+  .addFile("https://example.com/file2.zip", "file2.zip", "application/zip");
 
 const attachments = smartMessage.toAttachments();
 // attachments = [
@@ -404,28 +468,21 @@ const attachments = smartMessage.toAttachments();
 Bạn có thể sử dụng SmartMessage với Mezon SDK trực tiếp:
 
 ```ts
-import { MezonClient } from 'mezon-sdk';
-import { SmartMessage, ButtonBuilder, ButtonStyle } from '@n0xgg04/nezon';
+import { MezonClient } from "mezon-sdk";
+import { SmartMessage, ButtonBuilder, ButtonStyle } from "@n0xgg04/nezon";
 
-const client = new MezonClient({ token: 'YOUR_TOKEN' });
+const client = new MezonClient({ token: "YOUR_TOKEN" });
 
 async function sendMessage() {
-  const channel = await client.channels.fetch('CHANNEL_ID');
-  
-  const smartMessage = SmartMessage.text('Hello from Mezon SDK!')
-    .addButton(
-      new ButtonBuilder()
-        .setLabel('Click Me')
-        .setStyle(ButtonStyle.Primary)
-    );
-  
-  const payload = smartMessage.toJSON();
-  
-  await channel.send(
-    payload.content,
-    undefined,
-    payload.attachments
+  const channel = await client.channels.fetch("CHANNEL_ID");
+
+  const smartMessage = SmartMessage.text("Hello from Mezon SDK!").addButton(
+    new ButtonBuilder().setLabel("Click Me").setStyle(ButtonStyle.Primary)
   );
+
+  const payload = smartMessage.toJSON();
+
+  await channel.send(payload.content, undefined, payload.attachments);
 }
 ```
 
@@ -434,21 +491,20 @@ async function sendMessage() {
 Bạn có thể sử dụng SmartMessage trong Mezon SDK event handlers:
 
 ```ts
-import { MezonClient } from 'mezon-sdk';
-import { SmartMessage, ButtonBuilder, ButtonStyle } from '@n0xgg04/nezon';
+import { MezonClient } from "mezon-sdk";
+import { SmartMessage, ButtonBuilder, ButtonStyle } from "@n0xgg04/nezon";
 
-const client = new MezonClient({ token: 'YOUR_TOKEN' });
+const client = new MezonClient({ token: "YOUR_TOKEN" });
 
-client.on('message', async (message) => {
-  if (message.content?.t === 'ping') {
-    const reply = SmartMessage.text('pong!')
-      .addButton(
-        new ButtonBuilder()
-          .setLabel('Ping Again')
-          .setStyle(ButtonStyle.Primary)
-          .setCustomId('ping/again')
-      );
-    
+client.on("message", async (message) => {
+  if (message.content?.t === "ping") {
+    const reply = SmartMessage.text("pong!").addButton(
+      new ButtonBuilder()
+        .setLabel("Ping Again")
+        .setStyle(ButtonStyle.Primary)
+        .setCustomId("ping/again")
+    );
+
     const payload = reply.toJSON();
     await message.reply(payload.content, undefined, payload.attachments);
   }
@@ -460,38 +516,35 @@ client.on('message', async (message) => {
 Kết hợp SmartMessage với logic Mezon SDK để tạo payload phức tạp:
 
 ```ts
-import { MezonClient, User, Channel } from 'mezon-sdk';
-import { SmartMessage, EmbedBuilder } from '@n0xgg04/nezon';
+import { MezonClient, User, Channel } from "mezon-sdk";
+import { SmartMessage, EmbedBuilder } from "@n0xgg04/nezon";
 
 async function createDynamicMessage(user: User, channel: Channel) {
   const embed = new EmbedBuilder()
     .setTitle(`Welcome to ${channel.name}!`)
     .setDescription(`Hello ${user.display_name}`)
-    .setColor('#00ff00');
-  
-  const message = SmartMessage.system(`User ${user.user_id} joined`)
-    .addEmbed(embed);
-  
+    .setColor("#00ff00");
+
+  const message = SmartMessage.system(`User ${user.user_id} joined`).addEmbed(
+    embed
+  );
+
   if (user.avatar_url) {
-    message.addImage(user.avatar_url, { filename: 'avatar.jpg' });
+    message.addImage(user.avatar_url, { filename: "avatar.jpg" });
   }
-  
+
   return message.toJSON();
 }
 
-const client = new MezonClient({ token: 'YOUR_TOKEN' });
-client.on('userJoined', async (event) => {
+const client = new MezonClient({ token: "YOUR_TOKEN" });
+client.on("userJoined", async (event) => {
   const user = await client.users.fetch(event.user_id);
   const channel = await client.channels.fetch(event.channel_id);
-  
+
   const payload = await createDynamicMessage(user, channel);
-  const targetChannel = await client.channels.fetch('TARGET_CHANNEL_ID');
-  
-  await targetChannel.send(
-    payload.content,
-    undefined,
-    payload.attachments
-  );
+  const targetChannel = await client.channels.fetch("TARGET_CHANNEL_ID");
+
+  await targetChannel.send(payload.content, undefined, payload.attachments);
 });
 ```
 
@@ -500,27 +553,24 @@ client.on('userJoined', async (event) => {
 SmartMessage cũng có thể được sử dụng với webhook responses:
 
 ```ts
-import express from 'express';
-import { SmartMessage, ButtonBuilder, ButtonStyle } from '@n0xgg04/nezon';
+import express from "express";
+import { SmartMessage, ButtonBuilder, ButtonStyle } from "@n0xgg04/nezon";
 
 const app = express();
 
-app.post('/webhook', async (req, res) => {
+app.post("/webhook", async (req, res) => {
   const { message } = req.body;
-  
-  if (message.content?.t === 'hello') {
-    const reply = SmartMessage.text('Hello from webhook!')
-      .addButton(
-        new ButtonBuilder()
-          .setLabel('Respond')
-          .setStyle(ButtonStyle.Primary)
-      );
-    
+
+  if (message.content?.t === "hello") {
+    const reply = SmartMessage.text("Hello from webhook!").addButton(
+      new ButtonBuilder().setLabel("Respond").setStyle(ButtonStyle.Primary)
+    );
+
     const payload = reply.toJSON();
-    
+
     res.json({
       content: payload.content,
-      attachments: payload.attachments
+      attachments: payload.attachments,
     });
   }
 });
@@ -541,12 +591,12 @@ type SmartMessageLike =
 **Ví dụ các cách sử dụng:**
 
 ```ts
-await message.reply(SmartMessage.text('Hello'));
-await message.reply('Hello');
-await message.reply({ t: 'Hello' });
+await message.reply(SmartMessage.text("Hello"));
+await message.reply("Hello");
+await message.reply({ t: "Hello" });
 await message.reply({
-  content: { t: 'Hello' },
-  attachments: [{ url: '...', filetype: 'image' }]
+  content: { t: "Hello" },
+  attachments: [{ url: "...", filetype: "image" }],
 });
 ```
 
@@ -640,26 +690,29 @@ async onDownload(@AutoContext() [message]: Nezon.AutoContext) {
 ### Ví dụ 4: Kết hợp với Mezon SDK để tạo message động
 
 ```ts
-import { MezonClient, User, Clan } from 'mezon-sdk';
-import { SmartMessage, EmbedBuilder } from '@n0xgg04/nezon';
+import { MezonClient, User, Clan } from "mezon-sdk";
+import { SmartMessage, EmbedBuilder } from "@n0xgg04/nezon";
 
 async function createUserProfileMessage(client: MezonClient, userId: string) {
   const user: User = await client.users.fetch(userId);
-  const clan: Clan | null = user.clan_id ? await client.clans.fetch(user.clan_id) : null;
-  
+  const clan: Clan | null = user.clan_id
+    ? await client.clans.fetch(user.clan_id)
+    : null;
+
   const embed = new EmbedBuilder()
     .setTitle(`${user.display_name}'s Profile`)
-    .setDescription(user.bio || 'No bio')
-    .addField('User ID', user.user_id, true)
-    .addField('Clan', clan?.name || 'None', true);
-  
-  const message = SmartMessage.text(`Thông tin user ${user.display_name}`)
-    .addEmbed(embed);
-  
+    .setDescription(user.bio || "No bio")
+    .addField("User ID", user.user_id, true)
+    .addField("Clan", clan?.name || "None", true);
+
+  const message = SmartMessage.text(
+    `Thông tin user ${user.display_name}`
+  ).addEmbed(embed);
+
   if (user.avatar_url) {
-    message.addImage(user.avatar_url, { filename: 'avatar.jpg' });
+    message.addImage(user.avatar_url, { filename: "avatar.jpg" });
   }
-  
+
   return message.toJSON();
 }
 ```
@@ -682,12 +735,12 @@ function createWelcomeMessage(user: User): SmartMessage {
   return SmartMessage.system(`Welcome ${user.display_name}!`)
     .addEmbed(
       new EmbedBuilder()
-        .setTitle('Getting Started')
-        .setDescription('Chào mừng bạn đến với server!')
+        .setTitle("Getting Started")
+        .setDescription("Chào mừng bạn đến với server!")
     )
     .addButton(
       new ButtonBuilder()
-        .setLabel('Xem hướng dẫn')
+        .setLabel("Xem hướng dẫn")
         .setStyle(ButtonStyle.Primary)
     );
 }
@@ -696,14 +749,10 @@ function createWelcomeMessage(user: User): SmartMessage {
 ### 3. Sử dụng `.toJSON()` khi cần tích hợp với Mezon SDK
 
 ```ts
-const smartMessage = SmartMessage.text('Hello');
+const smartMessage = SmartMessage.text("Hello");
 const payload = smartMessage.toJSON();
 
-await mezonChannel.send(
-  payload.content,
-  undefined,
-  payload.attachments
-);
+await mezonChannel.send(payload.content, undefined, payload.attachments);
 ```
 
 ### 4. Tận dụng type safety
@@ -717,21 +766,21 @@ message.addButton(...);
 
 ```ts
 const message = SmartMessage.build()
-  .addEmbed(new EmbedBuilder().setTitle('Title Only'))
-  .addButton(new ButtonBuilder().setLabel('Click'));
+  .addEmbed(new EmbedBuilder().setTitle("Title Only"))
+  .addButton(new ButtonBuilder().setLabel("Click"));
 ```
 
 ## So sánh với Mezon SDK thuần
 
-| Tính năng | SmartMessage | Mezon SDK thuần |
-|-----------|--------------|-----------------|
-| Cú pháp | Fluent, dễ đọc | Object literal phức tạp |
-| Type Safety | ✅ Full TypeScript support | ⚠️ Manual typing |
-| Method Chaining | ✅ Hỗ trợ | ❌ Không hỗ trợ |
-| Auto Grouping | ✅ Buttons tự động nhóm | ❌ Phải tự nhóm |
-| Attachments | ✅ Dễ thêm | ⚠️ Phải quản lý riêng |
-| Embeds | ✅ Builder pattern | ⚠️ Object literal |
-| Learning Curve | ✅ Dễ học | ⚠️ Cần hiểu API structure |
+| Tính năng       | SmartMessage               | Mezon SDK thuần           |
+| --------------- | -------------------------- | ------------------------- |
+| Cú pháp         | Fluent, dễ đọc             | Object literal phức tạp   |
+| Type Safety     | ✅ Full TypeScript support | ⚠️ Manual typing          |
+| Method Chaining | ✅ Hỗ trợ                  | ❌ Không hỗ trợ           |
+| Auto Grouping   | ✅ Buttons tự động nhóm    | ❌ Phải tự nhóm           |
+| Attachments     | ✅ Dễ thêm                 | ⚠️ Phải quản lý riêng     |
+| Embeds          | ✅ Builder pattern         | ⚠️ Object literal         |
+| Learning Curve  | ✅ Dễ học                  | ⚠️ Cần hiểu API structure |
 
 ## API Reference
 
@@ -760,4 +809,3 @@ const message = SmartMessage.build()
 - [Attachments](/docs/message-template/attachments) - Chi tiết về attachments
 - [Embed, Form, Button](/docs/message-template/embed-form-button) - Embeds và forms
 - [Direct Message](/docs/message-template/dm) - Gửi DM với SmartMessage
-

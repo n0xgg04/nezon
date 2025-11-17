@@ -1,5 +1,6 @@
 import {
   ApiMessageAttachment,
+  ApiMessageMention,
   ChannelMessageContent,
   EMarkdownType,
   IMessageActionRow,
@@ -7,14 +8,64 @@ import {
   ReactMessagePayload,
 } from 'mezon-sdk/dist/cjs/interfaces/client';
 import type { ChannelMessage } from 'mezon-sdk';
+import type { Clan } from 'mezon-sdk/dist/cjs/mezon-client/structures/Clan';
 import type { Message } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
+import type { User } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
 import type { NezonCommandContext } from '../interfaces/command-context.interface';
-import { ButtonBuilder, ButtonComponent, ButtonClickHandler } from './button-builder';
+import {
+  ButtonBuilder,
+  ButtonComponent,
+  ButtonClickHandler,
+} from './button-builder';
 import { EmbedBuilder } from './embed-builder';
 
 export interface NormalizedSmartMessage {
   content: ChannelMessageContent;
   attachments?: ApiMessageAttachment[];
+  mentions?: ApiMessageMention[];
+  mentionPlaceholders?: Record<string, string>;
+}
+
+type MentionResolver = (userId: string) => Promise<string>;
+
+async function resolveMentionPlaceholders(
+  text: string,
+  placeholders: Record<string, string>,
+  resolver: MentionResolver,
+): Promise<{ text: string; mentions: ApiMessageMention[] }> {
+  if (!text) {
+    return { text, mentions: [] };
+  }
+  const regex = /{{\s*([a-zA-Z0-9_.:-]+)\s*}}/g;
+  let cursor = 0;
+  let result = '';
+  const mentions: ApiMessageMention[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    const [fullMatch, keyRaw] = match;
+    const key = keyRaw?.trim();
+    result += text.slice(cursor, match.index);
+    cursor = match.index + fullMatch.length;
+    if (!key || !placeholders[key]) {
+      result += fullMatch;
+      continue;
+    }
+    const username = await resolver(placeholders[key]);
+    const cleanUsername = username || placeholders[key];
+    const mentionText = `@${cleanUsername}`;
+    const start = result.length;
+    result += mentionText;
+    mentions.push({
+      user_id: placeholders[key],
+      username: cleanUsername,
+      s: start,
+      e: start + mentionText.length,
+    });
+  }
+
+  result += text.slice(cursor);
+  return { text: result, mentions };
 }
 
 export type SmartMessageLike =
@@ -70,6 +121,7 @@ export class SmartMessage {
   private components: ButtonComponent[] = [];
   private attachments: ApiMessageAttachment[] = [];
   private embeds: IInteractiveMessageProps[] = [];
+  private mentionPlaceholders: Record<string, string> = {};
 
   private constructor(
     private readonly content: ChannelMessageContent,
@@ -84,7 +136,7 @@ export class SmartMessage {
     return new SmartMessage({ t: content });
   }
 
-  static build(): SmartMessage { 
+  static build(): SmartMessage {
     return new SmartMessage({});
   }
 
@@ -291,6 +343,23 @@ export class SmartMessage {
     return this;
   }
 
+  addMention(key: string, userId: string): this;
+  addMention(mentions: Record<string, string>): this;
+  addMention(keyOrMap: string | Record<string, string>, userId?: string): this {
+    if (typeof keyOrMap === 'string') {
+      if (keyOrMap && typeof userId === 'string' && userId) {
+        this.mentionPlaceholders[keyOrMap] = userId;
+      }
+      return this;
+    }
+    Object.entries(keyOrMap).forEach(([key, value]) => {
+      if (key && typeof value === 'string' && value) {
+        this.mentionPlaceholders[key] = value;
+      }
+    });
+    return this;
+  }
+
   toJSON(): NormalizedSmartMessage {
     const contentWithComponents: ChannelMessageContent = { ...this.content };
     if (this.components.length > 0) {
@@ -310,6 +379,10 @@ export class SmartMessage {
       attachments:
         this.attachments.length > 0
           ? this.attachments.map((attachment) => ({ ...attachment }))
+          : undefined,
+      mentionPlaceholders:
+        Object.keys(this.mentionPlaceholders).length > 0
+          ? { ...this.mentionPlaceholders }
           : undefined,
     };
   }
@@ -342,6 +415,11 @@ interface ManagedMessageHelpers {
   normalize: (input: SmartMessageLike) => NormalizedSmartMessage;
 }
 
+type UserDirectory = {
+  get?: (id: string) => User | undefined;
+  fetch?: (id: string) => Promise<User | undefined>;
+};
+
 export class DMHelper {
   constructor(
     private readonly client: import('mezon-sdk').MezonClient,
@@ -349,23 +427,66 @@ export class DMHelper {
   ) {}
 
   async send(userId: string, message: SmartMessageLike) {
-    const payload = this.helpers.normalize(message);
-    
+    const payload = await this.preparePayload(message);
+
     const dmChannel = await (this.client as any).createDMchannel(userId);
     if (!dmChannel?.channel_id) {
       throw new Error(`Failed to create DM channel with user ${userId}`);
     }
 
-    const channel = await (this.client as any).channels.fetch(dmChannel.channel_id);
+    const channel = await (this.client as any).channels.fetch(
+      dmChannel.channel_id,
+    );
     if (!channel) {
       throw new Error(`Failed to fetch DM channel ${dmChannel.channel_id}`);
     }
 
-    return channel.send(
-      payload.content,
-      undefined,
-      payload.attachments,
+    return channel.send(payload.content, payload.mentions, payload.attachments);
+  }
+
+  private async preparePayload(
+    message: SmartMessageLike,
+  ): Promise<NormalizedSmartMessage> {
+    const payload = this.helpers.normalize(message);
+    if (
+      !payload.mentionPlaceholders ||
+      Object.keys(payload.mentionPlaceholders).length === 0 ||
+      typeof payload.content?.t !== 'string'
+    ) {
+      return payload;
+    }
+    const mentionResult = await resolveMentionPlaceholders(
+      payload.content.t,
+      payload.mentionPlaceholders,
+      async (id) => this.fetchUsername(id),
     );
+    return {
+      ...payload,
+      content: {
+        ...payload.content,
+        t: mentionResult.text,
+      },
+      mentions: mentionResult.mentions,
+    };
+  }
+
+  private async fetchUsername(userId: string): Promise<string> {
+    try {
+      const users = (this.client as any)?.users;
+      const cached = users?.get?.(userId);
+      if (cached?.username) {
+        return cached.username;
+      }
+      if (users?.fetch) {
+        const fetched = await users.fetch(userId);
+        if (fetched?.username) {
+          return fetched.username;
+        }
+      }
+    } catch {
+      return userId;
+    }
+    return userId;
   }
 }
 
@@ -398,9 +519,8 @@ export class ManagedMessage {
   get isBotMessage(): boolean {
     try {
       const clientAny = this.context.client as any;
-      const clientId = clientAny.user?.id || 
-                       clientAny.getClientId?.() ||
-                       clientAny.botId;
+      const clientId =
+        clientAny.user?.id || clientAny.getClientId?.() || clientAny.botId;
       return this.context.message.sender_id === clientId;
     } catch {
       return false;
@@ -408,8 +528,12 @@ export class ManagedMessage {
   }
 
   async reply(message: SmartMessageLike) {
-    const payload = this.helpers.normalize(message);
-    return this.context.reply(payload.content, undefined, payload.attachments);
+    const payload = await this.preparePayload(message);
+    return this.context.reply(
+      payload.content,
+      payload.mentions,
+      payload.attachments,
+    );
   }
 
   async update(message: SmartMessageLike) {
@@ -417,9 +541,13 @@ export class ManagedMessage {
     if (!entity) {
       throw new Error('Cannot update message: message entity not found');
     }
-    const payload = this.helpers.normalize(message);
+    const payload = await this.preparePayload(message);
     if (typeof entity.update === 'function') {
-      return entity.update(payload.content, undefined, payload.attachments);
+      return entity.update(
+        payload.content,
+        payload.mentions,
+        payload.attachments,
+      );
     }
     throw new Error('Cannot update message: update method not available');
   }
@@ -435,7 +563,7 @@ export class ManagedMessage {
     throw new Error('Cannot delete message: delete method not available');
   }
 
-  async react(emoji: string, emojiId?: string, actionDelete: boolean = false) {
+  async react(emoji: string, emojiId?: string, actionDelete = false) {
     const entity = await this.context.getMessage();
     if (!entity) {
       throw new Error('Cannot react to message: message entity not found');
@@ -469,8 +597,8 @@ export class ManagedMessage {
     if (!senderId) {
       throw new Error('Cannot send DM: sender_id is not available');
     }
-    const payload = this.helpers.normalize(message);
-    
+    const payload = await this.preparePayload(message);
+
     const clientAny = this.context.client as any;
     const dmChannel = await clientAny.createDMchannel(senderId);
     if (!dmChannel?.channel_id) {
@@ -482,10 +610,102 @@ export class ManagedMessage {
       throw new Error(`Failed to fetch DM channel ${dmChannel.channel_id}`);
     }
 
-    return channel.send(
-      payload.content,
-      undefined,
-      payload.attachments,
+    return channel.send(payload.content, payload.mentions, payload.attachments);
+  }
+
+  private async preparePayload(
+    message: SmartMessageLike,
+  ): Promise<NormalizedSmartMessage> {
+    const payload = this.helpers.normalize(message);
+    return this.applyMentionPlaceholders(payload);
+  }
+
+  private async applyMentionPlaceholders(
+    payload: NormalizedSmartMessage,
+  ): Promise<NormalizedSmartMessage> {
+    if (
+      !payload.mentionPlaceholders ||
+      Object.keys(payload.mentionPlaceholders).length === 0 ||
+      typeof payload.content?.t !== 'string'
+    ) {
+      return payload;
+    }
+    const clan =
+      typeof this.context.getClan === 'function'
+        ? await this.context.getClan()
+        : undefined;
+    const cache = new Map<string, string>();
+    const mentionResult = await resolveMentionPlaceholders(
+      payload.content.t,
+      payload.mentionPlaceholders,
+      async (userId) => {
+        const cachedValue = cache.get(userId);
+        if (cachedValue) {
+          return cachedValue;
+        }
+        const username = await this.lookupUsername(userId, clan);
+        cache.set(userId, username);
+        return username;
+      },
     );
+    return {
+      ...payload,
+      content: {
+        ...payload.content,
+        t: mentionResult.text,
+      },
+      mentions: mentionResult.mentions,
+    };
+  }
+
+  private async lookupUsername(userId: string, clan?: Clan): Promise<string> {
+    const clanUser = await this.fetchUserFromDirectory(
+      clan ? (clan.users as unknown as UserDirectory) : undefined,
+      userId,
+    );
+    if (clanUser) {
+      return (
+        clanUser.username ||
+        clanUser.display_name ||
+        (clanUser as unknown as { name?: string }).name ||
+        userId
+      );
+    }
+    const clientUsers = (
+      this.context.client as unknown as {
+        users?: UserDirectory;
+      }
+    ).users;
+    const fetched = await this.fetchUserFromDirectory(clientUsers, userId);
+    if (fetched) {
+      return (
+        fetched.username ||
+        fetched.display_name ||
+        (fetched as unknown as { name?: string }).name ||
+        userId
+      );
+    }
+    return userId;
+  }
+
+  private async fetchUserFromDirectory(
+    directory: UserDirectory | undefined,
+    userId: string,
+  ): Promise<User | undefined> {
+    if (!directory) {
+      return undefined;
+    }
+    const existing = directory.get?.(userId);
+    if (existing) {
+      return existing;
+    }
+    if (directory.fetch) {
+      try {
+        return await directory.fetch(userId);
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
   }
 }

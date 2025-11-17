@@ -80,7 +80,10 @@ export class NezonCommandService {
           }
         })
         .catch((error: any) =>
-          this.logger.error('failed to bind channel message listener', error?.stack),
+          this.logger.error(
+            'failed to bind channel message listener',
+            error?.stack,
+          ),
         );
       return;
     }
@@ -149,11 +152,7 @@ export class NezonCommandService {
     parameters: NezonParameterMetadata[],
     context: NezonCommandContext,
   ) {
-    const size =
-      Math.max(
-        ...parameters.map((param) => param.index),
-        -1,
-      ) + 1;
+    const size = Math.max(...parameters.map((param) => param.index), -1) + 1;
     const args = new Array<unknown>(size).fill(undefined);
     for (const param of parameters) {
       const value = await this.resolveCommandParameter(param, context);
@@ -247,9 +246,7 @@ export class NezonCommandService {
     if (typeof payload === 'string') {
       return payload;
     }
-    if (
-      typeof (payload as { t?: unknown }).t === 'string'
-    ) {
+    if (typeof (payload as { t?: unknown }).t === 'string') {
       return (payload as { t: string }).t;
     }
     return '';
@@ -257,7 +254,7 @@ export class NezonCommandService {
 
   private ensureCache(context: NezonCommandContext) {
     if (!context.cache) {
-        context.cache = new Map<symbol, unknown>();
+      context.cache = new Map<symbol, unknown>();
     }
     return context.cache;
   }
@@ -404,6 +401,10 @@ export class NezonCommandService {
         attachments: normalized.attachments?.map((attachment) => ({
           ...attachment,
         })),
+        mentions: normalized.mentions?.map((mention) => ({ ...mention })),
+        mentionPlaceholders: normalized.mentionPlaceholders
+          ? { ...normalized.mentionPlaceholders }
+          : undefined,
       };
     }
     if (input && typeof input === 'object') {
@@ -461,4 +462,3 @@ export class NezonCommandService {
     return undefined;
   }
 }
-
