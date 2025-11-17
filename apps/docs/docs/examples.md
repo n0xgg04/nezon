@@ -6,6 +6,20 @@ sidebar_position: 6
 
 Các ví dụ chi tiết cho từng decorator và tính năng.
 
+## Danh sách ví dụ trong example bot
+
+| Module     | File                                                      | Tính năng chính                                          |
+| ---------- | --------------------------------------------------------- | -------------------------------------------------------- |
+| Command    | `apps/mebot/src/bot/examples/example-command.handlers.ts` | Ping/pong, đọc attachments/mentions, channel helper demo |
+| Embed/Form | `.../example-embed.handlers.ts`                           | Embed, form input, quiz markdown, animated slots         |
+| Component  | `.../example-component.handlers.ts`                       | Component pattern, `@FormData`, onClick, reaction        |
+| DM         | `.../example-dm.handlers.ts`                              | DMHelper, ManagedMessage.sendDM                          |
+| Event      | `.../example-event.handlers.ts`                           | `@On(VoiceJoined)`, TokenSend, voice events              |
+
+Các template được copy đầy đủ khi bạn chạy `create-mezon-bot`.
+
+---
+
 ## @Command Examples
 
 ### Basic Command
@@ -216,7 +230,7 @@ async onDM(
   @AutoContext() [message, dm]: Nezon.AutoContext,
 ) {
   const userId = args[0];
-  
+
   if (!userId) {
     await message.reply(SmartMessage.text('Sử dụng: *dm <user_id>'));
     return;
@@ -263,7 +277,7 @@ async onDMRich(
   @AutoContext() [message, dm]: Nezon.AutoContext,
 ) {
   const userId = args[0];
-  
+
   await dm.send(
     userId,
     SmartMessage.text('DM với embed và button!')
@@ -367,23 +381,31 @@ async onToggleReact(@AutoContext() [message]: Nezon.AutoContext) {
 ### Inject MezonClient và NezonUtilsService
 
 ```ts
-import { Injectable } from '@nestjs/common';
-import { Command, MezonClient, NezonUtils, AutoContext, SmartMessage } from '@n0xgg04/nezon';
-import type { Nezon } from '@n0xgg04/nezon';
+import { Injectable } from "@nestjs/common";
+import {
+  Command,
+  MezonClient,
+  NezonUtils,
+  AutoContext,
+  SmartMessage,
+} from "@n0xgg04/nezon";
+import type { Nezon } from "@n0xgg04/nezon";
 
 @Injectable()
 export class MyHandlers {
   constructor(
     @MezonClient() private readonly client: Nezon.Client,
-    @NezonUtils() private readonly utils: Nezon.NezonUtilsService,
+    @NezonUtils() private readonly utils: Nezon.NezonUtilsService
   ) {}
 
-  @Command('info')
+  @Command("info")
   async onInfo(@AutoContext() [message]: Nezon.AutoContext) {
-    const clan = await this.utils.getClan('clan-id');
+    const clan = await this.utils.getClan("clan-id");
     if (clan) {
       await message.reply(
-        SmartMessage.text(`Clan: ${clan.name}\nBot: ${this.client.user?.username}`)
+        SmartMessage.text(
+          `Clan: ${clan.name}\nBot: ${this.client.user?.username}`
+        )
       );
     }
   }
@@ -426,4 +448,3 @@ async onPoll(@AutoContext() [managedMessage]: Nezon.AutoContext) {
 ```
 
 Xem thêm các ví dụ chi tiết trong từng trang documentation.
-

@@ -851,4 +851,4 @@ const message = SmartMessage.build()
 - [Text Message](/docs/message-template/text-message) - Text và System messages cơ bản
 - [Attachments](/docs/message-template/attachments) - Chi tiết về attachments
 - [Embed, Form, Button](/docs/message-template/embed-form-button) - Embeds và forms
-- [Direct Message](/docs/message-template/dm) - Gửi DM với SmartMessage
+- [Gửi tin nhắn](/docs/messaging/send-message) - Reply, Channel helper, DM helper

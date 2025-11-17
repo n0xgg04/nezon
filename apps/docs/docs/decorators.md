@@ -489,6 +489,38 @@ async confirm(@ComponentTarget() target: Nezon.Message | undefined) {
 }
 ```
 
+### @FormData
+
+Đọc dữ liệu form (các input được tạo bằng `EmbedBuilder.addTextField/addSelectField`) khi người dùng submit thông qua button/component.
+
+```ts
+@FormData(field?: string): ParameterDecorator
+// Không có field: trả về Record<string, string>
+// Có field: trả về giá trị cụ thể (string | undefined)
+```
+
+```ts
+@Component('/poll/create')
+async onPollCreate(
+  @FormData() form: Nezon.FormData | undefined,
+  @FormData('title') title: string | undefined,
+  @AutoContext('message') message: Nezon.AutoContextType.Message,
+) {
+  await message.reply(
+    SmartMessage.text(
+      [
+        '🎯 Poll form data:',
+        `Tiêu đề: ${title ?? 'N/A'}`,
+        `Option 1: ${form?.option_1 ?? 'N/A'}`,
+        `Expired: ${form?.expired ?? '168'} giờ`,
+      ].join('\n'),
+    ),
+  );
+}
+```
+
+> Khi dùng `ButtonBuilder.onClick`, bạn cũng có thể đọc `context.formData`.
+
 ### @EventPayload
 
 Lấy event payload từ @On hoặc @Once handlers.

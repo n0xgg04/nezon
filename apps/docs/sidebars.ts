@@ -5,36 +5,41 @@ const sidebars: SidebarsConfig = {
     "overview",
     "installation",
     {
+      type: "doc",
+      id: "guides/data-access",
+      label: "Bot Context",
+    },
+    {
       type: "category",
-      label: "Message",
+      label: "Xử lý logic & Event",
       items: [
+        "guides/logic-events",
+        "interaction/command",
+        "interaction/component",
+        "interaction/onclick",
+        "interaction/events",
+        "events-list",
+      ],
+    },
+    {
+      type: "category",
+      label: "Message Builder",
+      items: [
+        "message-template/overview",
         "message-template/smart-message",
         "message-template/text-message",
         "message-template/attachments",
         "message-template/embed-form-button",
-        "message-template/dm",
       ],
     },
-          {
-            type: "category",
-            label: "Tương tác",
-            items: [
-              "interaction/command",
-              "interaction/component",
-              "interaction/events",
-              "interaction/onclick",
-            ],
-          },
-          "events-list",
-          "decorators",
-          "examples",
-          {
-            type: "category",
-            label: "Nezon",
-            items: [
-              "nezon/utils",
-            ],
-          },
+    "messaging/send-message",
+    {
+      type: "category",
+      label: "Utility",
+      items: ["nezon/utils"],
+    },
+    "examples",
+    "decorators",
   ],
 };
 
