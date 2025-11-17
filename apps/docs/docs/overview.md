@@ -42,15 +42,16 @@ Không cần phải tạo `ChannelMessageContent` thủ công, sử dụng fluen
 
 ```ts
 await message.reply(
-  SmartMessage.text('Hello!')
-    .addButton(new ButtonBuilder().setLabel('Click Me'))
-    .addEmbed(new EmbedBuilder().setTitle('Rich Card'))
+  SmartMessage.text("Hello!")
+    .addButton(new ButtonBuilder().setLabel("Click Me"))
+    .addEmbed(new EmbedBuilder().setTitle("Rich Card"))
 );
 ```
 
 ### 🔄 Auto Lifecycle Management
 
 Nezon tự động quản lý:
+
 - Đăng nhập bot khi app khởi động
 - Đăng ký và cleanup event listeners
 - Cache entities để giảm API calls
@@ -61,11 +62,9 @@ Nezon tự động quản lý:
 Tạo button với inline handler, không cần tạo component handler riêng:
 
 ```ts
-new ButtonBuilder()
-  .setLabel('Click Me')
-  .onClick(async (context) => {
-    await context.message.reply('Clicked!');
-  })
+new ButtonBuilder().setLabel("Click Me").onClick(async (context) => {
+  await context.message.reply("Clicked!");
+});
 ```
 
 ## Tính năng tiêu biểu
@@ -82,15 +81,15 @@ new ButtonBuilder()
 
 ## So sánh với Mezon SDK
 
-| Tính năng | Mezon SDK | Nezon |
-|-----------|-----------|-------|
-| Command handling | Manual event listener | `@Command` decorator |
-| Component handling | Manual pattern matching | `@Component` với pattern |
-| Type safety | Partial | Full với namespace `Nezon` |
-| Message building | Manual `ChannelMessageContent` | `SmartMessage` builder |
-| Button creation | Manual object | `ButtonBuilder` fluent API |
-| Lifecycle | Manual management | Auto với `NezonModule` |
-| Context injection | Manual fetch | Decorator injection |
+| Tính năng          | Mezon SDK                      | Nezon                      |
+| ------------------ | ------------------------------ | -------------------------- |
+| Command handling   | Manual event listener          | `@Command` decorator       |
+| Component handling | Manual pattern matching        | `@Component` với pattern   |
+| Type safety        | Partial                        | Full với namespace `Nezon` |
+| Message building   | Manual `ChannelMessageContent` | `SmartMessage` builder     |
+| Button creation    | Manual object                  | `ButtonBuilder` fluent API |
+| Lifecycle          | Manual management              | Auto với `NezonModule`     |
+| Context injection  | Manual fetch                   | Decorator injection        |
 
 ## Bắt đầu nhanh
 
@@ -113,8 +112,8 @@ yarn add @n0xgg04/nezon
 ```
 
 ```ts
-import { Module } from '@nestjs/common';
-import { NezonModule } from '@n0xgg04/nezon';
+import { Module } from "@nestjs/common";
+import { NezonModule } from "@n0xgg04/nezon";
 
 @Module({
   imports: [
@@ -137,13 +136,16 @@ async onPing(@AutoContext() [managedMessage]: Nezon.AutoContext) {
 }
 ```
 
-## Tài liệu
+## Lộ trình đọc tài liệu
 
-- [Installation](/docs/installation) - Hướng dẫn cài đặt và tạo bot đầu tiên
-- [Message Template](/docs/message-template/text-message) - Các cách tạo message
-- [Interaction](/docs/interaction/command) - Command, Component, Events
-- [Decorators](/docs/decorators) - Danh sách đầy đủ các decorator
-- [Examples](/docs/examples) - Ví dụ chi tiết cho từng tính năng
+1. [Installation](./installation.md) – cài đặt & quick example.
+2. [Lấy thông tin](./guides/data-access.md) – đọc payload, channel, clan, user, form.
+3. [Xử lý logic & event](./guides/logic-events.md) – command/component/onClick/@On.
+4. [Message Builder](./message-template/overview.md) + các trang con (text, attachments, embed, DM).
+5. [Gửi tin nhắn](./messaging/send-message.md) – reply, channel helper, DM helper, client thuần.
+6. [Utility Service](./nezon/utils.md) – `NezonUtilsService`.
+7. [Examples](./examples.md) – danh sách demo trong example bot.
+8. [Decorators](./decorators.md) – reference đầy đủ.
 
 ## Liên kết
 

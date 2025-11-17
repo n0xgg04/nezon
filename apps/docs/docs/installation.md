@@ -13,9 +13,53 @@ Hướng dẫn cài đặt Nezon và tạo bot đầu tiên với tính năng pi
 
 > **Lấy bot token và bot ID:** Tạo bot mới tại [https://mezon.ai/developers/applications](https://mezon.ai/developers/applications)
 
-## Cài đặt
+## Cài đặt & Quick Example
 
-Có 2 cách để bắt đầu với Nezon:
+Nếu bạn muốn thử nhanh trong project sẵn có:
+
+1. Cài đặt package:
+
+   ```bash
+   yarn add @n0xgg04/nezon
+   # hoặc npm install @n0xgg04/nezon
+   ```
+
+2. Khai báo module:
+
+   ```ts
+   import { Module } from "@nestjs/common";
+   import { ConfigModule } from "@nestjs/config";
+   import { NezonModule } from "@n0xgg04/nezon";
+
+   @Module({
+     imports: [
+       ConfigModule.forRoot({ isGlobal: true }),
+       NezonModule.forRoot({
+         token: process.env.MEZON_TOKEN ?? "",
+         botId: process.env.MEZON_BOT_ID ?? "",
+       }),
+     ],
+   })
+   export class AppModule {}
+   ```
+
+3. Tạo handler cơ bản:
+
+   ```ts
+   @Injectable()
+   export class PingHandler {
+     @Command("ping")
+     async onPing(@AutoContext() [message]: Nezon.AutoContext) {
+       await message.reply(Nezon.SmartMessage.text("pong!"));
+     }
+   }
+   ```
+
+4. Thêm `PingHandler` vào `providers` của module, chạy `yarn start:dev`, gõ `*ping` trong Mezon.
+
+---
+
+Ngoài ra bạn có thể chọn một trong hai cách bên dưới:
 
 ### Cách 1: Tạo project mới (Khuyến nghị) ⭐
 
@@ -362,25 +406,16 @@ Xem thêm: [create-mezon-bot trên npm](https://www.npmjs.com/package/create-mez
 
 ## Troubleshooting
 
-### Bot không phản hồi
-
-1. Kiểm tra token và bot ID trong `.env`
-2. Đảm bảo bot đã được thêm vào channel/clan
-3. Kiểm tra console logs để xem có lỗi không
-
-### Module không được load
-
-1. Đảm bảo handler được thêm vào `providers` trong module
-2. Kiểm tra `@Injectable()` decorator
-3. Đảm bảo module được import vào `AppModule`
-
-### Type errors
-
-1. Đảm bảo đã import type từ `@n0xgg04/nezon`
-2. Sử dụng namespace `Nezon` cho types: `Nezon.AutoContext`, `Nezon.Args`, etc.
+- **Bot không phản hồi:** kiểm tra token/ID, đảm bảo bot đã join clan và xem log console.
+- **Module không được load:** chắc chắn handler có `@Injectable()` và được thêm vào `providers`.
+- **Type errors:** import type từ `@n0xgg04/nezon` và dùng namespace `Nezon` (ví dụ `Nezon.AutoContext`).
 
 ## Next Steps
 
-- [Message Template](/docs/message-template/text-message) - Tìm hiểu cách tạo các loại message
-- [Interaction](/docs/interaction/command) - Tìm hiểu về Command, Component, Events
-- [Decorators](/docs/decorators) - Xem danh sách đầy đủ decorators
+1. [Lấy thông tin](./guides/data-access.md) – đọc message, channel, clan, form data...
+2. [Xử lý logic & event](./guides/logic-events.md) – command, component, onClick, @On/@Once.
+3. [Message Builder](./message-template/overview.md) – xây dựng nội dung (text, embed, form...).
+4. [Gửi tin nhắn](./messaging/send-message.md) – reply, channel helper, DM helper, client thuần.
+5. [Utility Service](./nezon/utils.md) – `NezonUtilsService`.
+6. [Examples](./examples.md) – danh sách tính năng đã có sẵn trong example bot.
+7. [Decorators](./decorators.md) – tra cứu đầy đủ decorator.

@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **AutoContext type**: cập nhật từ `[ManagedMessage, DMHelper]` thành `[ManagedMessage, DMHelper, ChannelHelper]`. Event handlers trả về `[null, DMHelper, null]`.
-- **Documentation**: Cập nhật decorators, installation, DM docs với hướng dẫn dùng ChannelHelper.
+- **Documentation**: Cập nhật decorators, installation, DM docs với hướng dẫn dùng ChannelHelper và bổ sung lộ trình tài liệu (Giới thiệu → Cài đặt → Lấy thông tin → Logic/Event → Message Builder → Gửi tin nhắn → Utility → Examples → Decorators).
 
 ## [1.0.9] - 2025-11-14
 
@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **@AutoContext trong Event Handlers**: Hỗ trợ sử dụng `@AutoContext` trong `@On` và `@Once` event handlers để truy cập `DMHelper`:
+
   ```ts
   @On(Events.TokenSend)
   async onTokenSend(
@@ -53,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Trong event handlers, `@AutoContext()` trả về `[null, DMHelper]` vì không có message context
   - Có thể sử dụng `@AutoContext('dm')` để lấy trực tiếp `DMHelper`
   - `ManagedMessage` sẽ là `null` trong event handlers vì không có message context
+
 - **Event Examples với DM**: Thêm examples mới cho VoiceJoinedEvent và TokenSend event với DM notifications:
   ```ts
   @On(Events.VoiceJoinedEvent)
@@ -71,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Event Binding Error Handling**: Sửa lỗi `onAddClanUser(...).catch is not a function` bằng cách thêm kiểm tra xem method có trả về Promise hay không trước khi gọi `.catch()`:
+
   ```ts
   const result = (client as any).onAddClanUser(async (user) => {
     this.eventEmitter.emit(Events.AddClanUser, user);
