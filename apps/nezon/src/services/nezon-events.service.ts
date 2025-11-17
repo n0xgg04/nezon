@@ -12,6 +12,7 @@ import {
   SmartMessage,
   type SmartMessageLike,
   type NormalizedSmartMessage,
+  cloneMentionPlaceholders,
 } from '../messaging/smart-message';
 import type { ChannelMessageContent } from 'mezon-sdk';
 
@@ -119,7 +120,7 @@ export class NezonEventsService {
         case NezonParamType.ARG:
           value =
             typeof param.data === 'number'
-              ? args[param.data] ?? undefined
+              ? (args[param.data] ?? undefined)
               : undefined;
           break;
         case NezonParamType.ATTACHMENTS: {
@@ -149,16 +150,19 @@ export class NezonEventsService {
             normalize: (input: any) => this.normalizeSmartMessage(input),
           };
           const dmHelper = new DMHelper(client, helpers);
+          const tuple: [null, DMHelper, null] = [null, dmHelper, null];
           if (typeof param.data === 'string' && param.data) {
             if (param.data === 'dm') {
               value = dmHelper;
             } else if (param.data === 'message') {
               value = null;
+            } else if (param.data === 'channel') {
+              value = null;
             } else {
-              value = [null, dmHelper];
+              value = tuple;
             }
           } else {
-            value = [null, dmHelper];
+            value = tuple;
           }
           break;
         }
@@ -192,9 +196,9 @@ export class NezonEventsService {
           ...attachment,
         })),
         mentions: normalized.mentions?.map((mention) => ({ ...mention })),
-        mentionPlaceholders: normalized.mentionPlaceholders
-          ? { ...normalized.mentionPlaceholders }
-          : undefined,
+        mentionPlaceholders: cloneMentionPlaceholders(
+          normalized.mentionPlaceholders,
+        ),
       };
     }
     if (input && typeof input === 'object') {

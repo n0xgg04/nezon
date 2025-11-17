@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-11-17
+
+### Added
+
+- **ChannelHelper**: `@AutoContext()` giờ trả về `[ManagedMessage, DMHelper, ChannelHelper]`.
+  - `channel.send()` gửi message mới vào channel hiện tại mà không cần reply.
+  - `channel.find(channelId)` trả về helper mới đã bind vào channel khác để tiếp tục gọi `.send()`.
+  - `@AutoContext('channel')` inject trực tiếp helper (type: `Nezon.AutoContextType.Channel`).
+- **SmartMessage.addGIF()**: Helper mới để thêm GIF (`filetype: 'image/gif'`) chỉ với một dòng code.
+- **Examples & Template**: Thêm các command `*channel-demo`, `*channel-to` trong `apps/mebot` và `create-mezon-bot` template để minh họa ChannelHelper.
+
+### Changed
+
+- **AutoContext type**: cập nhật từ `[ManagedMessage, DMHelper]` thành `[ManagedMessage, DMHelper, ChannelHelper]`. Event handlers trả về `[null, DMHelper, null]`.
+- **Documentation**: Cập nhật decorators, installation, DM docs với hướng dẫn dùng ChannelHelper.
+
 ## [1.0.9] - 2025-11-14
 
 ### Added
@@ -33,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     await dm.send(event.sender_id, SmartMessage.text('Token sent!'));
   }
   ```
+
   - Trong event handlers, `@AutoContext()` trả về `[null, DMHelper]` vì không có message context
   - Có thể sử dụng `@AutoContext('dm')` để lấy trực tiếp `DMHelper`
   - `ManagedMessage` sẽ là `null` trong event handlers vì không có message context
@@ -62,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     result.catch((error) => this.logger.error('...', error?.stack));
   }
   ```
+
   - Áp dụng error handling an toàn cho tất cả event binding methods
   - Tránh crash khi event methods không trả về Promise
 
@@ -88,17 +106,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     await message.sendDM(SmartMessage.text('Private response!'));
     ```
 - **AutoContext với key parameter**: `@AutoContext` giờ hỗ trợ key parameter để lấy phần tử cụ thể thay vì phải destructure tuple:
+
   ```ts
   // Cách cũ (vẫn hoạt động - backward compatible)
   @AutoContext() [message]: Nezon.AutoContext
   @AutoContext() [message, dm]: Nezon.AutoContext
-  
+
   // Cách mới với key (tiện lợi hơn)
   @AutoContext('message') message: Nezon.AutoContextType.Message
   @AutoContext('dm') dm: Nezon.AutoContextType.DM
   ```
+
   - Type safety đầy đủ với `Nezon.AutoContextType.Message` và `Nezon.AutoContextType.DM`
   - Autocomplete tự động khi gõ `@AutoContext('...')` - TypeScript sẽ gợi ý `'message'` hoặc `'dm'`
+
 - **AutoContext enhancement**: `AutoContext` giờ trả về `[ManagedMessage, DMHelper]` thay vì chỉ `[ManagedMessage]`, cho phép truy cập DMHelper khi cần
 - **DM Documentation**: Thêm trang documentation đầy đủ về DM tại `/docs/message-template/dm` với:
   - Hướng dẫn sử dụng DMHelper và sendDM()
@@ -197,4 +218,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.6] - Previous version
 
 - Initial stable release với các tính năng cơ bản: Command decorators, Component decorators, SmartMessage builder, AutoContext injection.
-

@@ -17,6 +17,7 @@ Danh sách đầy đủ các decorators trong Nezon và cách sử dụng.
 ```
 
 **Type:**
+
 ```ts
 interface NezonCommandOptions {
   name: string;
@@ -26,6 +27,7 @@ interface NezonCommandOptions {
 ```
 
 **Ví dụ:**
+
 ```ts
 @Command('ping')
 @Command({ name: 'ping', aliases: ['pong'], prefix: '!' })
@@ -44,6 +46,7 @@ Xử lý component interactions (buttons, selects, etc.).
 ```
 
 **Type:**
+
 ```ts
 interface NezonComponentOptions {
   pattern: string;
@@ -52,6 +55,7 @@ interface NezonComponentOptions {
 ```
 
 **Ví dụ:**
+
 ```ts
 @Component('click/confirm')
 @Component({ pattern: '/user/:id/:action' })
@@ -70,6 +74,7 @@ Lắng nghe event mỗi lần xảy ra.
 ```
 
 **Ví dụ:**
+
 ```ts
 @On(Events.ChannelMessage)
 ```
@@ -85,6 +90,7 @@ Lắng nghe event một lần duy nhất.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Once('Ready')
 ```
@@ -103,6 +109,7 @@ Lấy tất cả arguments từ command.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Command('greet')
 async greet(@Args() args: Nezon.Args) {
@@ -120,6 +127,7 @@ Lấy argument cụ thể theo index.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Command('greet')
 async greet(@Arg(0) name: string | undefined) {
@@ -138,6 +146,7 @@ Lấy danh sách file đính kèm từ message.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Command('inspect')
 async inspect(
@@ -159,6 +168,7 @@ Lấy danh sách mentions từ message.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Command('inspect')
 async inspectMentions(
@@ -179,6 +189,7 @@ Lấy toàn bộ nội dung message (bao gồm cả command).
 ```
 
 **Ví dụ:**
+
 ```ts
 @Command('echo')
 async echo(@MessageContent() content: string | undefined) {
@@ -188,16 +199,18 @@ async echo(@MessageContent() content: string | undefined) {
 
 ### @AutoContext
 
-Lấy ManagedMessage và DMHelper với các methods tiện dụng.
+Lấy ManagedMessage, DMHelper và ChannelHelper với các methods tiện dụng.
 
 ```ts
-@AutoContext(key?: 'message' | 'dm'): ParameterDecorator
-// Không có key: Trả về Nezon.AutoContext = [ManagedMessage, DMHelper]
+@AutoContext(key?: 'message' | 'dm' | 'channel'): ParameterDecorator
+// Không có key: Trả về Nezon.AutoContext = [ManagedMessage, DMHelper, ChannelHelper]
 // Với key 'message': Trả về Nezon.AutoContextType.Message
 // Với key 'dm': Trả về Nezon.AutoContextType.DM
+// Với key 'channel': Trả về Nezon.AutoContextType.Channel
 ```
 
 **Cách 1: Lấy toàn bộ tuple (backward compatible)**
+
 ```ts
 @Command('ping')
 async ping(@AutoContext() [managedMessage]: Nezon.AutoContext) {
@@ -206,6 +219,7 @@ async ping(@AutoContext() [managedMessage]: Nezon.AutoContext) {
 ```
 
 **Cách 2: Lấy phần tử cụ thể bằng key**
+
 ```ts
 @Command('dm')
 async sendDM(
@@ -218,19 +232,52 @@ async sendDM(
 }
 ```
 
+**Ví dụ 3: Channel helper**
+
+```ts
+@Command('broadcast')
+async broadcast(
+  @AutoContext('channel') channel: Nezon.AutoContextType.Channel,
+) {
+  if (!channel) return;
+  await channel.send(SmartMessage.text('Tin nhắn mới trong channel hiện tại!'));
+}
+
+@Command('broadcast-to')
+async broadcastTo(
+  @Args() args: Nezon.Args,
+  @AutoContext('channel') channel: Nezon.AutoContextType.Channel,
+) {
+  const [channelId] = args;
+  if (!channel || !channelId) {
+    return;
+  }
+  await channel
+    .find(channelId)
+    .send(SmartMessage.text(`Gửi thông báo tới channel ${channelId}`));
+}
+```
+
 **Type definitions:**
-- `Nezon.AutoContext` - Tuple type `[ManagedMessage, DMHelper]`
+
+- `Nezon.AutoContext` - Tuple type `[ManagedMessage, DMHelper, ChannelHelper]`
 - `Nezon.AutoContextType.Message` - Type cho ManagedMessage
 - `Nezon.AutoContextType.DM` - Type cho DMHelper
+- `Nezon.AutoContextType.Channel` - Type cho ChannelHelper
 
 > **Lưu ý về ManagedMessage**
 >
 > `ManagedMessage` đại diện cho message của context hiện tại:
+>
 > - Với **text commands**, đây chính là **tin nhắn người dùng gửi**, nên bạn chỉ nên dùng `reply()`, `sendDM()`, hoặc `react()`. Các method như `update()`/`delete()` sẽ **throw error** nếu không phải message của bot.
 > - Với **component handlers** (hoặc khi dùng `@ComponentTarget`), `ManagedMessage` trỏ tới **message do bot gửi**, vì vậy bạn có thể gọi `update()` hoặc `delete()` để chỉnh sửa/xóa message của bot.
 > - **Reaction methods** (`react()`, `addReaction()`, `removeReaction()`) hoạt động với cả message của user và bot.
 >
 > Best practice: đặt tên biến là `managedMessage` hoặc tương tự để phân biệt với raw payload (`ChannelMessagePayload`).
+
+> **Lưu ý về ChannelHelper**
+>
+> `ChannelHelper` trả về `null` trong bối cảnh event (`@On`/`@Once`) vì không có channel cụ thể. Trong commands/components, channel luôn tồn tại.
 
 ### @Message
 
@@ -243,6 +290,7 @@ Lấy Message entity từ Mezon SDK.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Command('info')
 async info(@Message() message: Nezon.Message | undefined) {
@@ -265,6 +313,7 @@ Lấy raw ChannelMessage payload.
 ```
 
 **Ví dụ:**
+
 ```ts
 @On(Events.ChannelMessage)
 async onMessage(@ChannelMessagePayload() payload: Nezon.ChannelMessage) {
@@ -283,6 +332,7 @@ Lấy Channel entity.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Command('info')
 async info(@Channel() channel: Nezon.Channel | undefined) {
@@ -305,6 +355,7 @@ Lấy Clan entity.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Command('info')
 async info(@Clan() clan: Nezon.Clan | undefined) {
@@ -323,6 +374,7 @@ Lấy User entity.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Command('info')
 async info(@User() user: Nezon.User | undefined) {
@@ -345,6 +397,7 @@ Lấy MezonClient instance.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Command('info')
 async info(@Client() client: Nezon.Client) {
@@ -362,6 +415,7 @@ Lấy raw ComponentPayload từ button click.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Component('click/confirm')
 async confirm(@ComponentPayload() payload: Nezon.ComponentPayload) {
@@ -381,6 +435,7 @@ Lấy tất cả parameters từ component pattern.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Component({ pattern: '/user/:id/:action' })
 async action(
@@ -404,6 +459,7 @@ Lấy parameter cụ thể theo index hoặc name.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Component({ pattern: '/user/:id/:action' })
 async action(
@@ -425,6 +481,7 @@ Lấy Message entity đã được cache từ component click.
 ```
 
 **Ví dụ:**
+
 ```ts
 @Component('click/confirm')
 async confirm(@ComponentTarget() target: Nezon.Message | undefined) {
@@ -442,6 +499,7 @@ Lấy event payload từ @On hoặc @Once handlers.
 ```
 
 **Ví dụ:**
+
 ```ts
 @On(Events.TokenSend)
 async onTokenSend(@EventPayload() payload: Nezon.TokenSendPayload) {
@@ -456,29 +514,29 @@ async onAddClanUser(@EventPayload() payload: Nezon.AddClanUserPayload) {
 
 ## Bảng tóm tắt
 
-| Decorator | Type | Use Case |
-|-----------|------|----------|
-| `@Command` | Method | Định nghĩa command |
-| `@Component` | Method | Xử lý component |
-| `@On` | Method | Lắng nghe event |
-| `@Once` | Method | Lắng nghe event một lần |
-| `@Args` | Parameter | Tất cả arguments |
-| `@Arg` | Parameter | Argument cụ thể |
-| `@MessageContent` | Parameter | Nội dung message |
-| `@AutoContext` | Parameter | ManagedMessage |
-| `@Message` | Parameter | Message entity |
-| `@ChannelMessagePayload` | Parameter | Raw message payload |
-| `@Channel` | Parameter | Channel entity |
-| `@Clan` | Parameter | Clan entity |
-| `@User` | Parameter | User entity |
-| `@Client` | Parameter | MezonClient |
-| `@ComponentPayload` | Parameter | Raw component payload |
-| `@ComponentParams` | Parameter | Component parameters |
-| `@ComponentParam` | Parameter | Component parameter cụ thể |
-| `@ComponentTarget` | Parameter | Target message (cached) |
-| `@EventPayload` | Parameter | Event payload (typed) |
-| `@MezonClient` | Parameter | MezonClient instance |
-| `@NezonUtils` | Parameter | NezonUtilsService instance |
+| Decorator                | Type      | Use Case                   |
+| ------------------------ | --------- | -------------------------- |
+| `@Command`               | Method    | Định nghĩa command         |
+| `@Component`             | Method    | Xử lý component            |
+| `@On`                    | Method    | Lắng nghe event            |
+| `@Once`                  | Method    | Lắng nghe event một lần    |
+| `@Args`                  | Parameter | Tất cả arguments           |
+| `@Arg`                   | Parameter | Argument cụ thể            |
+| `@MessageContent`        | Parameter | Nội dung message           |
+| `@AutoContext`           | Parameter | ManagedMessage             |
+| `@Message`               | Parameter | Message entity             |
+| `@ChannelMessagePayload` | Parameter | Raw message payload        |
+| `@Channel`               | Parameter | Channel entity             |
+| `@Clan`                  | Parameter | Clan entity                |
+| `@User`                  | Parameter | User entity                |
+| `@Client`                | Parameter | MezonClient                |
+| `@ComponentPayload`      | Parameter | Raw component payload      |
+| `@ComponentParams`       | Parameter | Component parameters       |
+| `@ComponentParam`        | Parameter | Component parameter cụ thể |
+| `@ComponentTarget`       | Parameter | Target message (cached)    |
+| `@EventPayload`          | Parameter | Event payload (typed)      |
+| `@MezonClient`           | Parameter | MezonClient instance       |
+| `@NezonUtils`            | Parameter | NezonUtilsService instance |
 
 ## Xem thêm
 
@@ -486,4 +544,3 @@ async onAddClanUser(@EventPayload() payload: Nezon.AddClanUserPayload) {
 - [@Component](/docs/interaction/component) - Chi tiết về Component
 - [@On, @Once](/docs/interaction/events) - Chi tiết về Events
 - [Examples](/docs/examples) - Ví dụ sử dụng
-

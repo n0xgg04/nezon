@@ -86,4 +86,44 @@ export class ExampleCommandHandlers {
     ].join('\n');
     await managedMessage.reply(SmartMessage.text(summary));
   }
+
+  @Command('channel-demo')
+  async onChannelDemo(
+    @AutoContext('channel') channel: Nezon.AutoContextType.Channel,
+  ) {
+    if (!channel) {
+      return;
+    }
+    await channel.send(
+      SmartMessage.text(
+        'Tin nhắn này được gửi trực tiếp vào channel hiện tại!',
+      ),
+    );
+  }
+
+  @Command('channel-to')
+  async onChannelTo(
+    @Args() args: Nezon.Args,
+    @AutoContext('channel') channel: Nezon.AutoContextType.Channel,
+  ) {
+    if (!channel) {
+      return;
+    }
+    const [targetChannelId] = args;
+    if (!targetChannelId) {
+      await channel.send(
+        SmartMessage.text(
+          'Sử dụng: *channel-to <channel_id> để gửi tới channel khác',
+        ),
+      );
+      return;
+    }
+    await channel
+      .find(targetChannelId)
+      .send(
+        SmartMessage.text(
+          `Xin chào channel ${targetChannelId}! Đây là tin nhắn được gửi bằng ChannelHelper.`,
+        ),
+      );
+  }
 }

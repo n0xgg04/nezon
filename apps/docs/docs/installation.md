@@ -212,11 +212,13 @@ Xem thư mục `src/bot/examples/` (ví dụ `example-command.handlers.ts`, `exa
 @AutoContext() [message]: Nezon.AutoContext
 ```
 
-- **Không có key**: Trả về tuple `[ManagedMessage, DMHelper]`
+- **Không có key**: Trả về tuple `[ManagedMessage, DMHelper, ChannelHelper]`
 - **Với key `'message'`**: Trả về `ManagedMessage` (type: `Nezon.AutoContextType.Message`)
 - **Với key `'dm'`**: Trả về `DMHelper` (type: `Nezon.AutoContextType.DM`)
+- **Với key `'channel'`**: Trả về `ChannelHelper` (type: `Nezon.AutoContextType.Channel`)
 - `ManagedMessage` có các methods: `reply()`, `update()`, `delete()`, `sendDM()`
 - `DMHelper` có method: `send(userId, message)` để gửi DM
+- `ChannelHelper` có `.send()` để post message mới vào channel hiện tại và `.find(channelId)` để bind sang channel khác
 
 **Ví dụ 1: Lấy toàn bộ tuple (backward compatible)**
 
@@ -239,6 +241,33 @@ async onDM(
   const userId = args[0];
   await dm.send(userId, SmartMessage.text('Hello via DM!'));
 }
+
+@Command('broadcast')
+async onBroadcast(
+  @AutoContext('channel') channel: Nezon.AutoContextType.Channel,
+) {
+  if (!channel) return;
+  await channel.send(SmartMessage.text('Thông báo trong channel hiện tại!'));
+}
+
+@Command('broadcast-to')
+async onBroadcastTo(
+  @Args() args: Nezon.Args,
+  @AutoContext('channel') channel: Nezon.AutoContextType.Channel,
+) {
+  const [channelId] = args;
+  if (!channel || !channelId) {
+    await channel?.send(
+      SmartMessage.text('Sử dụng: *broadcast-to <channel_id>'),
+    );
+    return;
+  }
+  await channel
+    .find(channelId)
+    .send(SmartMessage.text(`Gửi thông báo tới channel ${channelId}`));
+}
+
+> **Lưu ý**: Trong event handlers (`@On`, `@Once`), `channel` có thể là `null` vì không có channel context cố định.
 ```
 
 ### `SmartMessage.text()`

@@ -309,6 +309,16 @@ addFile(
     size?: number;
   }
 ): this
+
+addGIF(
+  url: string,
+  options?: {
+    filename?: string;
+    width?: number;
+    height?: number;
+    size?: number;
+  }
+): this
 ```
 
 **Ví dụ:**
@@ -319,6 +329,12 @@ const message = SmartMessage.text("Download the file:").addFile(
   "document.pdf",
   "application/pdf",
   { size: 1024000 }
+);
+
+// Thêm GIF
+SmartMessage.text("Reaction time!").addGIF(
+  "https://media.tenor.com/2ES7YijqoOwAAAAC/kiss.gif",
+  { filename: "kiss.gif" }
 );
 ```
 
@@ -348,15 +364,23 @@ const message = SmartMessage.text("Rich embed:").addEmbed(
 Map placeholder → user_id để SmartMessage tự render mention với `@username` và metadata `mentions`.
 
 ```ts
-addMention(key: string, userId: string): this
-addMention(mentions: Record<string, string>): this
+addMention(
+  key: string,
+  value: string | { user_id?: string; role_id?: string; role_name?: string }
+): this
+addMention(
+  mentions: Record<
+    string,
+    string | { user_id?: string; role_id?: string; role_name?: string }
+  >
+): this
 ```
 
 **Cách sử dụng**
 
 1. Trong nội dung text, đặt `{{placeholder_name}}` tại vị trí cần mention.
-2. Gọi `.addMention({ placeholder_name: 'USER_ID' })` hoặc `.addMention('placeholder_name', 'USER_ID')`.
-3. Khi gửi qua `ManagedMessage`/`DMHelper`, SDK sẽ tìm username trong clan, thay thế bằng `@username`, đồng thời truyền `mentions` với `s`/`e`.
+2. Gọi `.addMention({ placeholder_name: 'USER_ID' })` hoặc `.addMention('placeholder_name', 'USER_ID')` với user, hoặc truyền object `{ role_name: '...' }` / `{ role_id: '...' }` đối với role.
+3. Khi gửi qua `ManagedMessage`/`DMHelper`, SDK sẽ tìm username hoặc role theo `clan.listRoles()`, thay thế bằng `@` phù hợp và tự động truyền `mentions` với `s`/`e`.
 
 **Ví dụ**
 
@@ -377,6 +401,21 @@ Output thực tế:
 
 Nếu không tìm được username, SDK fallback về user_id.
 
+**Role mention**
+
+```ts
+await managedMessage.reply(
+  SmartMessage.text("Gửi thông báo tới {{target_role}} 🛎️").addMention({
+    target_role: { role_name: "GÔ LĂNG" },
+  })
+);
+```
+
+- `role_name` tự động bỏ ký tự `@` đầu chuỗi và so khớp case-insensitive với `clan.listRoles()`. Có thể truyền trực tiếp `role_id` (`{ role_id: "1840..." }`) nếu đã biết ID.
+- Khi tìm thấy role, nội dung sẽ trở thành `@TênRole` và payload chứa `role_id`, `rolename`, `s`, `e` tương ứng.
+- Chỉ khi bot xác định được `role_id` (qua `role_id` truyền vào hoặc lookup theo tên) thì mới thêm entry vào `mentions`. Nếu không match được, SDK chỉ thay thế text nhưng không thêm mention.
+- Với user mentions, bạn có thể truyền thêm `username` hoặc `display_name` trong object `{ user_id, username }` để làm fallback khi bot chưa fetch được profile (tránh hiển thị ID thô).
+
 ## Chuyển đổi sang Mezon SDK
 
 SmartMessage cung cấp các methods để chuyển đổi sang format Mezon SDK:
@@ -392,7 +431,11 @@ interface NormalizedSmartMessage {
   content: ChannelMessageContent;
   attachments?: ApiMessageAttachment[];
   mentions?: ApiMessageMention[];
-  mentionPlaceholders?: Record<string, string>;
+  mentionPlaceholders?: Record<
+    string,
+    | { kind: "user"; userId: string }
+    | { kind: "role"; roleId?: string; roleName?: string }
+  >;
 }
 ```
 

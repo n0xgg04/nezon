@@ -1,6 +1,7 @@
 import {
   ApiMessageAttachment,
   ApiMessageMention,
+  ApiRole,
   ChannelMessageContent,
   EMarkdownType,
   IMessageActionRow,
@@ -9,6 +10,7 @@ import {
 } from 'mezon-sdk/dist/cjs/interfaces/client';
 import type { ChannelMessage } from 'mezon-sdk';
 import type { Clan } from 'mezon-sdk/dist/cjs/mezon-client/structures/Clan';
+import type { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
 import type { Message } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
 import type { User } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
 import type { NezonCommandContext } from '../interfaces/command-context.interface';
@@ -19,19 +21,173 @@ import {
 } from './button-builder';
 import { EmbedBuilder } from './embed-builder';
 
+type MentionInput =
+  | string
+  | {
+      user_id?: string;
+      userId?: string;
+      username?: string;
+      display_name?: string;
+      role_id?: string;
+      roleId?: string;
+      role_name?: string;
+      roleName?: string;
+      type?: 'user' | 'role';
+    };
+
+type MentionPlaceholderUser = {
+  kind: 'user';
+  userId: string;
+  label?: string;
+};
+
+type MentionPlaceholderRole = {
+  kind: 'role';
+  roleId?: string;
+  roleName?: string;
+};
+
+type MentionPlaceholderValue = MentionPlaceholderUser | MentionPlaceholderRole;
+
+interface MentionResolvers {
+  resolveUser: (userId: string) => Promise<string>;
+  resolveRole?: (
+    target: MentionPlaceholderRole,
+  ) => Promise<{ name: string; roleId?: string } | undefined>;
+}
+
 export interface NormalizedSmartMessage {
   content: ChannelMessageContent;
   attachments?: ApiMessageAttachment[];
   mentions?: ApiMessageMention[];
-  mentionPlaceholders?: Record<string, string>;
+  mentionPlaceholders?: Record<string, MentionPlaceholderValue>;
 }
 
-type MentionResolver = (userId: string) => Promise<string>;
+const CLAN_ROLE_CACHE_TTL = 5 * 60 * 1000;
+
+const clanRoleCache = new WeakMap<
+  Clan,
+  {
+    roles: ApiRole[];
+    expiresAt: number;
+  }
+>();
+
+function normalizeMentionInput(
+  value?: MentionInput,
+): MentionPlaceholderValue | undefined {
+  if (!value) {
+    return undefined;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? { kind: 'user', userId: trimmed } : undefined;
+  }
+  const userId = value.user_id ?? value.userId;
+  const userLabel = cleanUserLabel(value.username ?? value.display_name);
+  const roleId = value.role_id ?? value.roleId;
+  const roleName = cleanRoleLabel(value.role_name ?? value.roleName);
+  const explicitType = value.type;
+
+  if (explicitType === 'role' || roleId || roleName) {
+    if (roleId || roleName) {
+      return {
+        kind: 'role',
+        roleId: roleId?.trim(),
+        roleName,
+      };
+    }
+    return undefined;
+  }
+  if (explicitType === 'user' || userId) {
+    return userId
+      ? {
+          kind: 'user',
+          userId: userId.trim(),
+          label: userLabel,
+        }
+      : undefined;
+  }
+  return undefined;
+}
+
+async function getClanRoles(clan: Clan): Promise<ApiRole[]> {
+  const cached = clanRoleCache.get(clan);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.roles;
+  }
+  try {
+    const response = await clan.listRoles();
+    const roles = response?.roles?.roles ?? [];
+    clanRoleCache.set(clan, {
+      roles,
+      expiresAt: Date.now() + CLAN_ROLE_CACHE_TTL,
+    });
+    return roles;
+  } catch {
+    if (cached) {
+      return cached.roles;
+    }
+    return [];
+  }
+}
+
+function cloneMentionPlaceholderValue(
+  value: MentionPlaceholderValue,
+): MentionPlaceholderValue {
+  if (value.kind === 'user') {
+    return {
+      kind: 'user',
+      userId: value.userId,
+      label: value.label,
+    };
+  }
+  return {
+    kind: 'role',
+    roleId: value.roleId,
+    roleName: value.roleName,
+  };
+}
+
+function cloneMentionPlaceholdersRecord(
+  placeholders: Record<string, MentionPlaceholderValue>,
+): Record<string, MentionPlaceholderValue> {
+  const cloned: Record<string, MentionPlaceholderValue> = {};
+  for (const [key, entry] of Object.entries(placeholders)) {
+    cloned[key] = cloneMentionPlaceholderValue(entry);
+  }
+  return cloned;
+}
+
+export function cloneMentionPlaceholders(
+  placeholders?: Record<string, MentionPlaceholderValue>,
+): Record<string, MentionPlaceholderValue> | undefined {
+  if (!placeholders) {
+    return undefined;
+  }
+  return cloneMentionPlaceholdersRecord(placeholders);
+}
+
+function cleanRoleLabel(label?: string | null): string | undefined {
+  if (!label) {
+    return undefined;
+  }
+  const trimmed = label.trim().replace(/^@+/, '').trim();
+  return trimmed.length ? trimmed : undefined;
+}
+
+function cleanUserLabel(label?: string | null): string | undefined {
+  if (!label) {
+    return undefined;
+  }
+  const trimmed = label.trim().replace(/^@+/, '').trim();
+  return trimmed.length ? trimmed : undefined;
+}
 
 async function resolveMentionPlaceholders(
   text: string,
-  placeholders: Record<string, string>,
-  resolver: MentionResolver,
+  placeholders: Record<string, MentionPlaceholderValue>,
+  resolvers: MentionResolvers,
 ): Promise<{ text: string; mentions: ApiMessageMention[] }> {
   if (!text) {
     return { text, mentions: [] };
@@ -47,17 +203,50 @@ async function resolveMentionPlaceholders(
     const key = keyRaw?.trim();
     result += text.slice(cursor, match.index);
     cursor = match.index + fullMatch.length;
-    if (!key || !placeholders[key]) {
+    if (!key) {
       result += fullMatch;
       continue;
     }
-    const username = await resolver(placeholders[key]);
-    const cleanUsername = username || placeholders[key];
+    const placeholder = placeholders[key];
+    if (!placeholder) {
+      result += fullMatch;
+      continue;
+    }
+    if (placeholder.kind === 'role') {
+      const resolved = resolvers.resolveRole
+        ? await resolvers.resolveRole(placeholder)
+        : undefined;
+      const roleLabel =
+        cleanRoleLabel(resolved?.name) ??
+        placeholder.roleName ??
+        placeholder.roleId ??
+        'role';
+      if (!roleLabel) {
+        result += fullMatch;
+        continue;
+      }
+      const mentionText = `@${roleLabel}`;
+      const start = result.length;
+      result += mentionText;
+      const roleId = resolved?.roleId ?? placeholder.roleId;
+      if (roleId) {
+        mentions.push({
+          role_id: roleId,
+          rolename: mentionText,
+          s: start,
+          e: start + mentionText.length,
+        });
+      }
+      continue;
+    }
+    const username = await resolvers.resolveUser(placeholder.userId);
+    const cleanUsername =
+      cleanUserLabel(username) ?? placeholder.label ?? placeholder.userId;
     const mentionText = `@${cleanUsername}`;
     const start = result.length;
     result += mentionText;
     mentions.push({
-      user_id: placeholders[key],
+      user_id: placeholder.userId,
       username: cleanUsername,
       s: start,
       e: start + mentionText.length,
@@ -121,7 +310,7 @@ export class SmartMessage {
   private components: ButtonComponent[] = [];
   private attachments: ApiMessageAttachment[] = [];
   private embeds: IInteractiveMessageProps[] = [];
-  private mentionPlaceholders: Record<string, string> = {};
+  private mentionPlaceholders: Record<string, MentionPlaceholderValue> = {};
 
   private constructor(
     private readonly content: ChannelMessageContent,
@@ -313,6 +502,27 @@ export class SmartMessage {
     return this;
   }
 
+  addGIF(
+    url: string,
+    options?: {
+      filename?: string;
+      width?: number;
+      height?: number;
+      size?: number;
+    },
+  ): this {
+    const attachment: ApiMessageAttachment = {
+      url,
+      filetype: 'image/gif',
+      filename: options?.filename,
+      width: options?.width,
+      height: options?.height,
+      size: options?.size,
+    };
+    this.attachments.push(attachment);
+    return this;
+  }
+
   /**
    * Adds an embed to the message.
    *
@@ -343,18 +553,23 @@ export class SmartMessage {
     return this;
   }
 
-  addMention(key: string, userId: string): this;
-  addMention(mentions: Record<string, string>): this;
-  addMention(keyOrMap: string | Record<string, string>, userId?: string): this {
+  addMention(key: string, value: MentionInput): this;
+  addMention(mentions: Record<string, MentionInput>): this;
+  addMention(
+    keyOrMap: string | Record<string, MentionInput>,
+    value?: MentionInput,
+  ): this {
     if (typeof keyOrMap === 'string') {
-      if (keyOrMap && typeof userId === 'string' && userId) {
-        this.mentionPlaceholders[keyOrMap] = userId;
+      const normalized = normalizeMentionInput(value);
+      if (keyOrMap && normalized) {
+        this.mentionPlaceholders[keyOrMap] = normalized;
       }
       return this;
     }
-    Object.entries(keyOrMap).forEach(([key, value]) => {
-      if (key && typeof value === 'string' && value) {
-        this.mentionPlaceholders[key] = value;
+    Object.entries(keyOrMap).forEach(([key, target]) => {
+      const normalized = normalizeMentionInput(target);
+      if (key && normalized) {
+        this.mentionPlaceholders[key] = normalized;
       }
     });
     return this;
@@ -382,7 +597,7 @@ export class SmartMessage {
           : undefined,
       mentionPlaceholders:
         Object.keys(this.mentionPlaceholders).length > 0
-          ? { ...this.mentionPlaceholders }
+          ? cloneMentionPlaceholdersRecord(this.mentionPlaceholders)
           : undefined,
     };
   }
@@ -448,26 +663,9 @@ export class DMHelper {
     message: SmartMessageLike,
   ): Promise<NormalizedSmartMessage> {
     const payload = this.helpers.normalize(message);
-    if (
-      !payload.mentionPlaceholders ||
-      Object.keys(payload.mentionPlaceholders).length === 0 ||
-      typeof payload.content?.t !== 'string'
-    ) {
-      return payload;
-    }
-    const mentionResult = await resolveMentionPlaceholders(
-      payload.content.t,
-      payload.mentionPlaceholders,
-      async (id) => this.fetchUsername(id),
-    );
-    return {
-      ...payload,
-      content: {
-        ...payload.content,
-        t: mentionResult.text,
-      },
-      mentions: mentionResult.mentions,
-    };
+    return this.applyMentionPlaceholders(payload, {
+      resolveUser: (id) => this.fetchUsername(id),
+    });
   }
 
   private async fetchUsername(userId: string): Promise<string> {
@@ -487,6 +685,134 @@ export class DMHelper {
       return userId;
     }
     return userId;
+  }
+
+  private async applyMentionPlaceholders(
+    payload: NormalizedSmartMessage,
+    resolvers: MentionResolvers,
+  ): Promise<NormalizedSmartMessage> {
+    if (
+      !payload.mentionPlaceholders ||
+      Object.keys(payload.mentionPlaceholders).length === 0 ||
+      typeof payload.content?.t !== 'string'
+    ) {
+      return payload;
+    }
+    const mentionResult = await resolveMentionPlaceholders(
+      payload.content.t,
+      payload.mentionPlaceholders,
+      resolvers,
+    );
+    return {
+      ...payload,
+      content: {
+        ...payload.content,
+        t: mentionResult.text,
+      },
+      mentions: [...(payload.mentions ?? []), ...mentionResult.mentions],
+    };
+  }
+}
+
+export class ChannelHelper {
+  constructor(
+    private readonly context: NezonCommandContext,
+    private readonly helpers: ManagedMessageHelpers,
+    private readonly targetChannelId?: string,
+  ) {}
+
+  async send(message: SmartMessageLike) {
+    const channel = await this.resolveChannel();
+    if (!channel) {
+      throw new Error('Cannot send message: channel could not be resolved');
+    }
+    const payload = await this.preparePayload(message, channel);
+    return channel.send(payload.content, payload.mentions, payload.attachments);
+  }
+
+  find(channelId: string): ChannelHelper {
+    if (!channelId) {
+      throw new Error('channelId is required to bind channel helper');
+    }
+    return new ChannelHelper(this.context, this.helpers, channelId);
+  }
+
+  private async resolveChannel(): Promise<TextChannel | undefined> {
+    const channelId = this.targetChannelId ?? this.context.message.channel_id;
+    if (!channelId) {
+      return undefined;
+    }
+    if (!this.targetChannelId) {
+      try {
+        const cached = await this.context.getChannel();
+        if (cached) {
+          return cached;
+        }
+      } catch {
+        // fallback to fetch
+      }
+    }
+    try {
+      const fetched = await this.context.client.channels.fetch(channelId);
+      return fetched as TextChannel;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private async preparePayload(
+    message: SmartMessageLike,
+    channel?: TextChannel,
+  ): Promise<NormalizedSmartMessage> {
+    const payload = this.helpers.normalize(message);
+    return this.applyMentionPlaceholders(payload, channel);
+  }
+
+  private async applyMentionPlaceholders(
+    payload: NormalizedSmartMessage,
+    channel?: TextChannel,
+  ): Promise<NormalizedSmartMessage> {
+    if (
+      !payload.mentionPlaceholders ||
+      Object.keys(payload.mentionPlaceholders).length === 0 ||
+      typeof payload.content?.t !== 'string'
+    ) {
+      return payload;
+    }
+    const clan =
+      channel?.clan ??
+      (typeof this.context.getClan === 'function'
+        ? await this.context.getClan()
+        : undefined);
+    const cache = new Map<string, string>();
+    const mentionResult = await resolveMentionPlaceholders(
+      payload.content.t,
+      payload.mentionPlaceholders,
+      {
+        resolveUser: async (userId) => {
+          const cachedValue = cache.get(userId);
+          if (cachedValue) {
+            return cachedValue;
+          }
+          const username = await lookupUsernameUsingContext(
+            this.context,
+            userId,
+            clan,
+          );
+          cache.set(userId, username);
+          return username;
+        },
+        resolveRole: (target) => lookupRoleInClan(target, clan),
+      },
+    );
+    return {
+      ...payload,
+      content: {
+        ...payload.content,
+        t: mentionResult.text,
+      },
+      mentions: [...(payload.mentions ?? []), ...mentionResult.mentions],
+    };
   }
 }
 
@@ -638,14 +964,21 @@ export class ManagedMessage {
     const mentionResult = await resolveMentionPlaceholders(
       payload.content.t,
       payload.mentionPlaceholders,
-      async (userId) => {
-        const cachedValue = cache.get(userId);
-        if (cachedValue) {
-          return cachedValue;
-        }
-        const username = await this.lookupUsername(userId, clan);
-        cache.set(userId, username);
-        return username;
+      {
+        resolveUser: async (userId) => {
+          const cachedValue = cache.get(userId);
+          if (cachedValue) {
+            return cachedValue;
+          }
+          const username = await lookupUsernameUsingContext(
+            this.context,
+            userId,
+            clan,
+          );
+          cache.set(userId, username);
+          return username;
+        },
+        resolveRole: (target) => lookupRoleInClan(target, clan),
       },
     );
     return {
@@ -654,58 +987,117 @@ export class ManagedMessage {
         ...payload.content,
         t: mentionResult.text,
       },
-      mentions: mentionResult.mentions,
+      mentions: [...(payload.mentions ?? []), ...mentionResult.mentions],
     };
   }
+}
 
-  private async lookupUsername(userId: string, clan?: Clan): Promise<string> {
-    const clanUser = await this.fetchUserFromDirectory(
-      clan ? (clan.users as unknown as UserDirectory) : undefined,
-      userId,
+async function lookupUsernameUsingContext(
+  context: NezonCommandContext,
+  userId: string,
+  clan?: Clan,
+): Promise<string> {
+  const clanUser = await fetchUserFromDirectory(
+    clan ? (clan.users as unknown as UserDirectory) : undefined,
+    userId,
+  );
+  if (clanUser) {
+    return (
+      clanUser.username ||
+      (clanUser as unknown as { display_name?: string }).display_name ||
+      (clanUser as unknown as { name?: string }).name ||
+      userId
     );
-    if (clanUser) {
-      return (
-        clanUser.username ||
-        clanUser.display_name ||
-        (clanUser as unknown as { name?: string }).name ||
-        userId
-      );
-    }
-    const clientUsers = (
-      this.context.client as unknown as {
-        users?: UserDirectory;
-      }
-    ).users;
-    const fetched = await this.fetchUserFromDirectory(clientUsers, userId);
-    if (fetched) {
-      return (
-        fetched.username ||
-        fetched.display_name ||
-        (fetched as unknown as { name?: string }).name ||
-        userId
-      );
-    }
-    return userId;
   }
+  const clientUsers = (
+    context.client as unknown as {
+      users?: UserDirectory;
+    }
+  ).users;
+  const fetched = await fetchUserFromDirectory(clientUsers, userId);
+  if (fetched) {
+    return (
+      fetched.username ||
+      (fetched as unknown as { display_name?: string }).display_name ||
+      (fetched as unknown as { name?: string }).name ||
+      userId
+    );
+  }
+  return userId;
+}
 
-  private async fetchUserFromDirectory(
-    directory: UserDirectory | undefined,
-    userId: string,
-  ): Promise<User | undefined> {
-    if (!directory) {
+async function lookupRoleInClan(
+  target: MentionPlaceholderRole,
+  clan?: Clan,
+): Promise<{ name: string; roleId?: string } | undefined> {
+  const fallback = (): { name: string; roleId?: string } | undefined => {
+    const fallbackName =
+      cleanRoleLabel(target.roleName) ??
+      cleanRoleLabel(target.roleId) ??
+      undefined;
+    if (!fallbackName && !target.roleId) {
       return undefined;
     }
-    const existing = directory.get?.(userId);
-    if (existing) {
-      return existing;
+    return {
+      name: fallbackName ?? 'role',
+      roleId: target.roleId,
+    };
+  };
+  if (!clan) {
+    return fallback();
+  }
+  try {
+    const roles = await getClanRoles(clan);
+    const normalizedTargetName = target.roleName
+      ? cleanRoleLabel(target.roleName)?.toLowerCase()
+      : undefined;
+    const role =
+      roles.find((item) => item.id && item.id === target.roleId) ||
+      (normalizedTargetName
+        ? roles.find((item) => {
+            const title = cleanRoleLabel(
+              item.title ?? item.slug ?? item.role_icon ?? '',
+            );
+            return title?.toLowerCase() === normalizedTargetName;
+          })
+        : undefined);
+    if (role) {
+      return {
+        name:
+          cleanRoleLabel(
+            role.title ||
+              role.slug ||
+              role.role_icon ||
+              target.roleName ||
+              role.id ||
+              'role',
+          ) ?? 'role',
+        roleId: role.id ?? target.roleId,
+      };
     }
-    if (directory.fetch) {
-      try {
-        return await directory.fetch(userId);
-      } catch {
-        return undefined;
-      }
-    }
+  } catch {
+    // ignore errors, fallback below
+  }
+  return fallback();
+}
+
+async function fetchUserFromDirectory(
+  directory: UserDirectory | undefined,
+  userId: string,
+): Promise<User | undefined> {
+  if (!directory) {
     return undefined;
   }
+  const existing = directory.get?.(userId);
+  if (existing) {
+    return existing;
+  }
+  if (directory.fetch) {
+    try {
+      return await directory.fetch(userId);
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
 }
