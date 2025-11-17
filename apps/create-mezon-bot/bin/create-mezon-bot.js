@@ -108,7 +108,7 @@ function createPackageJson() {
       "test:e2e": "jest --config ./test/jest-e2e.json",
     },
     dependencies: {
-      "@n0xgg04/nezon": "^1.1.4",
+      "@n0xgg04/nezon": "^1.1.5",
       "@nestjs/common": "^10.0.0",
       "@nestjs/config": "^4.0.2",
       "@nestjs/core": "^10.0.0",
