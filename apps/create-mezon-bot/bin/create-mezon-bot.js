@@ -42,7 +42,27 @@ function copyTemplateFiles() {
     { src: "src/app.module.ts", dest: "src/app.module.ts" },
     { src: "src/app.controller.ts", dest: "src/app.controller.ts" },
     { src: "src/app.service.ts", dest: "src/app.service.ts" },
-    { src: "src/bot/example.handlers.ts", dest: "src/bot/example.handlers.ts" },
+    { src: "src/bot/examples/index.ts", dest: "src/bot/examples/index.ts" },
+    {
+      src: "src/bot/examples/example-command.handlers.ts",
+      dest: "src/bot/examples/example-command.handlers.ts",
+    },
+    {
+      src: "src/bot/examples/example-component.handlers.ts",
+      dest: "src/bot/examples/example-component.handlers.ts",
+    },
+    {
+      src: "src/bot/examples/example-dm.handlers.ts",
+      dest: "src/bot/examples/example-dm.handlers.ts",
+    },
+    {
+      src: "src/bot/examples/example-embed.handlers.ts",
+      dest: "src/bot/examples/example-embed.handlers.ts",
+    },
+    {
+      src: "src/bot/examples/example-event.handlers.ts",
+      dest: "src/bot/examples/example-event.handlers.ts",
+    },
     { src: "tsconfig.json", dest: "tsconfig.json" },
     { src: "tsconfig.build.json", dest: "tsconfig.build.json" },
     { src: "nest-cli.json", dest: "nest-cli.json" },
@@ -84,7 +104,7 @@ function createPackageJson() {
       "test:e2e": "jest --config ./test/jest-e2e.json",
     },
     dependencies: {
-      "@n0xgg04/nezon": "^1.1.0",
+      "@n0xgg04/nezon": "^1.1.0en",
       "@nestjs/common": "^10.0.0",
       "@nestjs/config": "^4.0.2",
       "@nestjs/core": "^10.0.0",

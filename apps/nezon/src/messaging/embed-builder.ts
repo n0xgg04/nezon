@@ -1,6 +1,20 @@
 import type { IInteractiveMessageProps } from 'mezon-sdk/dist/cjs/interfaces/client';
+import { EMessageComponentType } from 'mezon-sdk';
 
 export type { IInteractiveMessageProps as EmbedData };
+
+interface AnimatedImageOptions {
+  id?: string;
+  name?: string;
+  value?: string;
+  imageUrl: string;
+  positionUrl: string;
+  pool: string[][];
+  repeat?: number;
+  duration?: number;
+  isResult?: boolean;
+  extra?: Record<string, unknown>;
+}
 
 /**
  * Builder for creating embed components compatible with Mezon SDK.
@@ -37,7 +51,7 @@ export class EmbedBuilder {
     value: string;
     inline?: boolean;
     options?: any[];
-    inputs?: {};
+    inputs?: object;
     max_options?: number;
   }> = [];
   private image?: {
@@ -59,6 +73,47 @@ export class EmbedBuilder {
    */
   setColor(color: string): this {
     this.color = color;
+    return this;
+  }
+
+  addAnimatedImage(options: AnimatedImageOptions): this {
+    const {
+      id = 'animated_image',
+      name = '',
+      value = '',
+      imageUrl,
+      positionUrl,
+      pool,
+      repeat = 1,
+      duration = 0.35,
+      isResult,
+      extra,
+    } = options;
+
+    const component: Record<string, unknown> = {
+      url_image: imageUrl,
+      url_position: positionUrl,
+      pool,
+      repeat,
+      duration,
+    };
+
+    if (typeof isResult === 'boolean') {
+      component.isResult = isResult ? 1 : 0;
+    }
+    if (extra) {
+      Object.assign(component, extra);
+    }
+
+    this.fields.push({
+      name,
+      value,
+      inputs: {
+        id,
+        type: EMessageComponentType.ANIMATION,
+        component,
+      },
+    });
     return this;
   }
 
@@ -91,10 +146,7 @@ export class EmbedBuilder {
    * @param options - Optional author icon URL and URL
    * @returns This builder instance for method chaining
    */
-  setAuthor(
-    name: string,
-    options?: { icon_url?: string; url?: string },
-  ): this {
+  setAuthor(name: string, options?: { icon_url?: string; url?: string }): this {
     this.author = {
       name,
       icon_url: options?.icon_url,
@@ -111,6 +163,38 @@ export class EmbedBuilder {
    */
   setDescription(description: string): this {
     this.description = description;
+    return this;
+  }
+
+  setDescriptionMarkdown(
+    description: string | string[],
+    options?: {
+      language?: string;
+      before?: string;
+      after?: string;
+      wrap?: boolean;
+    },
+  ): this {
+    const body = Array.isArray(description)
+      ? description.join('\n')
+      : description;
+    const before = options?.before
+      ? options.before.endsWith('\n')
+        ? options.before
+        : `${options.before}\n`
+      : '';
+    const after = options?.after
+      ? options.after.startsWith('\n')
+        ? options.after
+        : `\n${options.after}`
+      : '';
+    if (options?.wrap === false) {
+      this.description = `${before}${body}${after}`;
+      return this;
+    }
+    const language = options?.language?.trim();
+    const opener = language ? `\`\`\`${language}` : '```';
+    this.description = `${before}${opener}\n${body}\n\`\`\`${after}`;
     return this;
   }
 
@@ -242,10 +326,7 @@ export class EmbedBuilder {
    * @param options - Optional image width and height
    * @returns This builder instance for method chaining
    */
-  setImage(
-    url: string,
-    options?: { width?: string; height?: string },
-  ): this {
+  setImage(url: string, options?: { width?: string; height?: string }): this {
     this.image = {
       url,
       width: options?.width,
@@ -322,4 +403,3 @@ export class EmbedBuilder {
     return embed;
   }
 }
-

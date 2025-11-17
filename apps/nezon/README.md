@@ -32,12 +32,14 @@ npm create mezon-bot my-bot
 ```
 
 Lệnh này sẽ tự động:
+
 - Tạo cấu trúc project NestJS
 - Cài đặt tất cả dependencies
 - Tạo example handlers với các tính năng demo
 - Cấu hình NezonModule
 
 Sau đó chỉ cần:
+
 ```bash
 cd my-bot
 cp .env.example .env
@@ -123,13 +125,12 @@ export class ButtonHandler {
   @Command('button')
   async askForConfirm(@AutoContext() [message]: Nezon.AutoContext) {
     await message.reply(
-      SmartMessage.text('Nhấn nút để xác nhận.')
-        .addButton(
-          new ButtonBuilder()
-            .setCustomId('/demo/success/12345')
-            .setLabel('Confirm')
-            .setStyle(ButtonStyle.Success),
-        ),
+      SmartMessage.text('Nhấn nút để xác nhận.').addButton(
+        new ButtonBuilder()
+          .setCustomId('/demo/success/12345')
+          .setLabel('Confirm')
+          .setStyle(ButtonStyle.Success),
+      ),
     );
   }
 
@@ -209,20 +210,44 @@ export class EmbedHandler {
   @Command('embed')
   async onEmbedDemo(@AutoContext() [message]: Nezon.AutoContext) {
     await message.reply(
-      SmartMessage.text('')
-        .addEmbed(
-          new EmbedBuilder()
-            .setColor('#abcdef')
-            .setTitle('Example Embed')
-            .setThumbnail('https://example.com/thumb.jpg')
-            .addField('Field 1', 'Value 1', true)
-            .addField('Field 2', 'Value 2', true)
-            .setImage('https://example.com/image.jpg')
-            .setFooter('Example footer'),
-        ),
+      SmartMessage.text('').addEmbed(
+        new EmbedBuilder()
+          .setColor('#abcdef')
+          .setTitle('Example Embed')
+          .setThumbnail('https://example.com/thumb.jpg')
+          .addField('Field 1', 'Value 1', true)
+          .addField('Field 2', 'Value 2', true)
+          .setImage('https://example.com/image.jpg')
+          .setFooter('Example footer'),
+      ),
     );
   }
 }
+```
+
+### Description với Markdown
+
+```ts
+await message.reply(
+  SmartMessage.text('').addEmbed(
+    new EmbedBuilder()
+      .setColor('#E91E63')
+      .setTitle('[SPECIALIZED] The basic managerial skill(s) is(are)')
+      .setDescriptionMarkdown(
+        [
+          '1 - business strategy, human resource practices, organisational capabilities',
+          '2 - marketing strategy, human resource practices, organisational capabilities',
+          '3 - business strategy, human resource practices, organisational structure',
+          '4 - marketing strategy, human resource practices, organisational structure',
+          '5 - to supervise',
+          '6 - to stimulate',
+          '7 - to motivate',
+          '8 - all of the above',
+        ],
+        { after: '(Chọn đáp án đúng tương ứng phía bên dưới!)' },
+      ),
+  ),
+);
 ```
 
 ## Ví dụ Form với EmbedBuilder
@@ -255,16 +280,19 @@ export class FormHandler {
             .addTextField('Option 1️⃣', 'option_1', {
               placeholder: 'Input option 1 here',
             })
-            .addSelectField('Type', 'type', [
-              { label: 'Single choice', value: 'SINGLE' },
-              { label: 'Multiple choice', value: 'MULTIPLE' },
-            ], 'SINGLE')
+            .addSelectField(
+              'Type',
+              'type',
+              [
+                { label: 'Single choice', value: 'SINGLE' },
+                { label: 'Multiple choice', value: 'MULTIPLE' },
+              ],
+              'SINGLE',
+            )
             .setFooter('Powered by Mezon'),
         )
         .addButton(
-          new ButtonBuilder()
-            .setLabel('Create')
-            .setStyle(ButtonStyle.Success),
+          new ButtonBuilder().setLabel('Create').setStyle(ButtonStyle.Success),
         ),
     );
   }
@@ -317,6 +345,7 @@ async onUserAction(
 - `.setURL(url)` - Set URL cho title
 - `.setAuthor(name, iconUrl, url)` - Set author
 - `.setDescription(description)` - Set mô tả
+- `.setDescriptionMarkdown(description, options?)` - Set mô tả với markdown/code block helper
 - `.setThumbnail(url)` - Set thumbnail
 - `.addField(name, value, inline?)` - Thêm field
 - `.setImage(url)` - Set ảnh lớn

@@ -46,6 +46,7 @@ import * as ButtonModule from '../messaging/button-builder';
 import type { ButtonComponent } from '../messaging/button-builder';
 import * as EmbedModule from '../messaging/embed-builder';
 import type { EmbedData } from '../messaging/embed-builder';
+import type { NezonUtilsService as NezonUtilsServiceType } from '../services/nezon-utils.service';
 
 /**
  * Convenience namespace that re-exports the most common mezon-sdk types and
@@ -82,17 +83,18 @@ export namespace Nezon {
   export const SmartMessage = Messaging.SmartMessage;
   export type ManagedMessage = ManagedMessageType;
   export type DMHelper = DMHelperType;
-  
+
   export namespace AutoContextType {
     export type Message = ManagedMessageType;
     export type DM = DMHelperType;
   }
-  
+
   export type Button = ButtonComponent;
   export const ButtonBuilder = ButtonModule.ButtonBuilder;
   export const ButtonStyle = ButtonModule.ButtonStyle;
   export type Embed = EmbedData;
   export const EmbedBuilder = EmbedModule.EmbedBuilder;
+  export type NezonUtilsService = NezonUtilsServiceType;
   export type TokenSendPayload = TokenSentEvent;
   export type AddClanUserPayload = AddClanUserEvent;
   export type MessageReactionPayload = MessageReaction;
@@ -105,8 +107,12 @@ export namespace Nezon {
   export type RoleEventPayload = RoleEvent;
   export type GiveCoffeePayload = GiveCoffeeEvent;
   export type RoleAssignPayload = RoleAssignedEvent;
-  export type StreamingJoinedPayload = StreamingJoinedEvent | ClientStreamingJoinedEvent;
-  export type StreamingLeavedPayload = StreamingLeavedEvent | ClientStreamingLeavedEvent;
+  export type StreamingJoinedPayload =
+    | StreamingJoinedEvent
+    | ClientStreamingJoinedEvent;
+  export type StreamingLeavedPayload =
+    | StreamingLeavedEvent
+    | ClientStreamingLeavedEvent;
   export type DropdownBoxSelectedPayload = DropdownBoxSelected;
   export type WebrtcSignalingFwdPayload = WebrtcSignalingFwd;
   export type VoiceStartedPayload = VoiceStartedEvent;
@@ -115,7 +121,7 @@ export namespace Nezon {
   export type VoiceLeavedPayload = VoiceLeavedEvent;
   export type NotificationsPayload = Notifications;
   export type QuickMenuPayload = QuickMenuDataEvent;
-  
+
   export const Events = MezonEvents;
 }
 
