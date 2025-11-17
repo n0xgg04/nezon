@@ -32,6 +32,7 @@ npm create mezon-bot my-bot
 ```
 
 Lệnh này sẽ tự động:
+
 - ✅ Tạo cấu trúc project NestJS hoàn chỉnh
 - ✅ Cài đặt tất cả dependencies (`@n0xgg04/nezon`, `@nestjs/*`, etc.)
 - ✅ Tạo example handlers với các tính năng demo
@@ -83,16 +84,16 @@ npm install @n0xgg04/nezon
 Tạo hoặc cập nhật `app.module.ts`:
 
 ```ts
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { NezonModule } from '@n0xgg04/nezon';
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { NezonModule } from "@n0xgg04/nezon";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     NezonModule.forRoot({
-      token: process.env.MEZON_TOKEN ?? '',
-      botId: process.env.MEZON_BOT_ID ?? '',
+      token: process.env.MEZON_TOKEN ?? "",
+      botId: process.env.MEZON_BOT_ID ?? "",
     }),
   ],
 })
@@ -113,19 +114,15 @@ MEZON_BOT_ID=your_bot_id_here
 Tạo file `ping.handler.ts`:
 
 ```ts
-import { Injectable } from '@nestjs/common';
-import {
-  Command,
-  AutoContext,
-  SmartMessage,
-} from '@n0xgg04/nezon';
-import type { Nezon } from '@n0xgg04/nezon';
+import { Injectable } from "@nestjs/common";
+import { Command, AutoContext, SmartMessage } from "@n0xgg04/nezon";
+import type { Nezon } from "@n0xgg04/nezon";
 
 @Injectable()
 export class PingHandler {
-  @Command({ name: 'ping', aliases: ['pong'] })
+  @Command({ name: "ping", aliases: ["pong"] })
   async onPing(@AutoContext() [managedMessage]: Nezon.AutoContext) {
-    await managedMessage.reply(SmartMessage.text('pong!'));
+    await managedMessage.reply(SmartMessage.text("pong!"));
   }
 }
 ```
@@ -135,17 +132,17 @@ export class PingHandler {
 Thêm handler vào `app.module.ts`:
 
 ```ts
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { NezonModule } from '@n0xgg04/nezon';
-import { PingHandler } from './ping.handler';
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { NezonModule } from "@n0xgg04/nezon";
+import { PingHandler } from "./ping.handler";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     NezonModule.forRoot({
-      token: process.env.MEZON_TOKEN ?? '',
-      botId: process.env.MEZON_BOT_ID ?? '',
+      token: process.env.MEZON_TOKEN ?? "",
+      botId: process.env.MEZON_BOT_ID ?? "",
     }),
   ],
   providers: [PingHandler],
@@ -193,8 +190,9 @@ Project được tạo đã có sẵn nhiều example commands để bạn tham 
 - `*form` - Demo form với text fields và select fields
 - `*file` - Demo file attachments
 - `*update` - Demo message update với buttons
+- `*slots` - Demo animated embed (slot machine) với `addAnimatedImage`
 
-Xem file `src/bot/example.handlers.ts` để học cách sử dụng các tính năng của Nezon.
+Xem thư mục `src/bot/examples/` (ví dụ `example-command.handlers.ts`, `example-embed.handlers.ts`, ...) để học cách sử dụng các tính năng của Nezon.
 
 ## Giải thích Code
 
@@ -221,6 +219,7 @@ Xem file `src/bot/example.handlers.ts` để học cách sử dụng các tính 
 - `DMHelper` có method: `send(userId, message)` để gửi DM
 
 **Ví dụ 1: Lấy toàn bộ tuple (backward compatible)**
+
 ```ts
 @Command('ping')
 async onPing(@AutoContext() [message]: Nezon.AutoContext) {
@@ -229,6 +228,7 @@ async onPing(@AutoContext() [message]: Nezon.AutoContext) {
 ```
 
 **Ví dụ 2: Lấy phần tử cụ thể bằng key**
+
 ```ts
 @Command('dm')
 async onDM(
@@ -244,7 +244,7 @@ async onDM(
 ### `SmartMessage.text()`
 
 ```ts
-SmartMessage.text('pong!')
+SmartMessage.text("pong!");
 ```
 
 - Tạo message text đơn giản
@@ -311,13 +311,15 @@ npx create-mezon-bot my-bot
 ```
 
 Sau khi tạo project, bạn sẽ có:
-- `src/bot/example.handlers.ts` - File chứa các example handlers
+
+- `src/bot/examples/` - Bộ example handlers được chia theo module (`example-command`, `example-embed`, ...)
 - `.env.example` - Template cho environment variables
 - `package.json` - Đã có sẵn tất cả dependencies
 
 ### Example commands có sẵn
 
 Project được tạo sẽ có sẵn các example commands:
+
 - `*ping` / `*pong` - Ping pong command
 - `*button` - Demo button với setCustomId
 - `*onclick` - Demo button với onClick handler
@@ -353,4 +355,3 @@ Xem thêm: [create-mezon-bot trên npm](https://www.npmjs.com/package/create-mez
 - [Message Template](/docs/message-template/text-message) - Tìm hiểu cách tạo các loại message
 - [Interaction](/docs/interaction/command) - Tìm hiểu về Command, Component, Events
 - [Decorators](/docs/decorators) - Xem danh sách đầy đủ decorators
-
