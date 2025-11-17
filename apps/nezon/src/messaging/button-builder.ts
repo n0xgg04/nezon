@@ -62,6 +62,7 @@ export class ButtonBuilder {
    * - `user`: User instance (or undefined)
    * - `clan`: Clan instance (or undefined)
    * - `client`: MezonClient instance
+   * - `formData`: Parsed form inputs (if the button was submitted with embed form fields)
    *
    * @param handler - The handler function to execute when the button is clicked
    * @returns This builder instance for method chaining
@@ -76,6 +77,7 @@ export class ButtonBuilder {
    *     await context.message.reply(SmartMessage.text('Button clicked!'));
    *     const channelName = context.channel?.name ?? 'unknown';
    *     const userName = context.user?.username ?? 'unknown';
+   *     const input = context.formData?.['feedback'] ?? 'no input';
    *   });
    * ```
    */
@@ -190,7 +192,8 @@ export class ButtonBuilder {
       buttonMessage.url = this.url;
     }
 
-    const customId = this.id ?? (this.onClickHandler ? this.generateOnClickId() : undefined);
+    const customId =
+      this.id ?? (this.onClickHandler ? this.generateOnClickId() : undefined);
 
     if (!customId && !this.url) {
       throw new Error(

@@ -183,7 +183,7 @@ export class NezonCommandService {
         return context.args;
       case NezonParamType.ARG:
         return typeof param.data === 'number'
-          ? (context.args[param.data] ?? undefined)
+          ? context.args[param.data] ?? undefined
           : undefined;
       case NezonParamType.ATTACHMENTS: {
         const attachments = Array.isArray(context.message?.attachments)

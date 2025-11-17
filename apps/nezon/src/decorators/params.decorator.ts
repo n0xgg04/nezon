@@ -330,3 +330,25 @@ export function NezonUtils(): ParameterDecorator {
     type: NezonParamType.NEZON_UTILS,
   });
 }
+
+export function FormData(field?: string): ParameterDecorator {
+  /**
+   * Injects parsed form inputs submitted alongside the component action.
+   *
+   * @param field Optional key to retrieve a specific input value.
+   * If omitted, returns the entire form data record.
+   *
+   * @example
+   * ```ts
+   * @Component('lixi/submit')
+   * async onSubmit(
+   *   @FormData() form: Nezon.FormData | undefined,
+   *   @FormData('lixi-title') title: string | undefined,
+   * ) {}
+   * ```
+   */
+  return setParamMetadata({
+    type: NezonParamType.FORM_DATA,
+    data: field,
+  });
+}

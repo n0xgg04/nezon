@@ -10,6 +10,7 @@ import {
   ComponentParams,
   ComponentPayload,
   ComponentTarget,
+  FormData,
   SmartMessage,
 } from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
@@ -175,6 +176,24 @@ export class ExampleComponentHandlers {
         `Bạn đã chọn đáp án ${answer}\nUser: ${payload.user_id ?? 'unknown'}`,
       ),
     );
+  }
+
+  @Component('/poll/create')
+  async onPollCreate(
+    @FormData() form: Nezon.FormData | undefined,
+    @FormData('title') title: string | undefined,
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
+  ) {
+    const summary = [
+      '🎯 Poll form data received!',
+      `Title: ${title ?? 'Chưa đặt'}`,
+      `Option 1: ${form?.option_1 ?? 'N/A'}`,
+      `Option 2: ${form?.option_2 ?? 'N/A'}`,
+      `Type: ${form?.type ?? 'SINGLE'}`,
+      `Expired: ${form?.expired ?? '168'} giờ`,
+    ].join('\n');
+
+    await managedMessage.reply(SmartMessage.text(summary));
   }
 
   private async getMessageByIds(

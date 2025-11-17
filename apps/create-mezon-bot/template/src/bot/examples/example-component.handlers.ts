@@ -10,6 +10,7 @@ import {
   ComponentParams,
   ComponentPayload,
   ComponentTarget,
+  FormData,
   SmartMessage,
 } from "@n0xgg04/nezon";
 import type { Nezon } from "@n0xgg04/nezon";

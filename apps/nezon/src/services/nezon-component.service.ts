@@ -51,6 +51,7 @@ export class NezonComponentService {
     channel: Symbol('nezon:component:channel'),
     message: Symbol('nezon:component:message'),
     autoContext: Symbol('nezon:component:autoContext'),
+    formData: Symbol('nezon:component:formData'),
   };
 
   constructor(
@@ -138,8 +139,9 @@ export class NezonComponentService {
       try {
         const handler = registry.getHandler(buttonId);
         if (handler) {
-          const clickContext =
-            await this.createButtonClickContext(componentContext);
+          const clickContext = await this.createButtonClickContext(
+            componentContext,
+          );
           await handler(clickContext);
           return;
         }
@@ -234,7 +236,7 @@ export class NezonComponentService {
         case NezonParamType.ARG:
           value =
             typeof param.data === 'number'
-              ? (context.params[param.data] ?? undefined)
+              ? context.params[param.data] ?? undefined
               : undefined;
           break;
         case NezonParamType.ATTACHMENTS: {
@@ -255,6 +257,15 @@ export class NezonComponentService {
             : [];
           value =
             typeof param.data === 'number' ? mentions[param.data] : mentions;
+          break;
+        }
+        case NezonParamType.FORM_DATA: {
+          const formData = await this.getFormData(context);
+          if (typeof param.data === 'string' && param.data) {
+            value = formData ? formData[param.data] : undefined;
+          } else {
+            value = formData;
+          }
           break;
         }
         case NezonParamType.COMPONENT_TARGET:
@@ -334,12 +345,54 @@ export class NezonComponentService {
     );
   }
 
+  private async getFormData(
+    context: NezonComponentContext,
+  ): Promise<Record<string, string> | undefined> {
+    return this.getOrSetCache(context, this.cacheKeys.formData, async () => {
+      const raw = (context.payload as any)?.extra_data;
+      if (typeof raw !== 'string' || !raw.trim()) {
+        return undefined;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') {
+          return undefined;
+        }
+        const formData: Record<string, string> = {};
+        Object.entries(parsed).forEach(([key, value]) => {
+          if (value === undefined || value === null) {
+            return;
+          }
+          if (typeof value === 'string') {
+            formData[key] = value;
+            return;
+          }
+          if (typeof value === 'number' || typeof value === 'boolean') {
+            formData[key] = String(value);
+            return;
+          }
+          formData[key] = JSON.stringify(value);
+        });
+        return Object.keys(formData).length ? formData : undefined;
+      } catch (error) {
+        this.logger.warn(
+          `failed to parse form data for component ${
+            context.payload.button_id ?? 'unknown'
+          }`,
+          (error as Error)?.stack,
+        );
+        return undefined;
+      }
+    });
+  }
+
   private async getAutoContext(
     context: NezonComponentContext,
   ): Promise<[ManagedMessage, DMHelper, ChannelHelper]> {
     return this.getOrSetCache(context, this.cacheKeys.autoContext, async () => {
-      const commandContext =
-        await this.createCommandContextFromComponent(context);
+      const commandContext = await this.createCommandContextFromComponent(
+        context,
+      );
       const helpers = {
         normalize: (input) => this.normalizeSmartMessage(input),
       };
@@ -358,6 +411,7 @@ export class NezonComponentService {
     const channel = await this.getChannel(componentContext);
     const user = await this.getUserFromComponent(componentContext);
     const clan = channel?.clan;
+    const formData = await this.getFormData(componentContext);
 
     return {
       message,
@@ -365,6 +419,7 @@ export class NezonComponentService {
       user: user ?? undefined,
       clan: clan ?? undefined,
       client: componentContext.client,
+      formData,
     };
   }
 
@@ -484,7 +539,7 @@ export class NezonComponentService {
     const pattern =
       typeof options.pattern === 'string'
         ? new RegExp(options.pattern)
-        : (options.pattern ?? null);
+        : options.pattern ?? null;
 
     const hasNamedParams = patternString?.includes(':');
     let namedParamNames: string[] = [];

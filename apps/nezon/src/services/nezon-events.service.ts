@@ -120,7 +120,7 @@ export class NezonEventsService {
         case NezonParamType.ARG:
           value =
             typeof param.data === 'number'
-              ? (args[param.data] ?? undefined)
+              ? args[param.data] ?? undefined
               : undefined;
           break;
         case NezonParamType.ATTACHMENTS: {

@@ -10,5 +10,5 @@ export interface ButtonClickContext {
   user: User | undefined;
   clan: Clan | undefined;
   client: MezonClient;
+  formData?: Record<string, string>;
 }
-

@@ -71,6 +71,7 @@ export namespace Nezon {
   export type Attachment = Attachments[number];
   export type Mentions = NonNullable<MezonChannelMessage['mentions']>;
   export type Mention = Mentions[number];
+  export type FormData = Record<string, string>;
   export type Message = MezonMessage;
   export type Channel = MezonTextChannel;
   export type Clan = MezonClan;

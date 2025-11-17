@@ -18,6 +18,7 @@ export enum NezonParamType {
   AUTO_CONTEXT = 'auto_context',
   EVENT_PAYLOAD = 'event_payload',
   NEZON_UTILS = 'nezon_utils',
+  FORM_DATA = 'form_data',
 }
 
 export interface NezonParameterMetadata {
@@ -25,4 +26,3 @@ export interface NezonParameterMetadata {
   type: NezonParamType;
   data?: any;
 }
-
