@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2025-11-17
+
+### Changed
+
+- **Documentation navigation**: mục "Message Builder" không còn liệt kê trang DM riêng, tránh trùng lặp với phần hướng dẫn gửi tin nhắn; nội dung DM được dẫn lại trực tiếp từ trang "Gửi tin nhắn".
+- **Bot Context naming**: đổi tên category "Lấy Thông Tin" thành "Bot Context" để nhấn mạnh các decorator và helper phục vụ context của bot.
+- **Mention guide**: bổ sung hướng dẫn trong "Message Builder" giúp người dùng nhanh chóng biết cách mention user hoặc role bằng `SmartMessage.addMention`, liên kết rõ ràng tới API reference.
+
 ## [1.1.0] - 2025-11-17
 
 ### Added
