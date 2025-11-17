@@ -12,6 +12,7 @@ import {
   SmartMessage,
   type SmartMessageLike,
   type NormalizedSmartMessage,
+  cloneMentionPlaceholders,
 } from '../messaging/smart-message';
 import type { NezonCommandContext } from '../interfaces/command-context.interface';
 
@@ -248,9 +249,9 @@ export class NezonUtilsService {
           ...attachment,
         })),
         mentions: normalized.mentions?.map((mention) => ({ ...mention })),
-        mentionPlaceholders: normalized.mentionPlaceholders
-          ? { ...normalized.mentionPlaceholders }
-          : undefined,
+        mentionPlaceholders: cloneMentionPlaceholders(
+          normalized.mentionPlaceholders,
+        ),
       };
     }
     if (input && typeof input === 'object') {

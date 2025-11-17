@@ -16,9 +16,11 @@ import {
 import {
   ManagedMessage,
   DMHelper,
+  ChannelHelper,
   SmartMessage,
   SmartMessageLike,
   NormalizedSmartMessage,
+  cloneMentionPlaceholders,
   getButtonClickRegistry,
 } from '../messaging/smart-message';
 import { NezonCommandContext } from '../interfaces/command-context.interface';
@@ -136,9 +138,8 @@ export class NezonComponentService {
       try {
         const handler = registry.getHandler(buttonId);
         if (handler) {
-          const clickContext = await this.createButtonClickContext(
-            componentContext,
-          );
+          const clickContext =
+            await this.createButtonClickContext(componentContext);
           await handler(clickContext);
           return;
         }
@@ -233,7 +234,7 @@ export class NezonComponentService {
         case NezonParamType.ARG:
           value =
             typeof param.data === 'number'
-              ? context.params[param.data] ?? undefined
+              ? (context.params[param.data] ?? undefined)
               : undefined;
           break;
         case NezonParamType.ATTACHMENTS: {
@@ -293,6 +294,8 @@ export class NezonComponentService {
               value = autoContext[0];
             } else if (param.data === 'dm') {
               value = autoContext[1];
+            } else if (param.data === 'channel') {
+              value = autoContext[2];
             } else {
               value = autoContext;
             }
@@ -333,17 +336,17 @@ export class NezonComponentService {
 
   private async getAutoContext(
     context: NezonComponentContext,
-  ): Promise<[ManagedMessage, DMHelper]> {
+  ): Promise<[ManagedMessage, DMHelper, ChannelHelper]> {
     return this.getOrSetCache(context, this.cacheKeys.autoContext, async () => {
-      const commandContext = await this.createCommandContextFromComponent(
-        context,
-      );
+      const commandContext =
+        await this.createCommandContextFromComponent(context);
       const helpers = {
         normalize: (input) => this.normalizeSmartMessage(input),
       };
       return [
         new ManagedMessage(commandContext, helpers),
         new DMHelper(context.client, helpers),
+        new ChannelHelper(commandContext, helpers),
       ];
     });
   }
@@ -455,9 +458,9 @@ export class NezonComponentService {
           ...attachment,
         })),
         mentions: normalized.mentions?.map((mention) => ({ ...mention })),
-        mentionPlaceholders: normalized.mentionPlaceholders
-          ? { ...normalized.mentionPlaceholders }
-          : undefined,
+        mentionPlaceholders: cloneMentionPlaceholders(
+          normalized.mentionPlaceholders,
+        ),
       };
     }
     if (input && typeof input === 'object') {
@@ -481,7 +484,7 @@ export class NezonComponentService {
     const pattern =
       typeof options.pattern === 'string'
         ? new RegExp(options.pattern)
-        : options.pattern ?? null;
+        : (options.pattern ?? null);
 
     const hasNamedParams = patternString?.includes(':');
     let namedParamNames: string[] = [];

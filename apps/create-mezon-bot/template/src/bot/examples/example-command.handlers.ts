@@ -16,7 +16,7 @@ export class ExampleCommandHandlers {
   @Command({ name: "ping", aliases: ["pong"] })
   async onPing(
     @Args() args: Nezon.Args,
-    @AutoContext() [managedMessage]: Nezon.AutoContext
+    @AutoContext() [managedMessage]: Nezon.AutoContext,
   ) {
     const suffix = args.length ? args.join(" ") : "pong";
     await managedMessage.reply(SmartMessage.system(suffix));
@@ -29,8 +29,8 @@ export class ExampleCommandHandlers {
         "https://cdn.mezon.ai/1779484504377790464/1840658523503988736/1838769001518338000/1762397837280_apps.apple.com_main.zip",
         "apps.apple.com-main.zip",
         "application/x-zip-compressed",
-        { size: 3215230 }
-      )
+        { size: 3215230 },
+      ),
     );
   }
 
@@ -39,12 +39,12 @@ export class ExampleCommandHandlers {
     @Args() args: Nezon.Args,
     @AutoContext() [managedMessage]: Nezon.AutoContext,
     @User() user?: Nezon.User,
-    @MessageContent() content?: string
+    @MessageContent() content?: string,
   ) {
     const userText = args.length ? args.join(" ") : "";
     const userId = user?.id ?? "unknown";
     await managedMessage.reply(
-      SmartMessage.text(`User ID: ${userId}\nTin nhắn: ${content ?? userText}`)
+      SmartMessage.text(`User ID: ${userId}\nTin nhắn: ${content ?? userText}`),
     );
   }
 
@@ -54,7 +54,7 @@ export class ExampleCommandHandlers {
     @Attachments(0) firstAttachment: Nezon.Attachment | undefined,
     @Mentions() mentions: Nezon.Mentions,
     @Mentions(0) firstMention: Nezon.Mention | undefined,
-    @AutoContext("message") managedMessage: Nezon.AutoContextType.Message
+    @AutoContext("message") managedMessage: Nezon.AutoContextType.Message,
   ) {
     const attachmentLines = attachments.length
       ? attachments
@@ -81,5 +81,45 @@ export class ExampleCommandHandlers {
       `Mentions: ${mentionLabels}`,
     ].join("\n");
     await managedMessage.reply(SmartMessage.text(summary));
+  }
+
+  @Command("channel-demo")
+  async onChannelDemo(
+    @AutoContext("channel") channel: Nezon.AutoContextType.Channel,
+  ) {
+    if (!channel) {
+      return;
+    }
+    await channel.send(
+      SmartMessage.text(
+        "Tin nhắn này được gửi trực tiếp vào channel hiện tại!",
+      ),
+    );
+  }
+
+  @Command("channel-to")
+  async onChannelTo(
+    @Args() args: Nezon.Args,
+    @AutoContext("channel") channel: Nezon.AutoContextType.Channel,
+  ) {
+    if (!channel) {
+      return;
+    }
+    const [targetChannelId] = args;
+    if (!targetChannelId) {
+      await channel.send(
+        SmartMessage.text(
+          "Sử dụng: *channel-to <channel_id> để gửi tới channel khác",
+        ),
+      );
+      return;
+    }
+    await channel
+      .find(targetChannelId)
+      .send(
+        SmartMessage.text(
+          `Xin chào channel ${targetChannelId}! Đây là tin nhắn được gửi bằng ChannelHelper.`,
+        ),
+      );
   }
 }

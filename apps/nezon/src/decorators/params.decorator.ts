@@ -2,7 +2,10 @@ import 'reflect-metadata';
 import type { ChannelMessage } from 'mezon-sdk';
 import type { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
 import type { User as MezonUser } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
-import { NezonParamType, NezonParameterMetadata } from '../interfaces/parameter-metadata.interface';
+import {
+  NezonParamType,
+  NezonParameterMetadata,
+} from '../interfaces/parameter-metadata.interface';
 
 export const NEZON_PARAMS_METADATA = 'nezon:params';
 
@@ -11,17 +14,24 @@ export const NEZON_PARAMS_METADATA = 'nezon:params';
  *
  * @param metadata Parameter metadata without the parameter index.
  */
-function setParamMetadata(
-  metadata: Omit<NezonParameterMetadata, 'index'>,
-) {
-  return (target: object, propertyKey: string | symbol, parameterIndex: number) => {
+function setParamMetadata(metadata: Omit<NezonParameterMetadata, 'index'>) {
+  return (
+    target: object,
+    propertyKey: string | symbol,
+    parameterIndex: number,
+  ) => {
     const existing: NezonParameterMetadata[] =
       Reflect.getMetadata(NEZON_PARAMS_METADATA, target, propertyKey) ?? [];
     existing.push({
       ...metadata,
       index: parameterIndex,
     });
-    Reflect.defineMetadata(NEZON_PARAMS_METADATA, existing, target, propertyKey);
+    Reflect.defineMetadata(
+      NEZON_PARAMS_METADATA,
+      existing,
+      target,
+      propertyKey,
+    );
   };
 }
 
@@ -39,10 +49,10 @@ export function ChannelMessagePayload<K extends keyof ChannelMessage = never>(
 ): ParameterDecorator {
   /**
    * Injects the low-level `ChannelMessage` payload emitted by Mezon.
-   * 
+   *
    * @param key Optional key to extract a specific property from the ChannelMessage object.
    * If provided, returns the value of that property instead of the entire object.
-   * 
+   *
    * @example
    * ```ts
    * @Command('test')
@@ -117,11 +127,11 @@ export function ComponentPayload(): ParameterDecorator {
 export function ComponentParams(paramName?: string): ParameterDecorator {
   /**
    * Injects parameters derived from the component identifier.
-   * 
+   *
    * @param paramName Optional parameter name to get a specific named parameter.
    * If provided, returns the value of that named parameter.
    * If omitted, returns an object with all named parameters, or array if no named params.
-   * 
+   *
    * @example
    * ```ts
    * @Component({ pattern: '/user/:user_id/:action' })
@@ -137,12 +147,14 @@ export function ComponentParams(paramName?: string): ParameterDecorator {
   });
 }
 
-export function ComponentParam(positionOrName: number | string = 0): ParameterDecorator {
+export function ComponentParam(
+  positionOrName: number | string = 0,
+): ParameterDecorator {
   /**
    * Injects a specific parameter derived from the component identifier.
    *
    * @param positionOrName Zero-based index in the component params array, or parameter name for named parameters.
-   * 
+   *
    * @example
    * ```ts
    * @Component({ pattern: '/user/:user_id/:action' })
@@ -173,10 +185,10 @@ export function Channel<K extends keyof TextChannel = never>(
   /**
    * Injects the resolved channel entity associated with the message or component.
    * The value is cached per execution to avoid duplicate fetches.
-   * 
+   *
    * @param key Optional key to extract a specific property from the Channel object.
    * If provided, returns the value of that property instead of the entire object.
-   * 
+   *
    * @example
    * ```ts
    * @Command('test')
@@ -208,10 +220,10 @@ export function User<K extends keyof MezonUser = never>(
   /**
    * Injects the user entity who triggered the message or component.
    * The value is cached per execution to avoid duplicate fetches.
-   * 
+   *
    * @param key Optional key to extract a specific property from the User object.
    * If provided, returns the value of that property instead of the entire object.
-   * 
+   *
    * @example
    * ```ts
    * @Command('test')
@@ -250,7 +262,7 @@ export function ComponentTarget(): ParameterDecorator {
 
 /**
  * Injects an auto-generated helper tuple similar to Necord's `@Context()`.
- * Resolves to `[ManagedMessage, DMHelper]`, enabling convenience helpers.
+ * Resolves to `[ManagedMessage, DMHelper, ChannelHelper]`, enabling convenience helpers.
  *
  * **Cách 1: Lấy toàn bộ tuple (backward compatible)**
  * ```ts
@@ -274,10 +286,13 @@ export function ComponentTarget(): ParameterDecorator {
  * Available keys:
  * - `'message'` - Returns `ManagedMessage` (type: `Nezon.AutoContextType.Message`)
  * - `'dm'` - Returns `DMHelper` (type: `Nezon.AutoContextType.DM`)
+ * - `'channel'` - Returns `ChannelHelper` (type: `Nezon.AutoContextType.Channel`)
  *
  * Combine với `Nezon.SmartMessage` để dựng payload gửi tin nhắn một cách an toàn.
  */
-export function AutoContext(key?: 'message' | 'dm'): ParameterDecorator {
+export function AutoContext(
+  key?: 'message' | 'dm' | 'channel',
+): ParameterDecorator {
   return setParamMetadata({
     type: NezonParamType.AUTO_CONTEXT,
     data: key,
@@ -315,4 +330,3 @@ export function NezonUtils(): ParameterDecorator {
     type: NezonParamType.NEZON_UTILS,
   });
 }
-

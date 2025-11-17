@@ -9,6 +9,7 @@ Hướng dẫn gửi Direct Message (DM) cho người dùng với Nezon.
 ## Tổng quan
 
 Nezon hỗ trợ gửi DM cho người dùng thông qua 2 cách:
+
 1. **DMHelper** - Gửi DM đến user cụ thể bằng `user_id`
 2. **ManagedMessage.sendDM()** - Gửi DM tự động cho người gửi tin nhắn hiện tại
 
@@ -35,7 +36,7 @@ async onDM(
   @AutoContext() [message, dm]: Nezon.AutoContext,
 ) {
   const targetUserId = args[0];
-  
+
   if (!targetUserId) {
     await message.reply(
       SmartMessage.text('Sử dụng: *dm <user_id>'),
@@ -64,11 +65,18 @@ async onDM(
 ### Type
 
 ```ts
-type AutoContext = [ManagedMessage, DMHelper];
+type AutoContext = [ManagedMessage, DMHelper, ChannelHelper];
 
 interface DMHelper {
   send(userId: string, message: SmartMessageLike): Promise<ChannelMessageAck>;
 }
+
+interface ChannelHelper {
+  send(message: SmartMessageLike): Promise<ChannelMessageAck>;
+  find(channelId: string): ChannelHelper;
+}
+
+> ChannelHelper có thể là `null` trong event handlers vì không có channel context.
 ```
 
 ### DM với SmartMessage đầy đủ
@@ -80,7 +88,7 @@ async onDMRich(
   @AutoContext() [message, dm]: Nezon.AutoContext,
 ) {
   const targetUserId = args[0];
-  
+
   if (!targetUserId) {
     await message.reply(SmartMessage.text('Sử dụng: *dm-rich <user_id>'));
     return;
@@ -169,12 +177,12 @@ async onSendDMFile(@AutoContext() [managedMessage]: Nezon.AutoContext) {
 
 ## So sánh 2 cách
 
-| Tính năng | DMHelper | message.sendDM() |
-|-----------|----------|------------------|
-| Gửi đến user cụ thể | ✅ Có (cần `user_id`) | ❌ Chỉ gửi cho sender |
-| Tự động lấy sender | ❌ | ✅ |
-| Cần AutoContext đầy đủ | ✅ `[message, dm]` | ✅ Chỉ `[message]` |
-| Use case | Gửi DM cho user khác | Phản hồi DM cho người gửi |
+| Tính năng              | DMHelper                              | message.sendDM()          |
+| ---------------------- | ------------------------------------- | ------------------------- |
+| Gửi đến user cụ thể    | ✅ Có (cần `user_id`)                 | ❌ Chỉ gửi cho sender     |
+| Tự động lấy sender     | ❌                                    | ✅                        |
+| Cần AutoContext đầy đủ | ✅ `[message, dm]` (channel optional) | ✅ Chỉ `[message]`        |
+| Use case               | Gửi DM cho user khác                  | Phản hồi DM cho người gửi |
 
 ## Ví dụ thực tế
 
@@ -189,7 +197,7 @@ async onNotify(
 ) {
   const targetUserId = args[0];
   const notification = args.slice(1).join(' ') || 'Bạn có thông báo mới!';
-  
+
   if (!targetUserId) {
     await managedMessage.reply(
       SmartMessage.text('Sử dụng: *notify <user_id> <message>'),
@@ -222,11 +230,11 @@ async onPrivate(
   @Args() args: Nezon.Args,
 ) {
   const response = args.join(' ') || 'Đây là phản hồi riêng tư!';
-  
+
   await managedMessage.sendDM(
     SmartMessage.text(response),
   );
-  
+
   await managedMessage.reply(
     SmartMessage.system('✅ Đã gửi phản hồi riêng tư cho bạn!'),
   );
@@ -264,4 +272,3 @@ async onPrivate(
 - [Text Message](/docs/message-template/text-message) - Tìm hiểu về text message
 - [Attachments](/docs/message-template/attachments) - Gửi file, hình ảnh trong DM
 - [Embed & Button](/docs/message-template/embed-form-button) - Tạo DM với embed và button
-

@@ -16,9 +16,11 @@ import {
 import {
   ManagedMessage,
   DMHelper,
+  ChannelHelper,
   SmartMessage,
   SmartMessageLike,
   NormalizedSmartMessage,
+  cloneMentionPlaceholders,
 } from '../messaging/smart-message';
 
 @Injectable()
@@ -181,7 +183,7 @@ export class NezonCommandService {
         return context.args;
       case NezonParamType.ARG:
         return typeof param.data === 'number'
-          ? context.args[param.data] ?? undefined
+          ? (context.args[param.data] ?? undefined)
           : undefined;
       case NezonParamType.ATTACHMENTS: {
         const attachments = Array.isArray(context.message?.attachments)
@@ -229,6 +231,9 @@ export class NezonCommandService {
           }
           if (param.data === 'dm') {
             return autoContext[1];
+          }
+          if (param.data === 'channel') {
+            return autoContext[2];
           }
         }
         return autoContext;
@@ -368,7 +373,7 @@ export class NezonCommandService {
 
   private async getAutoContext(
     context: NezonCommandContext,
-  ): Promise<[ManagedMessage, DMHelper]> {
+  ): Promise<[ManagedMessage, DMHelper, ChannelHelper]> {
     return this.getOrSetCache(context, this.cacheKeys.autoContext, async () => {
       const helpers = {
         normalize: (input) => this.normalizeSmartMessage(input),
@@ -376,6 +381,7 @@ export class NezonCommandService {
       return [
         new ManagedMessage(context, helpers),
         new DMHelper(context.client, helpers),
+        new ChannelHelper(context, helpers),
       ];
     });
   }
@@ -402,9 +408,9 @@ export class NezonCommandService {
           ...attachment,
         })),
         mentions: normalized.mentions?.map((mention) => ({ ...mention })),
-        mentionPlaceholders: normalized.mentionPlaceholders
-          ? { ...normalized.mentionPlaceholders }
-          : undefined,
+        mentionPlaceholders: cloneMentionPlaceholders(
+          normalized.mentionPlaceholders,
+        ),
       };
     }
     if (input && typeof input === 'object') {
