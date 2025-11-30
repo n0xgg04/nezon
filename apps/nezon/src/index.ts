@@ -2,6 +2,7 @@ export * from './nezon.module';
 export * from './nezon-configurable';
 export * from './nezon.module-interface';
 export * from './client/nezon-client.service';
+export { getMezonClient } from './client/get-mezon-client';
 export * from './decorators/command.decorator';
 export * from './decorators/on.decorator';
 export * from './decorators/component.decorator';

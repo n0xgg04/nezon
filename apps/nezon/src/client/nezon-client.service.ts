@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { MezonClient } from 'mezon-sdk';
 import { NEZON_MODULE_OPTIONS } from '../nezon-configurable';
 import { NezonModuleOptions } from '../nezon.module-interface';
+import { setClientService } from './get-mezon-client';
 
 @Injectable()
 export class NezonClientService {
@@ -11,7 +12,9 @@ export class NezonClientService {
   constructor(
     @Inject(NEZON_MODULE_OPTIONS)
     private readonly options: NezonModuleOptions,
-  ) {}
+  ) {
+    setClientService(this);
+  }
 
   getClient(): MezonClient {
     if (!this.client) {
@@ -39,4 +42,3 @@ export class NezonClientService {
     this.isLoggedIn = false;
   }
 }
-
