@@ -574,6 +574,146 @@ async onAddClanUser(@EventPayload() payload: Nezon.AddClanUserPayload) {
 }
 ```
 
+## Bộ lọc / Giới hạn (Guards & Restrict)
+
+### 1. Global restrict (scope toàn bot)
+
+Khi khai báo `NezonModule.forRoot`, bạn có thể giới hạn phạm vi hoạt động của bot:
+
+```ts
+NezonModule.forRoot({
+  token: process.env.MEZON_TOKEN ?? "",
+  botId: process.env.MEZON_BOT_ID ?? "",
+  restricts: {
+    clans: ["1840666443260104704"],
+    channels: ["1840678533651763200"],
+    users: ["1831557527519629312"],
+  },
+});
+```
+
+- **clans**: chỉ xử lý command/component/event trong các clan này.
+- **channels**: chỉ xử lý trong các channel ID này.
+- **users**: chỉ nhận lệnh/sự kiện từ các user ID này.
+
+Áp dụng cho:
+
+- `@Command` (command handlers)
+- `@Component` (component handlers)
+- `@On`, `@Once`, `@OnMention` (event handlers)
+
+### 2. @Restrict – scope theo class & function
+
+Decorator `@Restrict()` cho phép bạn set scope chi tiết hơn, override/merge với global:
+
+```ts
+@Restrict({
+  clans: string[];
+  channels?: string[];
+  users?: string[];
+})
+```
+
+- **Class-level**: áp dụng cho toàn bộ handler trong class.
+- **Method-level**: áp dụng riêng cho 1 `@Command`, `@Component`, `@On`, `@Once`, `@OnMention`.
+- Khi có nhiều lớp (global + class + method), các mảng sẽ được **merge (union)** rồi mới kiểm tra.
+
+**Ví dụ:**
+
+```ts
+@Injectable()
+@Restrict({ clans: ["clan-A"] }) // tất cả handler trong class chỉ chạy ở clan-A
+export class ExampleCommandHandlers {
+  @Command("ping")
+  async ping() {}
+
+  @Restrict({ users: ["admin-id"] }) // chỉ user này mới gọi được lệnh
+  @Command("admin-only")
+  async adminOnly() {}
+}
+```
+
+### 3. NestJS Guards – @UseGuards cho Nezon handler
+
+Nezon hỗ trợ `@UseGuards()` của NestJS trên:
+
+- `@Command` handlers
+- `@Component` handlers
+- `@On`, `@Once`, `@OnMention` event handlers
+
+Guard được lấy từ metadata Nest (`@UseGuards`) ở **class** và **method**, sau đó được gọi trước khi vào handler.
+
+**Context trong Guard cụ thể là gì?**
+
+- Guard luôn nhận `ExecutionContext` giống NestJS:
+
+  - `context.getType()` sẽ là `"rpc"` cho tất cả handler của Nezon.
+  - `context.getArgs()` là mảng các tham số gốc mà Nezon truyền cho handler nội bộ.
+
+- **Command handler (`@Command`)**:
+
+  - `const [ctx] = context.getArgs() as [Nezon.NezonCommandContext];`
+  - `ctx` chứa:
+    - `message`: `Nezon.ChannelMessage` (payload gốc từ Mezon)
+    - `client`: `MezonClient`
+    - `args`: `string[]` – danh sách argument sau prefix/command
+    - `reply()`, `getChannel()`, `getClan()`, `getUser()`, `getMessage()`, `getMessageByIds()` – helper đã được bind sẵn
+
+- **Component handler (`@Component`)**:
+
+  - `const [ctx] = context.getArgs() as [Nezon.NezonComponentContext];`
+  - `ctx` chứa:
+    - `payload`: `MessageButtonClicked` (event click button từ Mezon)
+    - `client`: `MezonClient`
+    - `params`: `string[]` – params từ pattern (vd `/user/:id/:action`)
+    - `namedParams?`: `Record<string, string>` – params dạng object nếu dùng `:id`
+    - `match?`: `RegExpMatchArray | null`
+    - `cache?`: `Map<symbol, unknown>` – cache nội bộ cho handler
+
+- **Event handler (`@On`, `@Once`, `@OnMention`)**:
+  - `const args = context.getArgs();`
+  - Tùy event:
+    - Với `Events.ChannelMessage` / `@OnMention()`:
+      - `const [payload] = args as [Nezon.ChannelMessage];`
+    - Với `Events.TokenSend`:
+      - `const [payload] = args as [Nezon.TokenSendPayload];`
+    - Với các event khác: `args[0]` luôn là payload gốc mà Mezon bắn ra.
+
+Nhờ đó, bạn có thể viết guard phức tạp (kiểm tra quyền, trạng thái bot, payload, v.v.) mà không cần thay đổi handler logic.
+
+**Ví dụ Guard đơn giản:**
+
+```ts
+@Injectable()
+class ClanGuard implements CanActivate {
+  canActivate(ctx: ExecutionContext): boolean {
+    const [context] = ctx.getArgs() as [Nezon.NezonCommandContext];
+    return context.message.clan_id === "1840666443260104704";
+  }
+}
+
+@Injectable()
+@UseGuards(ClanGuard) // áp cho tất cả command trong class
+export class ExampleCommandHandlers {
+  @Command("ping")
+  async ping(@AutoContext() [message]: Nezon.AutoContext) {
+    await message.reply(SmartMessage.text("pong!"));
+  }
+
+  @UseGuards(OtherGuard) // chỉ áp riêng cho lệnh này
+  @Command("secure")
+  async secure(@AutoContext() [message]: Nezon.AutoContext) {
+    await message.reply(SmartMessage.text("secured!"));
+  }
+}
+```
+
+> **Thứ tự chạy:**
+>
+> 1. Kiểm tra `restricts` (global + class + method)
+> 2. Chạy tất cả NestJS Guards (`@UseGuards`)
+> 3. Nếu pass hết → mới vào handler logic.
+
 ## Bảng tóm tắt
 
 | Decorator                | Type      | Use Case                   |

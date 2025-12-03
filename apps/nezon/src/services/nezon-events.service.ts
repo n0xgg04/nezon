@@ -1,4 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  type CanActivate,
+  type Type,
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { ChannelMessage } from 'mezon-sdk';
 import type { Clan } from 'mezon-sdk/dist/cjs/mezon-client/structures/Clan';
@@ -9,6 +15,14 @@ import { NezonClientService } from '../client/nezon-client.service';
 import { NezonExplorerService } from './nezon-explorer.service';
 import { NezonEventDefinition } from '../interfaces/event-definition.interface';
 import type { NezonCommandContext } from '../interfaces/command-context.interface';
+import { NEZON_MODULE_OPTIONS } from '../nezon-configurable';
+import type {
+  NezonModuleOptions,
+  NezonRestrictConfig,
+} from '../nezon.module-interface';
+import { ModuleRef, Reflector } from '@nestjs/core';
+import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-host';
+import { GUARDS_METADATA } from '@nestjs/common/constants';
 import {
   NezonParamType,
   NezonParameterMetadata,
@@ -39,6 +53,10 @@ export class NezonEventsService {
     private readonly explorer: NezonExplorerService,
     private readonly clientService: NezonClientService,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(NEZON_MODULE_OPTIONS)
+    private readonly moduleOptions: NezonModuleOptions,
+    private readonly moduleRef: ModuleRef,
+    private readonly reflector: Reflector,
   ) {}
 
   initialize() {
@@ -90,12 +108,133 @@ export class NezonEventsService {
     if (typeof method !== 'function') {
       return;
     }
+    if (!this.isAllowedForPayload(definition.restricts, args[0])) {
+      return;
+    }
+    const guardsOk = await this.canActivateGuards(
+      definition.instance,
+      method,
+      args,
+    );
+    if (!guardsOk) {
+      return;
+    }
     const parameters = definition.parameters ?? [];
     if (!parameters.length) {
       return method.apply(definition.instance, args);
     }
     const resolvedArgs = await this.resolveEventArguments(parameters, args);
     return method.apply(definition.instance, resolvedArgs);
+  }
+
+  private async canActivateGuards(
+    instance: any,
+    handler: (...args: unknown[]) => unknown,
+    args: unknown[],
+  ): Promise<boolean> {
+    const guards =
+      this.reflector.getAllAndOverride<Array<Type<CanActivate> | CanActivate>>(
+        GUARDS_METADATA,
+        [handler, instance.constructor],
+      ) ?? [];
+    if (!guards.length) {
+      return true;
+    }
+    const context = new ExecutionContextHost(
+      args,
+      instance.constructor,
+      handler,
+    );
+    context.setType('rpc');
+    for (const guard of guards) {
+      const guardInstance = this.getGuardInstance(guard);
+      const result = await guardInstance.canActivate(context);
+      if (!result) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private getGuardInstance(
+    guard: Type<CanActivate> | CanActivate,
+  ): CanActivate {
+    if (typeof (guard as CanActivate).canActivate === 'function') {
+      return guard as CanActivate;
+    }
+    const type = guard as Type<CanActivate>;
+    try {
+      return this.moduleRef.get(type, { strict: false });
+    } catch {
+      return new type();
+    }
+  }
+
+  private isAllowedForPayload(
+    restricts: NezonRestrictConfig | undefined,
+    payload: any,
+  ): boolean {
+    const globalRestricts = this.moduleOptions.restricts;
+    const merged = this.mergeRestricts(globalRestricts, restricts);
+    if (!merged) {
+      return true;
+    }
+    const clanId: string | undefined = payload?.clan_id;
+    const channelId: string | undefined = payload?.channel_id;
+    const userId: string | undefined =
+      payload?.sender_id ?? payload?.user_id ?? payload?.creator_id;
+    if (
+      merged.clans &&
+      merged.clans.length &&
+      (!clanId || !merged.clans.includes(clanId))
+    ) {
+      return false;
+    }
+    if (
+      merged.channels &&
+      merged.channels.length &&
+      (!channelId || !merged.channels.includes(channelId))
+    ) {
+      return false;
+    }
+    if (
+      merged.users &&
+      merged.users.length &&
+      (!userId || !merged.users.includes(userId))
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  private mergeRestricts(
+    base?: NezonRestrictConfig,
+    override?: NezonRestrictConfig,
+  ): NezonRestrictConfig | undefined {
+    if (!base && !override) {
+      return undefined;
+    }
+    const clans = [...(base?.clans ?? []), ...(override?.clans ?? [])];
+    const channels = [...(base?.channels ?? []), ...(override?.channels ?? [])];
+    const users = [...(base?.users ?? []), ...(override?.users ?? [])];
+    const result: NezonRestrictConfig = {};
+    if (clans.length) {
+      result.clans = Array.from(new Set(clans));
+    }
+    if (channels.length) {
+      result.channels = Array.from(new Set(channels));
+    }
+    if (users.length) {
+      result.users = Array.from(new Set(users));
+    }
+    if (
+      !result.clans?.length &&
+      !result.channels?.length &&
+      !result.users?.length
+    ) {
+      return undefined;
+    }
+    return result;
   }
 
   private async resolveEventArguments(

@@ -1,6 +1,11 @@
 import { ClientConfigDto } from 'mezon-sdk';
 
-/**
- * Config Options
- */
-export interface NezonModuleOptions extends ClientConfigDto {}
+export interface NezonRestrictConfig {
+  clans?: string[];
+  channels?: string[];
+  users?: string[];
+}
+
+export interface NezonModuleOptions extends ClientConfigDto {
+  restricts?: NezonRestrictConfig;
+}
