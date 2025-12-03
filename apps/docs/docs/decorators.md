@@ -81,6 +81,35 @@ Lắng nghe event mỗi lần xảy ra.
 
 **Xem thêm:** [@On, @Once](/docs/interaction/events)
 
+### @OnMention
+
+Lắng nghe riêng trường hợp **bot được mention** trong `ChannelMessage`.
+
+```ts
+@OnMention()
+```
+
+**Cách hoạt động:**
+
+- Nội bộ Nezon lắng nghe `Events.ChannelMessage`
+- Với mỗi message, Nezon kiểm tra `message.mentions` có phần tử nào có `user_id === botId` (config từ `NezonModule.forRoot({ botId })`) hay không
+- Nếu có, Nezon emit event nội bộ `nezon:mention` và gọi tất cả handler được đánh dấu `@OnMention()`
+
+**Ví dụ:**
+
+```ts
+@OnMention()
+async onBotMention(
+  @MessageContent() content: string,
+  @User('username') username: string | undefined,
+) {
+  console.log(`Bot được mention bởi ${username}: ${content}`);
+}
+```
+
+> Bạn vẫn có thể dùng đầy đủ các decorator param trong `@OnMention()` giống như `@On()` / `@Once()`:  
+> `@ChannelMessagePayload()`, `@EventPayload()`, `@Channel()`, `@Clan()`, `@User()`, `@MessageContent()`, `@Mentions()`, `@Attachments()`, `@Client()`, `@AutoContext()`, `@NezonUtils()`, ...
+
 ### @Once
 
 Lắng nghe event một lần duy nhất.

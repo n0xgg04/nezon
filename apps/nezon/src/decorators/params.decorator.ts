@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import { Inject } from '@nestjs/common';
+import { MezonClient as MezonClientClass } from 'mezon-sdk';
 import type { ChannelMessage } from 'mezon-sdk';
 import type { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
 import type { User as MezonUser } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
@@ -69,15 +71,29 @@ export function ChannelMessagePayload<K extends keyof ChannelMessage = never>(
 }
 
 export function Client(): ParameterDecorator {
-  return setParamMetadata({
-    type: NezonParamType.CLIENT,
-  });
+  return (
+    target: object,
+    propertyKey: string | symbol | undefined,
+    parameterIndex: number,
+  ) => {
+    setParamMetadata({
+      type: NezonParamType.CLIENT,
+    })(target, propertyKey, parameterIndex);
+    Inject(MezonClientClass)(target, propertyKey, parameterIndex);
+  };
 }
 
 export function MezonClient(): ParameterDecorator {
-  return setParamMetadata({
-    type: NezonParamType.CLIENT,
-  });
+  return (
+    target: object,
+    propertyKey: string | symbol | undefined,
+    parameterIndex: number,
+  ) => {
+    setParamMetadata({
+      type: NezonParamType.CLIENT,
+    })(target, propertyKey, parameterIndex);
+    Inject(MezonClientClass)(target, propertyKey, parameterIndex);
+  };
 }
 
 export function Args(): ParameterDecorator {

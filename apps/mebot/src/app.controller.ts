@@ -1,10 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
-import { getMezonClient } from '@n0xgg04/nezon';
+import { Client, getMezonClient } from '@n0xgg04/nezon';
+import type { MezonClient } from 'mezon-sdk';
 import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    @Client() private readonly client: MezonClient,
+  ) {}
 
   @Get()
   getHello(): string {
@@ -13,10 +17,19 @@ export class AppController {
 
   @Get('client-info')
   async getClientInfo() {
-    const client = getMezonClient();
     return {
-      botId: client.botId,
-      isReady: client.isReady(),
+      message: 'MezonClient is available',
+      hasClient: !!this.client,
+      hasGlobalClient: !!getMezonClient(),
+    };
+  }
+
+  @Get('client-constructor')
+  async getClientFromConstructor(@Client() client: MezonClient) {
+    return {
+      message: 'MezonClient injected via @Client() decorator',
+      hasClient: !!client,
+      sameInstance: client === this.client,
     };
   }
 }

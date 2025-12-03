@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   Logger,
   OnApplicationBootstrap,
@@ -6,8 +7,14 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChannelMessage, Events, MezonClient, TokenSentEvent } from 'mezon-sdk';
-import { MessageButtonClicked, AddClanUserEvent } from 'mezon-sdk/dist/cjs/rtapi/realtime';
+import {
+  MessageButtonClicked,
+  AddClanUserEvent,
+} from 'mezon-sdk/dist/cjs/rtapi/realtime';
 import { NezonClientService } from '../client/nezon-client.service';
+import { NEZON_MODULE_OPTIONS } from '../nezon-configurable';
+import type { NezonModuleOptions } from '../nezon.module-interface';
+import { NEZON_MENTION_EVENT } from '../decorators/on.decorator';
 
 type EventHandler = (...args: unknown[]) => void;
 
@@ -21,6 +28,8 @@ export class NezonEventBridgeService
   constructor(
     private readonly clientService: NezonClientService,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(NEZON_MODULE_OPTIONS)
+    private readonly options: NezonModuleOptions,
   ) {}
 
   async onApplicationBootstrap() {
@@ -66,6 +75,22 @@ export class NezonEventBridgeService
         }
       });
       this.eventEmitter.emit(Events.ChannelMessage, message);
+      try {
+        const botId = this.options.botId;
+        if (!botId) {
+          return;
+        }
+        const mentions = Array.isArray((record as any).mentions)
+          ? ((record as any).mentions as Array<Record<string, unknown>>)
+          : [];
+        const hasBotMention = mentions.some((mention) => {
+          const userId = mention.user_id as string | undefined;
+          return userId === botId;
+        });
+        if (hasBotMention) {
+          this.eventEmitter.emit(NEZON_MENTION_EVENT, message);
+        }
+      } catch {}
     };
     this.registerListener(client, Events.ChannelMessage, handler);
   }
@@ -73,16 +98,24 @@ export class NezonEventBridgeService
   private bindAddClanUser(client: MezonClient) {
     if (typeof (client as any).onAddClanUser === 'function') {
       try {
-        const result = (client as any).onAddClanUser(async (user: AddClanUserEvent) => {
-          this.eventEmitter.emit(Events.AddClanUser, user);
-        });
+        const result = (client as any).onAddClanUser(
+          async (user: AddClanUserEvent) => {
+            this.eventEmitter.emit(Events.AddClanUser, user);
+          },
+        );
         if (result && typeof result.catch === 'function') {
           result.catch((error: any) =>
-            this.logger.error('failed to bind add clan user listener', error?.stack),
+            this.logger.error(
+              'failed to bind add clan user listener',
+              error?.stack,
+            ),
           );
         }
       } catch (error) {
-        this.logger.error('failed to bind add clan user listener', (error as Error)?.stack);
+        this.logger.error(
+          'failed to bind add clan user listener',
+          (error as Error)?.stack,
+        );
       }
       return;
     }

@@ -106,8 +106,61 @@ export class EventHandlers {
 }
 ```
 
+- **Supported decorators inside @On/@Once handlers**:
+
+  - `@ChannelMessagePayload()` / `@EventPayload()` – access raw payload from Mezon
+  - `@MessageContent()` – read text content of the message (when the event is `ChannelMessage`)
+  - `@Channel()` / `@Channel('name')` – get channel entity or a specific field
+  - `@Clan()` – get clan entity
+  - `@User()` / `@User('username')` – get user entity or a specific field
+  - `@Attachments()` / `@Mentions()` – read files and mentions from payload
+  - `@Client()` – get the current `MezonClient` instance
+  - `@AutoContext()` – currently only supports the **DM helper** in event context (`[null, dmHelper, null]`)
+  - `@NezonUtils()` – inject `NezonUtilsService` for helpers (getClan, getChannel, etc.)
+
 - Event list: [Events List](../events-list.md)
-- Guide: [Interaction → Events](../interaction/events.md)
+- Detailed guide: [Interaction → Events](../interaction/events.md)
+
+### 4.1 @OnMention – when the bot is mentioned
+
+`@OnMention()` is a shortcut for listening specifically to **when the bot is mentioned** in a channel:
+
+- The source event is `Nezon.Events.ChannelMessage`
+- Nezon automatically checks if `message.mentions` contains `user_id === botId` (taken from `NezonModule.forRoot({ botId })`)
+- Only when the bot is mentioned will the `@OnMention()` handler be executed
+
+```ts
+import {
+  OnMention,
+  MessageContent,
+  Channel,
+  User,
+  AutoContext,
+} from "@n0xgg04/nezon";
+import type { Nezon } from "@n0xgg04/nezon";
+
+export class MentionHandlers {
+  @OnMention()
+  async onBotMention(
+    @MessageContent() content: string,
+    @Channel() channel: Nezon.Channel | undefined,
+    @User() user: Nezon.User | undefined,
+    @AutoContext("dm") dm: Nezon.AutoContextType.DM
+  ) {
+    if (!user) return;
+    await dm.send(
+      user.id,
+      Nezon.SmartMessage.text(
+        `You mentioned the bot in channel ${
+          channel?.name ?? "unknown"
+        } with content: ${content}`
+      )
+    );
+  }
+}
+```
+
+> Note: `@OnMention()` shares the same parameter decorator system as `@On()` / `@Once()`, so you can also mix in `@Mentions()`, `@Attachments()`, `@Client()`, `@NezonUtils()`, ...
 
 ## 5. Quick Comparison
 

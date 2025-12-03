@@ -72,21 +72,15 @@ export class NezonCommandService {
   private async bindListener() {
     const client = this.clientService.getClient();
     if (typeof (client as any).onChannelMessage === 'function') {
-      await client
-        .onChannelMessage(async (message: ChannelMessage) => {
-          try {
-            await this.handleMessage(message);
-          } catch (error) {
-            const err = error as Error;
-            this.logger.error('command execution failed', err?.stack);
-          }
-        })
-        .catch((error: any) =>
-          this.logger.error(
-            'failed to bind channel message listener',
-            error?.stack,
-          ),
-        );
+      await client.onChannelMessage(async (message: ChannelMessage) => {
+        try {
+          await this.handleMessage(message);
+        } catch (error) {
+          const err = error as Error;
+          this.logger.error('command execution failed', err?.stack);
+        }
+      });
+
       return;
     }
     client.on(Events.ChannelMessage, async (message: ChannelMessage) => {

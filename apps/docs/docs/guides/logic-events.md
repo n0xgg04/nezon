@@ -106,8 +106,61 @@ export class EventHandlers {
 }
 ```
 
+- **Decorator hỗ trợ trong handler @On/@Once**:
+
+  - `@ChannelMessagePayload()` / `@EventPayload()` – lấy raw payload từ Mezon
+  - `@MessageContent()` – lấy nội dung text của message (nếu event là `ChannelMessage`)
+  - `@Channel()` / `@Channel('name')` – lấy channel entity hoặc field cụ thể
+  - `@Clan()` – lấy clan entity
+  - `@User()` / `@User('username')` – lấy user entity hoặc field cụ thể
+  - `@Attachments()` / `@Mentions()` – đọc files và mentions từ payload
+  - `@Client()` – lấy `MezonClient` instance hiện tại
+  - `@AutoContext()` – hiện tại chỉ support **DM helper** trong bối cảnh event (`[null, dmHelper, null]`)
+  - `@NezonUtils()` – inject `NezonUtilsService` để dùng helper (getClan, getChannel, v.v.)
+
 - Danh sách sự kiện: [Events List](../events-list.md)
-- Hướng dẫn: [Tương tác → Events](../interaction/events.md)
+- Hướng dẫn chi tiết: [Tương tác → Events](../interaction/events.md)
+
+### 4.1 @OnMention – khi bot được mention
+
+`@OnMention()` là shortcut cho việc lắng nghe riêng case **bot bị mention** trong channel:
+
+- Source event là `Nezon.Events.ChannelMessage`
+- Nezon sẽ tự kiểm tra `message.mentions` có chứa `user_id === botId` (lấy từ `NezonModule.forRoot({ botId })`)
+- Chỉ khi có mention bot, handler `@OnMention()` mới được gọi
+
+```ts
+import {
+  OnMention,
+  MessageContent,
+  Channel,
+  User,
+  AutoContext,
+} from "@n0xgg04/nezon";
+import type { Nezon } from "@n0xgg04/nezon";
+
+export class MentionHandlers {
+  @OnMention()
+  async onBotMention(
+    @MessageContent() content: string,
+    @Channel() channel: Nezon.Channel | undefined,
+    @User() user: Nezon.User | undefined,
+    @AutoContext("dm") dm: Nezon.AutoContextType.DM
+  ) {
+    if (!user) return;
+    await dm.send(
+      user.id,
+      Nezon.SmartMessage.text(
+        `Bạn vừa mention bot trong kênh ${
+          channel?.name ?? "unknown"
+        } với nội dung: ${content}`
+      )
+    );
+  }
+}
+```
+
+> Lưu ý: `@OnMention()` vẫn dùng chung toàn bộ hệ thống decorator param như `@On()` / `@Once()`, nên bạn có thể mix thêm `@Mentions()`, `@Attachments()`, `@Client()`, `@NezonUtils()`, ...
 
 ## 5. So sánh nhanh
 
