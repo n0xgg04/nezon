@@ -304,9 +304,10 @@ async broadcastTo(
 >
 > Best practice: đặt tên biến là `managedMessage` hoặc tương tự để phân biệt với raw payload (`ChannelMessagePayload`).
 
-> **Lưu ý về ChannelHelper**
+> **Lưu ý về ChannelHelper & AutoContext trong event**
 >
-> `ChannelHelper` trả về `null` trong bối cảnh event (`@On`/`@Once`) vì không có channel cụ thể. Trong commands/components, channel luôn tồn tại.
+> - Với `@On(Events.ChannelMessage)` và `@OnMention()`, `@AutoContext()` hoạt động tương tự command: bạn có thể dùng đầy đủ `[ManagedMessage, DMHelper, ChannelHelper]`.
+> - Với các event khác (không phải channel message), Nezon không có thông tin channel/message cụ thể nên chỉ khởi tạo được **DM helper**, hai phần tử còn lại sẽ là `null`.
 
 ### @Message
 

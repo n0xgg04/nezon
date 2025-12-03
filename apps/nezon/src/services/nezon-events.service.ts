@@ -1,21 +1,26 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import type { ChannelMessage } from 'mezon-sdk';
 import type { Clan } from 'mezon-sdk/dist/cjs/mezon-client/structures/Clan';
 import type { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
 import type { User } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
+import type { Message } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
 import { NezonClientService } from '../client/nezon-client.service';
 import { NezonExplorerService } from './nezon-explorer.service';
 import { NezonEventDefinition } from '../interfaces/event-definition.interface';
+import type { NezonCommandContext } from '../interfaces/command-context.interface';
 import {
   NezonParamType,
   NezonParameterMetadata,
 } from '../interfaces/parameter-metadata.interface';
 import {
   DMHelper,
+  ManagedMessage,
   SmartMessage,
   type SmartMessageLike,
   type NormalizedSmartMessage,
   cloneMentionPlaceholders,
+  ChannelHelper,
 } from '../messaging/smart-message';
 import type { ChannelMessageContent } from 'mezon-sdk';
 
@@ -180,19 +185,64 @@ export class NezonEventsService {
             normalize: (input: any) => this.normalizeSmartMessage(input),
           };
           const dmHelper = new DMHelper(client, helpers);
-          const tuple: [null, DMHelper, null] = [null, dmHelper, null];
-          if (typeof param.data === 'string' && param.data) {
-            if (param.data === 'dm') {
-              value = dmHelper;
-            } else if (param.data === 'message') {
-              value = null;
-            } else if (param.data === 'channel') {
-              value = null;
+          const payload = args[0] as ChannelMessage | undefined;
+
+          if (
+            payload &&
+            typeof (payload as any).channel_id === 'string' &&
+            typeof (payload as any).message_id === 'string'
+          ) {
+            const context: NezonCommandContext = {
+              message: payload,
+              client,
+              args: [],
+              cache: new Map<symbol, unknown>(),
+              reply: async (...replyArgs) => {
+                const entity = await this.getMessageEntityFromEvent(payload);
+                if (!entity) {
+                  return undefined;
+                }
+                return entity.reply(...replyArgs);
+              },
+              getChannel: () => this.getChannelFromEvent(payload),
+              getClan: () => this.getClanFromEvent(payload),
+              getUser: () => this.getUserFromEvent(payload),
+              getMessage: () => this.getMessageEntityFromEvent(payload),
+              getMessageByIds: (channelId: string, messageId: string) =>
+                this.fetchMessageByIds(client, channelId, messageId),
+            };
+            const managedMessage = new ManagedMessage(context, helpers);
+            const channelHelper = new ChannelHelper(context, helpers);
+            const tuple: [ManagedMessage, DMHelper, ChannelHelper] = [
+              managedMessage,
+              dmHelper,
+              channelHelper,
+            ];
+
+            if (typeof param.data === 'string' && param.data) {
+              if (param.data === 'message') {
+                value = managedMessage;
+              } else if (param.data === 'dm') {
+                value = dmHelper;
+              } else if (param.data === 'channel') {
+                value = channelHelper;
+              } else {
+                value = tuple;
+              }
             } else {
               value = tuple;
             }
           } else {
-            value = tuple;
+            const tuple: [null, DMHelper, null] = [null, dmHelper, null];
+            if (typeof param.data === 'string' && param.data) {
+              if (param.data === 'dm') {
+                value = dmHelper;
+              } else {
+                value = tuple;
+              }
+            } else {
+              value = tuple;
+            }
           }
           break;
         }
@@ -283,6 +333,44 @@ export class NezonEventsService {
       }
     } catch {
       return undefined;
+    }
+    return undefined;
+  }
+
+  private async getMessageEntityFromEvent(
+    payload: any,
+  ): Promise<Message | undefined> {
+    if (!payload) {
+      return undefined;
+    }
+    const client = this.clientService.getClient();
+    const channelId: string | undefined = (payload as any).channel_id;
+    const messageId: string | undefined = (payload as any).message_id;
+    if (!channelId || !messageId) {
+      return undefined;
+    }
+    return this.fetchMessageByIds(client, channelId, messageId);
+  }
+
+  private async fetchMessageByIds(
+    client: NezonCommandContext['client'],
+    channelId?: string,
+    messageId?: string,
+  ) {
+    if (!channelId || !messageId) {
+      return undefined;
+    }
+    try {
+      const channel = await client.channels.fetch(channelId);
+      if (!channel?.messages?.fetch) {
+        return undefined;
+      }
+      return (await channel.messages.fetch(messageId)) as Message;
+    } catch (error) {
+      this.logger.warn(
+        `failed to fetch message ${messageId} from channel ${channelId}`,
+        (error as Error)?.stack,
+      );
     }
     return undefined;
   }
