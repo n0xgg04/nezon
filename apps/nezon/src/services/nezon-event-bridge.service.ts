@@ -68,6 +68,10 @@ export class NezonEventBridgeService
   private bindChannelMessage(client: MezonClient) {
     const handler = (message: ChannelMessage) => {
       const record = message as unknown as Record<string, unknown>;
+      const botId = this.options.botId;
+      if (botId && (record.sender_id as string | undefined) === botId) {
+        return;
+      }
       ['attachments', 'mentions', 'references'].forEach((key) => {
         const value = record[key];
         if (!Array.isArray(value)) {
@@ -76,7 +80,6 @@ export class NezonEventBridgeService
       });
       this.eventEmitter.emit(Events.ChannelMessage, message);
       try {
-        const botId = this.options.botId;
         if (!botId) {
           return;
         }
