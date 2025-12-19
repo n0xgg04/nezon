@@ -466,9 +466,9 @@ export class NezonCommandService {
         if (!message.sender_id) {
           return undefined;
         }
-        const clan = await this.getClan(context);
-        if (clan?.users?.fetch) {
-          return (await clan.users.fetch(message.sender_id)) as User;
+        const client = context.client as any;
+        if (client.users?.fetch) {
+          return (await client.users.fetch(message.sender_id)) as User;
         }
       } catch (error) {
         this.logger.warn(

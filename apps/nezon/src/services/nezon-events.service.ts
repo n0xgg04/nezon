@@ -459,16 +459,15 @@ export class NezonEventsService {
     if (!payload) {
       return undefined;
     }
-    const clanId: string | undefined = (payload as any).clan_id;
     const userId: string | undefined =
       (payload as any).sender_id || (payload as any).user_id;
-    if (!clanId || !userId) {
+    if (!userId) {
       return undefined;
     }
     try {
-      const clan = await this.getClanFromEvent(payload);
-      if (clan?.users?.fetch) {
-        return (await clan.users.fetch(userId)) as User;
+      const client = this.clientService.getClient() as any;
+      if (client.users?.fetch) {
+        return (await client.users.fetch(userId)) as User;
       }
     } catch {
       return undefined;

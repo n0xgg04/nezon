@@ -995,7 +995,7 @@ export class ManagedMessage {
 async function lookupUsernameUsingContext(
   context: NezonCommandContext,
   userId: string,
-  clan?: Clan,
+  clan?: any,
 ): Promise<string> {
   const clanUser = await fetchUserFromDirectory(
     clan ? (clan.users as unknown as UserDirectory) : undefined,

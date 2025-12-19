@@ -198,14 +198,13 @@ export class NezonUtilsService {
       getChannel: async () => channel,
       getClan: async () => channel.clan || undefined,
       getUser: async () => {
-        if (!channelMessage.sender_id || !channel.clan) {
+        if (!channelMessage.sender_id) {
           return undefined;
         }
         try {
-          if (channel.clan.users?.fetch) {
-            return (await channel.clan.users.fetch(
-              channelMessage.sender_id,
-            )) as User;
+          const client = this.client as any;
+          if (client.users?.fetch) {
+            return (await client.users.fetch(channelMessage.sender_id)) as User;
           }
         } catch {
           return undefined;

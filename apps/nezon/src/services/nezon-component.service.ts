@@ -478,10 +478,9 @@ export class NezonComponentService {
           return undefined;
         }
         try {
-          const channel = await this.getChannel(context);
-          const clan = channel?.clan;
-          if (clan?.users?.fetch) {
-            return (await clan.users.fetch(context.payload.user_id)) as User;
+          const client = context.client as any;
+          if (client.users?.fetch) {
+            return (await client.users.fetch(context.payload.user_id)) as User;
           }
         } catch {
           return undefined;
@@ -608,10 +607,9 @@ export class NezonComponentService {
           return undefined;
         }
         try {
-          const channel = await this.getChannel(componentContext);
-          const clan = channel?.clan;
-          if (clan?.users?.fetch) {
-            return (await clan.users.fetch(
+          const client = componentContext.client as any;
+          if (client.users?.fetch) {
+            return (await client.users.fetch(
               componentContext.payload.user_id,
             )) as User;
           }
