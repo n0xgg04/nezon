@@ -644,16 +644,27 @@ export class DMHelper {
   async send(userId: string, message: SmartMessageLike) {
     const payload = await this.preparePayload(message);
 
-    const dmChannel = await (this.client as any).createDMchannel(userId);
-    if (!dmChannel?.channel_id) {
-      throw new Error(`Failed to create DM channel with user ${userId}`);
+    const clientAny = this.client as any;
+    let dmChannelId: string | undefined;
+
+    if (clientAny.users?.createDM) {
+      const dmChannel = await clientAny.users.createDM(userId);
+      dmChannelId = dmChannel?.channel_id;
+    } else if (clientAny.users?.fetchDM) {
+      const dmChannel = await clientAny.users.fetchDM(userId);
+      dmChannelId = dmChannel?.channel_id;
+    } else if (clientAny.createDMchannel) {
+      const dmChannel = await clientAny.createDMchannel(userId);
+      dmChannelId = dmChannel?.channel_id;
     }
 
-    const channel = await (this.client as any).channels.fetch(
-      dmChannel.channel_id,
-    );
+    if (!dmChannelId) {
+      throw new Error(`Failed to create/fetch DM channel with user ${userId}`);
+    }
+
+    const channel = await clientAny.channels.fetch(dmChannelId);
     if (!channel) {
-      throw new Error(`Failed to fetch DM channel ${dmChannel.channel_id}`);
+      throw new Error(`Failed to fetch DM channel ${dmChannelId}`);
     }
 
     return channel.send(payload.content, payload.mentions, payload.attachments);
@@ -926,14 +937,26 @@ export class ManagedMessage {
     const payload = await this.preparePayload(message);
 
     const clientAny = this.context.client as any;
-    const dmChannel = await clientAny.createDMchannel(senderId);
-    if (!dmChannel?.channel_id) {
-      throw new Error(`Failed to create DM channel with user ${senderId}`);
+    let dmChannelId: string | undefined;
+
+    if (clientAny.users?.createDM) {
+      const dmChannel = await clientAny.users.createDM(senderId);
+      dmChannelId = dmChannel?.channel_id;
+    } else if (clientAny.users?.fetchDM) {
+      const dmChannel = await clientAny.users.fetchDM(senderId);
+      dmChannelId = dmChannel?.channel_id;
+    } else if (clientAny.createDMchannel) {
+      const dmChannel = await clientAny.createDMchannel(senderId);
+      dmChannelId = dmChannel?.channel_id;
     }
 
-    const channel = await clientAny.channels.fetch(dmChannel.channel_id);
+    if (!dmChannelId) {
+      throw new Error(`Failed to create/fetch DM channel with user ${senderId}`);
+    }
+
+    const channel = await clientAny.channels.fetch(dmChannelId);
     if (!channel) {
-      throw new Error(`Failed to fetch DM channel ${dmChannel.channel_id}`);
+      throw new Error(`Failed to fetch DM channel ${dmChannelId}`);
     }
 
     return channel.send(payload.content, payload.mentions, payload.attachments);
