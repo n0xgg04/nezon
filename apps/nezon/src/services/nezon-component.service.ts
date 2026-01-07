@@ -13,6 +13,7 @@ import { User } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
 import { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
 import { NezonClientService } from '../client/nezon-client.service';
 import { NezonExplorerService } from './nezon-explorer.service';
+import { NezonUtilsService } from './nezon-utils.service';
 import { NezonComponentDefinition } from '../interfaces/component-definition.interface';
 import { NezonComponentContext } from '../interfaces/component-context.interface';
 import {
@@ -71,6 +72,7 @@ export class NezonComponentService {
   constructor(
     private readonly explorer: NezonExplorerService,
     private readonly clientService: NezonClientService,
+    private readonly utilsService: NezonUtilsService,
     @Inject(NEZON_MODULE_OPTIONS)
     private readonly moduleOptions: NezonModuleOptions,
     private readonly moduleRef: ModuleRef,
@@ -461,6 +463,9 @@ export class NezonComponentService {
           }
           break;
         }
+        case NezonParamType.NEZON_UTILS:
+          value = this.utilsService;
+          break;
         default:
           value = undefined;
       }

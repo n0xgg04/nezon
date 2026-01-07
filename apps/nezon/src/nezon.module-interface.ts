@@ -8,4 +8,8 @@ export interface NezonRestrictConfig {
 
 export interface NezonModuleOptions extends ClientConfigDto {
   restricts?: NezonRestrictConfig;
+  autoRetry?: boolean;
+  maxRetry?: number;
+  retryDuration?: number;
+  onCrash?: (error: Error) => void | Promise<void>;
 }

@@ -200,8 +200,14 @@ export class ExampleEmbedHandlers {
   @Command('slots')
   async onSlots(
     @AutoContext() [managedMessage]: Nezon.AutoContext,
-    @NezonUtils() utils: NezonUtilsService,
+    @NezonUtils() utils?: NezonUtilsService,
   ) {
+    if (!utils) {
+      await managedMessage.reply(
+        SmartMessage.text('❌ Lỗi: NezonUtilsService không khả dụng'),
+      );
+      return;
+    }
     const pool = [
       [
         '1.png',
@@ -289,10 +295,18 @@ export class ExampleEmbedHandlers {
       return;
     }
 
+    const messageId = animationAck.message_id;
+    const channelId = animationAck.channel_id;
+    const utilsService = utils;
+
     setTimeout(async () => {
-      const animatedMessage = await utils.getManagedMessage(
-        animationAck.message_id,
-        animationAck.channel_id,
+      if (!utilsService) {
+        console.error('NezonUtilsService is not available');
+        return;
+      }
+      const animatedMessage = await utilsService.getManagedMessage(
+        messageId,
+        channelId,
       );
       if (!animatedMessage) {
         return;

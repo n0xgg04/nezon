@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import {
+  ExampleAudioHandlers,
   ExampleCommandHandlers,
   ExampleComponentHandlers,
   ExampleDMHandlers,
@@ -31,6 +32,7 @@ import { NezonModule } from '@n0xgg04/nezon';
     ExampleEmbedHandlers,
     ExampleEventHandlers,
     ExampleMentionHandlers,
+    ExampleAudioHandlers,
   ],
 })
 export class AppModule {}

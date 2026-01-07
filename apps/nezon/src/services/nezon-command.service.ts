@@ -13,6 +13,7 @@ import { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChan
 import { User } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
 import { NezonClientService } from '../client/nezon-client.service';
 import { NezonExplorerService } from './nezon-explorer.service';
+import { NezonUtilsService } from './nezon-utils.service';
 import { NezonCommandDefinition } from '../interfaces/command-definition.interface';
 import { NezonCommandContext } from '../interfaces/command-context.interface';
 import { NEZON_MODULE_OPTIONS } from '../nezon-configurable';
@@ -57,6 +58,7 @@ export class NezonCommandService {
   constructor(
     private readonly explorer: NezonExplorerService,
     private readonly clientService: NezonClientService,
+    private readonly utilsService: NezonUtilsService,
     @Inject(NEZON_MODULE_OPTIONS)
     private readonly moduleOptions: NezonModuleOptions,
     private readonly moduleRef: ModuleRef,
@@ -95,7 +97,17 @@ export class NezonCommandService {
           await this.handleMessage(message);
         } catch (error) {
           const err = error as Error;
-          this.logger.error('command execution failed', err?.stack);
+          const messageContent = this.extractMessageContent(message);
+          this.logger.error(
+            `Command execution failed for message: "${messageContent}"`,
+            {
+              error: err.message,
+              stack: err.stack,
+              messageId: message.id,
+              channelId: message.channel_id,
+              senderId: message.sender_id,
+            },
+          );
         }
       });
 
@@ -106,7 +118,17 @@ export class NezonCommandService {
         await this.handleMessage(message);
       } catch (error) {
         const err = error as Error;
-        this.logger.error('command execution failed', err?.stack);
+        const messageContent = this.extractMessageContent(message);
+        this.logger.error(
+          `Command execution failed for message: "${messageContent}"`,
+          {
+            error: err.message,
+            stack: err.stack,
+            messageId: message.id,
+            channelId: message.channel_id,
+            senderId: message.sender_id,
+          },
+        );
       }
     });
   }
@@ -140,7 +162,19 @@ export class NezonCommandService {
         continue;
       }
       const context = this.createCommandContext(message, parts);
-      await this.executeCommand(command.definition, context);
+      try {
+        await this.executeCommand(command.definition, context);
+      } catch (error) {
+        const err = error as Error;
+        const commandName = command.definition.options.name || 'unknown';
+        this.logger.error(`Command "${commandName}" failed in handleMessage`, {
+          error: err.message,
+          stack: err.stack,
+          messageId: message.id,
+          channelId: message.channel_id,
+        });
+        throw error;
+      }
       break;
     }
   }
@@ -163,12 +197,31 @@ export class NezonCommandService {
       return;
     }
     const parameters = definition.parameters ?? [];
-    if (!parameters.length) {
-      await method.call(definition.instance, context);
-      return;
+    try {
+      if (!parameters.length) {
+        await method.call(definition.instance, context);
+        return;
+      }
+      const args = await this.resolveCommandArguments(parameters, context);
+      await method.apply(definition.instance, args);
+    } catch (error) {
+      const err = error as Error;
+      const commandName = definition.options.name || 'unknown';
+      this.logger.error(
+        `Command "${commandName}" execution failed in ${definition.instance.constructor.name}.${definition.methodName}`,
+        {
+          error: err.message,
+          stack: err.stack,
+          commandName,
+          handlerClass: definition.instance.constructor.name,
+          handlerMethod: definition.methodName,
+          messageId: context.message.id,
+          channelId: context.message.channel_id,
+          senderId: context.message.sender_id,
+        },
+      );
+      throw error;
     }
-    const args = await this.resolveCommandArguments(parameters, context);
-    await method.apply(definition.instance, args);
   }
 
   private async canActivateGuards(
@@ -368,6 +421,8 @@ export class NezonCommandService {
         }
         return autoContext;
       }
+      case NezonParamType.NEZON_UTILS:
+        return this.utilsService;
       default:
         return undefined;
     }

@@ -342,13 +342,37 @@ export class SmartMessage {
     });
   }
 
-  static voice(url: string, options?: { transcript?: string }): SmartMessage {
+  static voice(
+    url: string,
+    options?: { transcript?: string; filename?: string },
+  ): SmartMessage {
+    const filename =
+      options?.filename ||
+      url.split('/').pop() ||
+      url.split('\\').pop() ||
+      'audio.mp3';
+
+    const getMimeType = (filename: string): string => {
+      const ext = filename.toLowerCase().split('.').pop() || '';
+      const mimeTypes: Record<string, string> = {
+        mp3: 'audio/mpeg',
+        wav: 'audio/wav',
+        ogg: 'audio/ogg',
+        m4a: 'audio/mp4',
+        aac: 'audio/aac',
+        flac: 'audio/flac',
+        webm: 'audio/webm',
+      };
+      return mimeTypes[ext] || 'audio/mpeg';
+    };
+
     return new SmartMessage(
       options?.transcript ? { t: options.transcript } : {},
       [
         {
           url,
-          filetype: 'audio',
+          filetype: getMimeType(filename),
+          filename,
         },
       ],
     );
@@ -645,21 +669,59 @@ export class DMHelper {
     const payload = await this.preparePayload(message);
 
     const clientAny = this.client as any;
+
     let dmChannelId: string | undefined;
 
-    if (clientAny.users?.createDM) {
-      const dmChannel = await clientAny.users.createDM(userId);
-      dmChannelId = dmChannel?.channel_id;
-    } else if (clientAny.users?.fetchDM) {
-      const dmChannel = await clientAny.users.fetchDM(userId);
-      dmChannelId = dmChannel?.channel_id;
-    } else if (clientAny.createDMchannel) {
-      const dmChannel = await clientAny.createDMchannel(userId);
-      dmChannelId = dmChannel?.channel_id;
+    if (clientAny.createDMchannel) {
+      try {
+        const dmChannel = await clientAny.createDMchannel(userId);
+        dmChannelId = dmChannel?.channel_id;
+      } catch (error) {
+        throw new Error(
+          `User ${userId} not found or can not create DM channel!`,
+        );
+      }
     }
 
     if (!dmChannelId) {
-      throw new Error(`Failed to create/fetch DM channel with user ${userId}`);
+      if (clientAny.users?.fetch) {
+        try {
+          const user = await clientAny.users.fetch(userId);
+          if (user?.sendDM) {
+            if (payload.mentions && payload.mentions.length > 0) {
+              const dmChannel = await (user as any).createDmChannel?.();
+              if (dmChannel?.channel_id) {
+                dmChannelId = dmChannel.channel_id;
+              }
+            } else {
+              try {
+                return await user.sendDM(
+                  payload.content,
+                  undefined,
+                  payload.attachments,
+                );
+              } catch (error) {
+                const dmChannel = await (user as any).createDmChannel?.();
+                if (dmChannel?.channel_id) {
+                  dmChannelId = dmChannel.channel_id;
+                }
+              }
+            }
+          }
+        } catch (error) {
+          throw new Error(
+            `User ${userId} not found or can not create DM channel!`,
+          );
+        }
+      } else {
+        throw new Error(
+          `User ${userId} not found or can not create DM channel!`,
+        );
+      }
+    }
+
+    if (!dmChannelId) {
+      throw new Error(`User ${userId} not found or can not create DM channel!`);
     }
 
     const channel = await clientAny.channels.fetch(dmChannelId);
@@ -667,7 +729,15 @@ export class DMHelper {
       throw new Error(`Failed to fetch DM channel ${dmChannelId}`);
     }
 
-    return channel.send(payload.content, payload.mentions, payload.attachments);
+    return channel.send(
+      payload.content,
+      payload.mentions && payload.mentions.length > 0
+        ? payload.mentions
+        : undefined,
+      payload.attachments && payload.attachments.length > 0
+        ? payload.attachments
+        : undefined,
+    );
   }
 
   private async preparePayload(
@@ -738,7 +808,15 @@ export class ChannelHelper {
       throw new Error('Cannot send message: channel could not be resolved');
     }
     const payload = await this.preparePayload(message, channel);
-    return channel.send(payload.content, payload.mentions, payload.attachments);
+    return channel.send(
+      payload.content,
+      payload.mentions && payload.mentions.length > 0
+        ? payload.mentions
+        : undefined,
+      payload.attachments && payload.attachments.length > 0
+        ? payload.attachments
+        : undefined,
+    );
   }
 
   find(channelId: string): ChannelHelper {
@@ -868,8 +946,12 @@ export class ManagedMessage {
     const payload = await this.preparePayload(message);
     return this.context.reply(
       payload.content,
-      payload.mentions,
-      payload.attachments,
+      payload.mentions && payload.mentions.length > 0
+        ? payload.mentions
+        : undefined,
+      payload.attachments && payload.attachments.length > 0
+        ? payload.attachments
+        : undefined,
     );
   }
 
@@ -882,8 +964,12 @@ export class ManagedMessage {
     if (typeof entity.update === 'function') {
       return entity.update(
         payload.content,
-        payload.mentions,
-        payload.attachments,
+        payload.mentions && payload.mentions.length > 0
+          ? payload.mentions
+          : undefined,
+        payload.attachments && payload.attachments.length > 0
+          ? payload.attachments
+          : undefined,
       );
     }
     throw new Error('Cannot update message: update method not available');
@@ -937,21 +1023,61 @@ export class ManagedMessage {
     const payload = await this.preparePayload(message);
 
     const clientAny = this.context.client as any;
+
     let dmChannelId: string | undefined;
 
-    if (clientAny.users?.createDM) {
-      const dmChannel = await clientAny.users.createDM(senderId);
-      dmChannelId = dmChannel?.channel_id;
-    } else if (clientAny.users?.fetchDM) {
-      const dmChannel = await clientAny.users.fetchDM(senderId);
-      dmChannelId = dmChannel?.channel_id;
-    } else if (clientAny.createDMchannel) {
-      const dmChannel = await clientAny.createDMchannel(senderId);
-      dmChannelId = dmChannel?.channel_id;
+    if (clientAny.createDMchannel) {
+      try {
+        const dmChannel = await clientAny.createDMchannel(senderId);
+        dmChannelId = dmChannel?.channel_id;
+      } catch (error) {
+        throw new Error(
+          `User ${senderId} not found or can not create DM channel!`,
+        );
+      }
     }
 
     if (!dmChannelId) {
-      throw new Error(`Failed to create/fetch DM channel with user ${senderId}`);
+      if (clientAny.users?.fetch) {
+        try {
+          const user = await clientAny.users.fetch(senderId);
+          if (user?.sendDM) {
+            if (payload.mentions && payload.mentions.length > 0) {
+              const dmChannel = await (user as any).createDmChannel?.();
+              if (dmChannel?.channel_id) {
+                dmChannelId = dmChannel.channel_id;
+              }
+            } else {
+              try {
+                return await user.sendDM(
+                  payload.content,
+                  undefined,
+                  payload.attachments,
+                );
+              } catch (error) {
+                const dmChannel = await (user as any).createDmChannel?.();
+                if (dmChannel?.channel_id) {
+                  dmChannelId = dmChannel.channel_id;
+                }
+              }
+            }
+          }
+        } catch (error) {
+          throw new Error(
+            `User ${senderId} not found or can not create DM channel!`,
+          );
+        }
+      } else {
+        throw new Error(
+          `User ${senderId} not found or can not create DM channel!`,
+        );
+      }
+    }
+
+    if (!dmChannelId) {
+      throw new Error(
+        `User ${senderId} not found or can not create DM channel!`,
+      );
     }
 
     const channel = await clientAny.channels.fetch(dmChannelId);
@@ -959,7 +1085,15 @@ export class ManagedMessage {
       throw new Error(`Failed to fetch DM channel ${dmChannelId}`);
     }
 
-    return channel.send(payload.content, payload.mentions, payload.attachments);
+    return channel.send(
+      payload.content,
+      payload.mentions && payload.mentions.length > 0
+        ? payload.mentions
+        : undefined,
+      payload.attachments && payload.attachments.length > 0
+        ? payload.attachments
+        : undefined,
+    );
   }
 
   private async preparePayload(

@@ -1,5 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { Args, AutoContext, Command, SmartMessage, User } from '@n0xgg04/nezon';
+import {
+  Args,
+  AutoContext,
+  Client,
+  Command,
+  Mentions,
+  SmartMessage,
+  User,
+} from '@n0xgg04/nezon';
 import type { Nezon } from '@n0xgg04/nezon';
 
 @Injectable()
@@ -9,12 +17,17 @@ export class ExampleDMHandlers {
     @Args() args: Nezon.Args,
     @AutoContext('message') managedMessage: Nezon.AutoContextType.Message,
     @AutoContext('dm') dm: Nezon.AutoContextType.DM,
+    @Mentions() mentions?: Nezon.Mentions,
+    @Client() client?: Nezon.Client,
   ) {
-    const targetUserId = args[0];
-    if (!targetUserId) {
+    const channel = await client?.channels.fetch(managedMessage?.channelId);
+    const user = await client?.users.fetch(managedMessage?.senderId);
+
+    const targetInput = args[0];
+    if (!targetInput) {
       await managedMessage.reply(
         SmartMessage.text(
-          'Sử dụng: *dm <user_id>\n\nHoặc dùng *senddm để gửi DM cho người gửi tin nhắn này.',
+          'Sử dụng: *dm <user_id> hoặc *dm @username\n\nHoặc dùng *senddm để gửi DM cho người gửi tin nhắn này.',
         ),
       );
       return;
@@ -22,11 +35,11 @@ export class ExampleDMHandlers {
 
     try {
       await dm.send(
-        targetUserId,
+        mentions[0].user_id,
         SmartMessage.text('Đây là tin nhắn DM được gửi từ bot!'),
       );
       await managedMessage.reply(
-        SmartMessage.text(`✅ Đã gửi DM đến user ${targetUserId}`),
+        SmartMessage.text(`✅ Đã gửi DM đến user ${mentions[0].user_id}`),
       );
     } catch (error) {
       await managedMessage.reply(

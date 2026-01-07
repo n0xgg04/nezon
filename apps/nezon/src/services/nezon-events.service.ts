@@ -13,6 +13,7 @@ import type { User } from 'mezon-sdk/dist/cjs/mezon-client/structures/User';
 import type { Message } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
 import { NezonClientService } from '../client/nezon-client.service';
 import { NezonExplorerService } from './nezon-explorer.service';
+import { NezonUtilsService } from './nezon-utils.service';
 import { NezonEventDefinition } from '../interfaces/event-definition.interface';
 import type { NezonCommandContext } from '../interfaces/command-context.interface';
 import { NEZON_MODULE_OPTIONS } from '../nezon-configurable';
@@ -52,6 +53,7 @@ export class NezonEventsService {
   constructor(
     private readonly explorer: NezonExplorerService,
     private readonly clientService: NezonClientService,
+    private readonly utilsService: NezonUtilsService,
     private readonly eventEmitter: EventEmitter2,
     @Inject(NEZON_MODULE_OPTIONS)
     private readonly moduleOptions: NezonModuleOptions,
@@ -385,6 +387,9 @@ export class NezonEventsService {
           }
           break;
         }
+        case NezonParamType.NEZON_UTILS:
+          value = this.utilsService;
+          break;
         default:
           value = undefined;
       }

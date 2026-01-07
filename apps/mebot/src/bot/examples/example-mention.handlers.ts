@@ -36,42 +36,67 @@ export class ExampleMentionHandlers {
     @AutoContext() [managedMessage]: Nezon.AutoContext,
     @Mentions() mentions: Nezon.Mentions,
   ) {
-    if (!mentions.length) {
-      await managedMessage.reply(
-        SmartMessage.text(
-          'Hãy mention vài người bạn rồi thử lại `*multi-mention` nhé!',
-        ),
-      );
-      return;
-    }
-
-    const placeholderMap = mentions.reduce<
-      Record<string, { user_id: string; username?: string }>
-    >((acc, mention, index) => {
-      const userId = mention.user_id;
-      if (userId) {
-        acc[`user_${index + 1}`] = {
-          user_id: userId,
-          username: mention.username ?? undefined,
-        };
+    try {
+      if (!mentions.length) {
+        await managedMessage.reply(
+          SmartMessage.text(
+            'Hãy mention vài người bạn rồi thử lại `*multi-mention` nhé!',
+          ),
+        );
+        return;
       }
-      return acc;
-    }, {});
 
-    if (!Object.keys(placeholderMap).length) {
+      const placeholderMap = mentions.reduce<
+        Record<string, string | { user_id: string; username?: string }>
+      >((acc, mention, index) => {
+        const userId = mention.user_id;
+        if (userId) {
+          const mentionAny = mention as any;
+          const username =
+            mention.username ||
+            mentionAny.display_name ||
+            mentionAny.displayName;
+          if (username) {
+            acc[`user_${index + 1}`] = {
+              user_id: userId,
+              username: username,
+            };
+          } else {
+            acc[`user_${index + 1}`] = userId;
+          }
+        }
+        return acc;
+      }, {});
+
+      if (!Object.keys(placeholderMap).length) {
+        await managedMessage.reply(
+          SmartMessage.text('Không tìm thấy user_id trong danh sách mentions.'),
+        );
+        return;
+      }
+
+      const sentence = Object.keys(placeholderMap)
+        .map((key) => `{{${key}}}`)
+        .join(', ');
+
       await managedMessage.reply(
-        SmartMessage.text('Không tìm thấy user_id trong danh sách mentions.'),
+        SmartMessage.text(`Xin chào ${sentence}!`).addMention(placeholderMap),
       );
-      return;
+    } catch (error) {
+      const err = error as Error & { code?: number; message?: string };
+      try {
+        await managedMessage.reply(
+          SmartMessage.text(
+            `❌ Lỗi khi gửi message: ${
+              err.message || err.code || 'Unknown error'
+            }`,
+          ),
+        );
+      } catch (replyError) {
+        console.error('Failed to send error message:', replyError);
+        console.error('Original error:', err);
+      }
     }
-
-    const sentence = Object.keys(placeholderMap)
-      .map((key) => `{{${key}}}`)
-      .join(', ');
-
-    await managedMessage.reply(
-      SmartMessage.text(`Xin chào ${sentence}!`).addMention(placeholderMap),
-    );
   }
 
   @Command('mention-role')
