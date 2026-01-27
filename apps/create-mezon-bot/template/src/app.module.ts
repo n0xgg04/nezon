@@ -11,6 +11,7 @@ import {
   ExampleMentionHandlers,
 } from "./bot/examples";
 import { NezonModule } from "@n0xgg04/nezon";
+import { ExampleAudioHandlers } from "./bot/examples/example-audio.handlers";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { NezonModule } from "@n0xgg04/nezon";
     ExampleEmbedHandlers,
     ExampleEventHandlers,
     ExampleMentionHandlers,
+    ExampleAudioHandlers
   ],
 })
 export class AppModule {}

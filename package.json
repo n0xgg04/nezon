@@ -7,7 +7,6 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "deploy:nezon": "yarn workspace @n0xgg04/nezon run build && yarn workspace @n0xgg04/nezon publish --access public --registry https://registry.npmjs.org/",
     "deploy:create-mezon-bot": "yarn workspace create-mezon-bot publish --access public --registry https://registry.npmjs.org/",
     "prepare": "husky install",
     "create-mezon-bot": "node apps/create-mezon-bot/bin/create-mezon-bot.js"

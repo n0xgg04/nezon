@@ -1,6 +1,6 @@
 {
   "name": "@n0xgg04/nezon",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "NestJS framework for building Mezon bots",
   "author": "@n0xgg04",
   "license": "MIT",
@@ -31,7 +31,7 @@
     "@nestjs/core": "^10.0.0",
     "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/platform-express": "^10.0.0",
-    "mezon-sdk": "^2.8.37",
+    "mezon-sdk": "2.8.39",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1"
   },
