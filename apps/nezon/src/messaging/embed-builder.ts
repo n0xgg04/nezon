@@ -308,7 +308,7 @@ export class EmbedBuilder {
       value: '',
       inputs: {
         id: inputId,
-        type: 2,
+        type: EMessageComponentType.SELECT,
         component: {
           id: inputId,
           options,

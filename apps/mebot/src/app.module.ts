@@ -10,6 +10,7 @@ import {
   ExampleEmbedHandlers,
   ExampleEventHandlers,
   ExampleMentionHandlers,
+  ExampleSelectHandlers,
 } from './bot/examples';
 import { NezonModule } from '@n0xgg04/nezon';
 
@@ -33,6 +34,7 @@ import { NezonModule } from '@n0xgg04/nezon';
     ExampleEventHandlers,
     ExampleMentionHandlers,
     ExampleAudioHandlers,
+    ExampleSelectHandlers,
   ],
 })
 export class AppModule {}

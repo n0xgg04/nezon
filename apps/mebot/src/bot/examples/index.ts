@@ -5,3 +5,4 @@ export * from './example-embed.handlers';
 export * from './example-event.handlers';
 export * from './example-mention.handlers';
 export * from './example-audio.handlers';
+export * from './example-select.handlers';
