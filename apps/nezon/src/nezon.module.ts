@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { DiscoveryModule } from '@nestjs/core';
+import { DiscoveryModule, Reflector } from '@nestjs/core';
 import { MezonClient } from 'mezon-sdk';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ConfigurableModuleClass } from './nezon-configurable';
@@ -20,6 +20,7 @@ import { NezonUtilsService } from './services/nezon-utils.service';
 @Module({
   imports: [DiscoveryModule, EventEmitterModule.forRoot()],
   providers: [
+    Reflector,
     NezonClientService,
     NezonExplorerService,
     NezonCommandService,

@@ -24,6 +24,7 @@ import type {
 import { ModuleRef, Reflector } from '@nestjs/core';
 import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-host';
 import { GUARDS_METADATA } from '@nestjs/common/constants';
+import type { ApiMessageRef, ReplyMessageData } from 'mezon-sdk/dist/cjs/interfaces/client';
 import {
   NezonParamType,
   NezonParameterMetadata,
@@ -338,12 +339,79 @@ export class NezonEventsService {
               client,
               args: [],
               cache: new Map<symbol, unknown>(),
-              reply: async (...replyArgs) => {
-                const entity = await this.getMessageEntityFromEvent(payload);
-                if (!entity) {
+              reply: async (
+                content,
+                mentions,
+                attachments,
+                mention_everyone,
+                anonymous_message,
+                topic_id = '0',
+                code,
+              ) => {
+                const channelId = payload.channel_id;
+                if (!channelId) {
                   return undefined;
                 }
-                return entity.reply(...replyArgs);
+
+                const clanId = payload.clan_id ?? '';
+                let mode: number;
+                if (typeof (payload as any).mode === 'number') {
+                  mode = (payload as any).mode;
+                } else if (clanId) {
+                  mode = 2;
+                } else {
+                  mode = 4;
+                }
+                const isPublic =
+                  typeof (payload as any).is_public === 'boolean'
+                    ? (payload as any).is_public
+                    : !!clanId;
+
+                const clientAny = client as any;
+                const socketManager = clientAny.socketManager;
+                if (
+                  !socketManager ||
+                  typeof socketManager.writeChatMessage !== 'function'
+                ) {
+                  throw new Error('MezonClient socketManager is not available');
+                }
+
+                const messageRefId = payload.message_id ?? payload.id ?? '';
+                const refs: ApiMessageRef[] =
+                  messageRefId && payload.sender_id
+                    ? [
+                        {
+                          message_ref_id: messageRefId,
+                          ref_type: 0,
+                          message_sender_id: payload.sender_id,
+                          message_sender_username: payload.username,
+                          mesages_sender_avatar: payload.avatar,
+                          message_sender_clan_nick: payload.clan_nick,
+                          message_sender_display_name: payload.display_name,
+                          content: JSON.stringify(payload.content),
+                          has_attachment:
+                            Array.isArray(payload.attachments) &&
+                            payload.attachments.length > 0,
+                        },
+                      ]
+                    : [];
+
+                const data: ReplyMessageData = {
+                  clan_id: clanId,
+                  channel_id: channelId,
+                  mode,
+                  is_public: isPublic,
+                  content,
+                  mentions,
+                  attachments,
+                  references: refs,
+                  anonymous_message,
+                  mention_everyone,
+                  code,
+                  topic_id: topic_id || (payload as any).topic_id,
+                };
+
+                return await socketManager.writeChatMessage(data);
               },
               getChannel: () => this.getChannelFromEvent(payload),
               getClan: () => this.getClanFromEvent(payload),

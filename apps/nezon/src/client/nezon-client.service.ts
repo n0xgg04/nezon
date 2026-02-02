@@ -11,6 +11,7 @@ export class NezonClientService {
   private isLoggedIn = false;
   private isRetrying = false;
   private readyHandler: (() => void) | null = null;
+  private isChannelFetchPatched = false;
 
   constructor(
     @Inject(NEZON_MODULE_OPTIONS)
@@ -103,6 +104,7 @@ export class NezonClientService {
         const client = this.getClient();
         await client.login();
         this.isLoggedIn = true;
+        this.patchChannelFetch();
         this.logger.log('✅ MezonClient login thành công');
       } catch (error) {
         if (onCrash) {
@@ -128,6 +130,7 @@ export class NezonClientService {
         const client = this.getClient();
         await client.login();
         this.isLoggedIn = true;
+        this.patchChannelFetch();
         this.logger.log('✅ MezonClient login thành công');
         return;
       } catch (error) {
@@ -176,5 +179,27 @@ export class NezonClientService {
     this.client = null;
     this.isLoggedIn = false;
     this.isRetrying = false;
+    this.isChannelFetchPatched = false;
+  }
+
+  private patchChannelFetch() {
+    if (!this.client || this.isChannelFetchPatched) {
+      return;
+    }
+    const clientAny = this.client as any;
+    const channels = clientAny.channels;
+    const originalFetch = channels?.fetch;
+    if (typeof originalFetch !== 'function') {
+      return;
+    }
+    const boundOriginal = originalFetch.bind(channels);
+    channels.fetch = async (id: string) => {
+      try {
+        return await boundOriginal(id);
+      } catch {
+        return null;
+      }
+    };
+    this.isChannelFetchPatched = true;
   }
 }

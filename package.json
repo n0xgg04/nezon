@@ -12,6 +12,9 @@
     "create-mezon-bot": "node apps/create-mezon-bot/bin/create-mezon-bot.js"
   },
   "devDependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-express": "^10.0.0",
     "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "turbo": "^2.6.1",

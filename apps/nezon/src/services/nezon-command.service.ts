@@ -6,7 +6,11 @@ import {
   type Type,
 } from '@nestjs/common';
 import { ChannelMessage, Events } from 'mezon-sdk';
-import type { ChannelMessageContent } from 'mezon-sdk/dist/cjs/interfaces/client';
+import type {
+  ApiMessageRef,
+  ChannelMessageContent,
+  ReplyMessageData,
+} from 'mezon-sdk/dist/cjs/interfaces/client';
 import { Clan } from 'mezon-sdk/dist/cjs/mezon-client/structures/Clan';
 import { Message } from 'mezon-sdk/dist/cjs/mezon-client/structures/Message';
 import { TextChannel } from 'mezon-sdk/dist/cjs/mezon-client/structures/TextChannel';
@@ -91,29 +95,14 @@ export class NezonCommandService {
 
   private async bindListener() {
     const client = this.clientService.getClient();
-    if (typeof (client as any).onChannelMessage === 'function') {
-      await client.onChannelMessage(async (message: ChannelMessage) => {
-        try {
-          await this.handleMessage(message);
-        } catch (error) {
-          const err = error as Error;
-          const messageContent = this.extractMessageContent(message);
-          this.logger.error(
-            `Command execution failed for message: "${messageContent}"`,
-            {
-              error: err.message,
-              stack: err.stack,
-              messageId: message.id,
-              channelId: message.channel_id,
-              senderId: message.sender_id,
-            },
-          );
-        }
-      });
-
-      return;
+    const eventName = Events.ChannelMessage.toString();
+    const clientAny = client as any;
+    const handlerKey = Symbol.for('nezon:command:channel-message-handler');
+    const previousHandler = clientAny[handlerKey];
+    if (typeof previousHandler === 'function') {
+      client.removeListener(eventName, previousHandler);
     }
-    client.on(Events.ChannelMessage, async (message: ChannelMessage) => {
+    const handler = async (message: ChannelMessage) => {
       try {
         await this.handleMessage(message);
       } catch (error) {
@@ -130,7 +119,9 @@ export class NezonCommandService {
           },
         );
       }
-    });
+    };
+    clientAny[handlerKey] = handler;
+    client.on(eventName, handler);
   }
 
   private async handleMessage(message: ChannelMessage) {
@@ -613,12 +604,77 @@ export class NezonCommandService {
       client: this.clientService.getClient(),
       args,
       cache: new Map<symbol, unknown>(),
-      reply: async (...replyArgs) => {
-        const entity = await this.getMessageEntity(context);
-        if (!entity) {
+      reply: async (
+        content,
+        mentions,
+        attachments,
+        mention_everyone,
+        anonymous_message,
+        topic_id = '0',
+        code,
+      ) => {
+        const channelId = context.message.channel_id;
+        if (!channelId) {
           return undefined;
         }
-        return await entity.reply(...replyArgs);
+
+        const clanId = context.message.clan_id ?? '';
+        let mode: number;
+        if (typeof context.message.mode === 'number') {
+          mode = context.message.mode;
+        } else if (clanId) {
+          mode = 2;
+        } else {
+          mode = 4;
+        }
+        const isPublic =
+          typeof context.message.is_public === 'boolean'
+            ? context.message.is_public
+            : !!clanId;
+
+        const clientAny = context.client as any;
+        const socketManager = clientAny.socketManager;
+        if (!socketManager || typeof socketManager.writeChatMessage !== 'function') {
+          throw new Error('MezonClient socketManager is not available');
+        }
+
+        const messageRefId =
+          context.message.message_id ?? context.message.id ?? '';
+        const refs: ApiMessageRef[] =
+          messageRefId && context.message.sender_id
+            ? [
+                {
+                  message_ref_id: messageRefId,
+                  ref_type: 0,
+                  message_sender_id: context.message.sender_id,
+                  message_sender_username: context.message.username,
+                  mesages_sender_avatar: context.message.avatar,
+                  message_sender_clan_nick: context.message.clan_nick,
+                  message_sender_display_name: context.message.display_name,
+                  content: JSON.stringify(context.message.content),
+                  has_attachment:
+                    Array.isArray(context.message.attachments) &&
+                    context.message.attachments.length > 0,
+                },
+              ]
+            : [];
+
+        const data: ReplyMessageData = {
+          clan_id: clanId,
+          channel_id: channelId,
+          mode,
+          is_public: isPublic,
+          content,
+          mentions,
+          attachments,
+          references: refs,
+          anonymous_message,
+          mention_everyone,
+          code,
+          topic_id: topic_id || context.message.topic_id,
+        };
+
+        return await socketManager.writeChatMessage(data);
       },
       getChannel: () => this.getChannel(context),
       getClan: () => this.getClan(context),
